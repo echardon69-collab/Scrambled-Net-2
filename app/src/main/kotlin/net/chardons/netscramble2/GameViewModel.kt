@@ -15,8 +15,23 @@ import kotlinx.coroutines.launch
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.milliseconds
 import net.chardons.netscramble2.game.Board
+import net.chardons.netscramble2.game.GameSpec
 import net.chardons.netscramble2.game.Skill
 import net.chardons.netscramble2.game.Sound
+
+
+/**
+ * Victoire signalée une fois à l'UI : l'activité enregistre les records
+ * et montre le dialogue de victoire — pas si le solveur a servi, comme
+ * dans l'original (qui ne « se vante » pas non plus dans ce cas).
+ */
+data class WinEvent(
+    val skill: Skill,
+    val clicks: Int,
+    val seconds: Int,
+    val solverUsed: Boolean,
+    val ntiles: Int
+)
 
 
 /**
@@ -65,17 +80,16 @@ data class GameUiState(
 /**
  * Détient l'état du jeu et survit aux rotations de l'écran et à la
  * recréation de l'activité (contrairement à l'ancien code, qui portait tout
- * dans l'Activity et sauvegardait à la main dans des Bundles).
- *
- * TODO (roadmap) :
- *  - sauvegarde persistante de la partie (fichier) pour survivre à un kill
- *    du processus par le système ;
- *  - pause du chrono quand l'app passe en arrière-plan ;
- *  - records par niveau de difficulté (meilleurs clics / meilleur temps).
+ * dans l'Activity et sauvegardait à la main dans des Bundles). Depuis M4,
+ * la partie survit aussi à la mort du processus : l'activité photographie
+ * la partie à chaque onStop ([currentSpec]) et la restaure au lancement
+ * ([restoreIfPending]) ; le chrono et le solveur gèlent en arrière-plan
+ * ([setClockPaused]).
  */
 class GameViewModel : ViewModel() {
 
-    private var board: Board = Board.generate(Skill.NORMAL, newSeed())
+    private var seed: Long = newSeed()
+    private var board: Board = Board.generate(Skill.NORMAL, seed)
     private var prevClicked = -1
     private var clicks = 0
     private var elapsedMs = 0L
@@ -83,6 +97,21 @@ class GameViewModel : ViewModel() {
 
     /** File des coups restant à jouer par l'auto-solveur (null = inactif). */
     private var solveQueue: ArrayDeque<Int>? = null
+
+    /** Jeu gelé quand l'app n'est plus visible (chrono et solveur). */
+    private var clockPaused = false
+
+    /** Une restauration de partie a-t-elle déjà eu lieu (par instance) ? */
+    private var restored = false
+
+    /**
+     * Victoires à usage de l'UI (dialogue + records), une par partie.
+     */
+    private val _winEvents = MutableSharedFlow<WinEvent>(
+        extraBufferCapacity = 4,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
+    val winEvents: SharedFlow<WinEvent> = _winEvents.asSharedFlow()
 
     /**
      * Événements sonores, repris de l'original : rotation, refus,
@@ -113,7 +142,10 @@ class GameViewModel : ViewModel() {
         viewModelScope.launch {
             while (isActive) {
                 delay(TICK_MS)
-                if (!solvedNow) {
+                // En arrière-plan (ou une fois résolu), tout gèle : le chrono
+                // et le solveur n'avancent que pendant que l'app est visible,
+                // comme l'état PAUSED de l'original.
+                if (!clockPaused && !solvedNow) {
                     playOneSolveMoveIfNeeded()
                     elapsedMs += TICK_MS.inWholeMilliseconds
                     publish()
@@ -123,7 +155,8 @@ class GameViewModel : ViewModel() {
     }
 
     fun newGame(skill: Skill) {
-        board = Board.generate(skill, newSeed())
+        seed = newSeed()
+        board = Board.generate(skill, seed)
         prevClicked = -1
         clicks = 0
         elapsedMs = 0
@@ -214,6 +247,54 @@ class GameViewModel : ViewModel() {
         solveQueue = null // file épuisée : le plateau est résolu
     }
 
+    /**
+     * Gèle ou libère le jeu quand l'app quitte ou revient au premier
+     * plan (appelé par l'activité dans onStart et onStop). Parité avec
+     * l'état PAUSED de l'original, qui arrêtait le chrono.
+     */
+    fun setClockPaused(paused: Boolean) {
+        clockPaused = paused
+    }
+
+    /** Photographie sérialisable de la partie en cours (persistance). */
+    fun currentSpec(): GameSpec = GameSpec(
+        skill = board.skillOf(),
+        seed = seed,
+        clicks = clicks,
+        elapsedMs = elapsedMs,
+        solverUsed = solverUsed,
+        prevClicked = prevClicked,
+        solveQueue = solveQueue?.toList() ?: emptyList(),
+        rotations = board.rotations.copyOf(),
+        locked = board.locked.copyOf(),
+        revealed = board.revealed.copyOf()
+    )
+
+    /**
+     * Restaure une partie sauvegardée sur disque. Un seul effet par
+     * instance de ViewModel : les rotations d'écran réutilisent le même
+     * ViewModel, forcément plus à jour que la photographie du dernier
+     * onStop — seules les restaurations après mort du processus
+     * s'appliquent. La restauration est silencieuse : ni son, ni
+     * événement de victoire, ni compteur de connexité à comparer.
+     */
+    fun restoreIfPending(spec: GameSpec?): Boolean {
+        if (restored) return true
+        restored = true
+        if (spec == null) return false
+        seed = spec.seed
+        board = spec.buildBoard()
+        prevClicked = spec.prevClicked
+        clicks = spec.clicks
+        elapsedMs = spec.elapsedMs
+        solverUsed = spec.solverUsed
+        solveQueue = spec.solveQueue.takeIf { it.isNotEmpty() }
+            ?.let { ArrayDeque(it) }
+        lastConnectedCount = board.connectedCells().count { it }
+        _uiState.value = refresh()
+        return true
+    }
+
     private val solvedNow: Boolean
         get() = _uiState.value.solved
 
@@ -234,7 +315,20 @@ class GameViewModel : ViewModel() {
         lastConnectedCount = count
         if (previousCount >= 0) {
             if (count != previousCount) emit(Sound.CONNECT)
-            if (!_uiState.value.solved && state.solved) emit(Sound.WIN)
+            if (!_uiState.value.solved && state.solved) {
+                emit(Sound.WIN)
+                // Une seule victoire par partie : l'UI la transforme en
+                // dialogue et, si le solveur n'a pas servi, en records.
+                _winEvents.tryEmit(
+                    WinEvent(
+                        skill = state.skill,
+                        clicks = clicks,
+                        seconds = (elapsedMs / 1000L).toInt(),
+                        solverUsed = solverUsed,
+                        ntiles = board.size
+                    )
+                )
+            }
         }
         _uiState.value = state
     }

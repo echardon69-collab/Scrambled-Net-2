@@ -67,12 +67,14 @@ Structure
     app/src/main/kotlin/net/chardons/netscramble2/
         game/     moteur pur : Dir, Board (génération/mélange/connexité),
                   BlipField (blips de données), Skill, Sound (événements
-                  sonores)
+                  sonores), GameSpec (sérialisation de partie)
         audio/    SoundEffects : SoundPool basse latence, six sons courts
                   synthétisés (aucun échantillon de l'original réutilisé)
         ui/       BoardView : rendu VectorDrawable + viewport pan/zoom,
                   animations de rotation et blips (M2)
         MainActivity.kt, GameViewModel.kt
+        ScoresStore.kt, ScoresActivity.kt : records personnels par
+                  niveau (M4)
     app/src/main/res/drawable/   19 tuiles VectorDrawable converties des
                                   SVG d'origine (cable*, computer*, server*)
     app/src/main/res/raw/        6 effets sonores WAV synthétisés
@@ -86,7 +88,9 @@ Feuille de route (validée)
 - M2 rendu de parité : animations de rotation, « blips » de données (livré)
 - M3 sons modernes : SoundPool + 6 sons synthétisés, menu
   Désactivés/Discrets/Complets persisté (livré)
-- M4 scores / persistance
+- M4 scores / persistance : records par niveau, écran des records,
+  partie sauvegardée (survit à la mort du processus), chrono gelé en
+  arrière-plan, dialogue de victoire (livré)
 - M5 aide / réglages
 - M6 finition UI/UX
 - Phase bonus : seed partageable, undo, tailles custom, thèmes daltoniens

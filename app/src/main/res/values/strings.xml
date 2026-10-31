@@ -30,7 +30,25 @@
     <string name="status_time">Time: %1$s</string>
 
     <!-- Jeu -->
-    <string name="game_solved">Network solved!</string>
+    <string name="win_title">You win!</string>
+    <string name="win_pbest_title">New personal best!</string>
+    <string name="win_text">Congratulations! You solved the puzzle in %1$s with %2$d clicks.</string>
+    <string name="best_clicks_text">That’s your best click count yet at this level!</string>
+    <string name="best_time_text">That’s your fastest time yet at this level!</string>
+    <string name="best_both_text">That’s your best click count and fastest time yet at this level!</string>
+    <string name="win_new">New game</string>
+    <string name="win_continue">Continue</string>
+
+    <!-- Records personnels -->
+    <string name="scores_title">Personal bests</string>
+    <string name="scores_clickstitle">Fewest clicks</string>
+    <string name="scores_timestitle">Fastest time</string>
+    <string name="scores_skill">Skill level</string>
+    <string name="scores_clicks">Clicks</string>
+    <string name="scores_time">Time</string>
+    <string name="scores_when">When</string>
+    <string name="menu_scores_reset">Reset all scores</string>
+    <string name="scores_reset_confirm">Erase all your personal bests?</string>
 
     <!-- À propos -->
     <string name="about_title">About Scrambled Net 2</string>

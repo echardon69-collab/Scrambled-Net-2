@@ -1,5 +1,6 @@
 package net.chardons.netscramble2
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
@@ -15,6 +16,7 @@ import kotlinx.coroutines.launch
 import net.chardons.netscramble2.audio.SoundEffects
 import net.chardons.netscramble2.audio.SoundMode
 import net.chardons.netscramble2.databinding.ActivityMainBinding
+import net.chardons.netscramble2.game.GameSpec
 import net.chardons.netscramble2.game.Skill
 
 /**
@@ -22,14 +24,15 @@ import net.chardons.netscramble2.game.Skill
  * lifecycle-aware : l'affichage se met en pause tout seul quand l'app
  * passe en arrière-plan (plus de timers à gérer à la main).
  *
- * TODO (roadmap) : écran d'aide, liste des records, écran de réglages
- * (sons, animation), edge-to-edge, adaptivité tablette.
+ * TODO (roadmap) : écran d'aide, écran de réglages (animation),
+ * edge-to-edge, adaptivité tablette.
  */
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var viewModel: GameViewModel
     private lateinit var soundEffects: SoundEffects
+    private lateinit var scoresStore: ScoresStore
     private var soundMode = SoundMode.FULL
     private var lastSolving = false
 
@@ -41,9 +44,16 @@ class MainActivity : AppCompatActivity() {
 
         viewModel = ViewModelProvider(this)[GameViewModel::class.java]
 
+        // Partie précédente : survit à la mort du processus. Appelé avant
+        // toute collecte ; sans effet sur un ViewModel déjà vivant
+        // (rotation d'écran), qui est forcément plus à jour.
+        val savedSpec = getPreferences(MODE_PRIVATE).getString(GAME_SPEC_KEY, null)
+        viewModel.restoreIfPending(GameSpec.decode(savedSpec))
+
         // Mode sonore persisté (même clé que l'original), puis lecteur.
         soundMode = loadSoundMode()
         soundEffects = SoundEffects(this)
+        scoresStore = ScoresStore(this)
 
         binding.boardView.onCellTapped = { viewModel.onCellTapped(it) }
         binding.boardView.onCellLongPressed = { viewModel.onCellLongPressed(it) }
@@ -61,6 +71,27 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+        // Victoire : enregistre les records et montre le dialogue.
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.winEvents.collect { event -> showWinDialog(event) }
+            }
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        viewModel.setClockPaused(false)
+    }
+
+    override fun onStop() {
+        // Parité avec l'état PAUSED de l'original : le jeu gèle, et la
+        // partie est photographiée pour survivre à une mort du processus.
+        viewModel.setClockPaused(true)
+        getPreferences(MODE_PRIVATE).edit {
+            putString(GAME_SPEC_KEY, viewModel.currentSpec().encode())
+        }
+        super.onStop()
     }
 
     private fun render(state: GameUiState) {
@@ -74,9 +105,6 @@ class MainActivity : AppCompatActivity() {
             )[state.skill.ordinal]
         )
         binding.statusTime.text = getString(R.string.status_time, formatTime(state.elapsedMs))
-        if (state.solved) {
-            Snackbar.make(binding.root, R.string.game_solved, Snackbar.LENGTH_SHORT).show()
-        }
         // Le menu « Résoudre » devient « Arrêter le solveur » pendant le travail.
         if (state.solving != lastSolving) {
             lastSolving = state.solving
@@ -164,7 +192,7 @@ class MainActivity : AppCompatActivity() {
                 true
             }
             item.itemId == R.id.menu_scores -> {
-                showStub(R.string.menu_scores)
+                startActivity(Intent(this, ScoresActivity::class.java))
                 true
             }
             item.itemId == R.id.menu_help -> {
@@ -177,6 +205,39 @@ class MainActivity : AppCompatActivity() {
             }
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    /**
+     * Dialogue de victoire, comme dans l'original (reportWin) : temps,
+     * clics, message de record le cas échéant, et « Nouvelle partie ».
+     * Si le solveur a servi, aucun record n'est enregistré et l'original
+     * ne montre rien — on reste sur ce comportement.
+     */
+    private fun showWinDialog(event: WinEvent) {
+        if (event.solverUsed) return
+        val result = scoresStore.register(
+            event.skill, event.ntiles, event.clicks, event.seconds
+        )
+        val recordMessage = when (result) {
+            ScoresStore.Result.BEST_CLICKS -> R.string.best_clicks_text
+            ScoresStore.Result.BEST_TIME -> R.string.best_time_text
+            ScoresStore.Result.BEST_BOTH -> R.string.best_both_text
+            ScoresStore.Result.NONE -> 0
+        }
+        val message = buildString {
+            append(getString(R.string.win_text, formatTime(event.seconds * 1000L), event.clicks))
+            if (recordMessage != 0) {
+                append("\n\n").append(getString(recordMessage))
+            }
+        }
+        MaterialAlertDialogBuilder(this)
+            .setTitle(if (recordMessage != 0) R.string.win_pbest_title else R.string.win_title)
+            .setMessage(message)
+            .setPositiveButton(R.string.win_new) { _, _ ->
+                viewModel.newGame(viewModel.uiState.value.skill)
+            }
+            .setNegativeButton(R.string.win_continue, null)
+            .show()
     }
 
     /**
@@ -211,5 +272,8 @@ class MainActivity : AppCompatActivity() {
     companion object {
         /** Clé SharedPreferences du mode sonore, reprise de l'original. */
         private const val SOUND_MODE_KEY = "soundMode"
+
+        /** Clé de la partie en cours photographiée pour persistance. */
+        private const val GAME_SPEC_KEY = "gameSpec"
     }
 }

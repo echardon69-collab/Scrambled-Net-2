@@ -22,6 +22,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".ScoresActivity"
+            android:exported="false"
+            android:label="@string/scores_title"
+            android:parentActivityName=".MainActivity" />
     </application>
 
 </manifest>
