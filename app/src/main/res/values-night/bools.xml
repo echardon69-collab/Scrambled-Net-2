@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Mode nuit : le fond du plateau derrière la barre de navigation
+         est sombre → icônes claires. -->
+    <bool name="navbar_light_icons">false</bool>
+</resources>

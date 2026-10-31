@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import net.chardons.netscramble2.databinding.ActivityScoresBinding
 import net.chardons.netscramble2.game.Skill
+import net.chardons.netscramble2.ui.EdgeToEdge
 import kotlin.math.roundToInt
 
 /**
@@ -33,8 +34,13 @@ class ScoresActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // M6 : bord à bord — toolbar sous la barre d'état, contenu au-dessus
+        // de la barre de navigation (défile sous elle, clipToPadding off).
+        EdgeToEdge.apply(window)
         binding = ActivityScoresBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        EdgeToEdge.padSystemBars(binding.scoresToolbar, top = true)
+        EdgeToEdge.padSystemBars(binding.scoresScroll, bottom = true)
         setSupportActionBar(binding.scoresToolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         store = ScoresStore(this)

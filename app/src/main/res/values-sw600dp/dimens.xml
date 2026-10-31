@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Tablettes (≥ 600dp de large) : marges élargies, le contenu des
+         écrans Aide et Records est moins étiré. Le plateau s'adapte
+         déjà seul (fitBoard dans BoardView). -->
+    <dimen name="screen_padding">24dp</dimen>
+    <dimen name="content_padding_h">64dp</dimen>
+</resources>

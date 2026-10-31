@@ -6,6 +6,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.R as MaterialR
 import net.chardons.netscramble2.databinding.ActivityHelpBinding
+import net.chardons.netscramble2.ui.EdgeToEdge
 
 /**
  * Manuel du jeu : sections « titre + texte » lues depuis les tableaux
@@ -21,8 +22,12 @@ class HelpActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // M6 : bord à bord — même disposition que les records.
+        EdgeToEdge.apply(window)
         binding = ActivityHelpBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        EdgeToEdge.padSystemBars(binding.helpToolbar, top = true)
+        EdgeToEdge.padSystemBars(binding.helpScroll, bottom = true)
         setSupportActionBar(binding.helpToolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 

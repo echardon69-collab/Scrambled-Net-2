@@ -71,7 +71,8 @@ Structure
         audio/    SoundEffects : SoundPool basse latence, six sons courts
                   synthétisés (aucun échantillon de l'original réutilisé)
         ui/       BoardView : rendu VectorDrawable + viewport pan/zoom,
-                  animations de rotation et blips (M2)
+                  animations de rotation et blips (M2) ;
+                  EdgeToEdge : insets bord à bord partagés (M6)
         MainActivity.kt, GameViewModel.kt
         ScoresStore.kt, ScoresActivity.kt : records personnels par
                   niveau (M4)
@@ -95,5 +96,7 @@ Feuille de route (validée)
 - M5 aide / réglages : manuel du jeu, réglage Animation
   (les blips seuls, comme l'original), rappels Maître/Dément au
   changement de niveau (livré)
-- M6 finition UI/UX
+- M6 finition UI/UX : edge-to-edge (barres système transparentes,
+  contraste des icônes jour/nuit, retour prédictif), marges adaptées
+  aux tablettes ≥ 600dp (livré)
 - Phase bonus : seed partageable, undo, tailles custom, thèmes daltoniens

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- M6 : contraste des icônes de la barre de navigation. En thème
+         clair, le fond du plateau derrière cette barre est clair →
+         icônes sombres ; values-night/bools.xml passe à false. -->
+    <bool name="navbar_light_icons">true</bool>
+</resources>

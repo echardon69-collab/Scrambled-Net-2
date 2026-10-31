@@ -7,5 +7,15 @@
     <style name="Theme.ScrambledNet2" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">@color/brand_primary</item>
         <item name="colorOnPrimary">@color/brand_on_primary</item>
+
+        <!-- M6 : bord à bord — barres système transparentes (ignorées sur
+             Android 15+, qui les force de toute façon). Le colorPrimary
+             de la toolbar s'étend derrière la barre d'état (icônes
+             claires), le plateau derrière la barre de navigation ; en
+             thème clair son fond est clair → icônes sombres. -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">@bool/navbar_light_icons</item>
     </style>
 </resources>

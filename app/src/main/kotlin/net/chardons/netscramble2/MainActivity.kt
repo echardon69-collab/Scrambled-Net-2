@@ -18,13 +18,15 @@ import net.chardons.netscramble2.audio.SoundMode
 import net.chardons.netscramble2.databinding.ActivityMainBinding
 import net.chardons.netscramble2.game.GameSpec
 import net.chardons.netscramble2.game.Skill
+import net.chardons.netscramble2.ui.EdgeToEdge
 
 /**
  * Activité unique. Le stateflow du ViewModel est collecté de façon
  * lifecycle-aware : l'affichage se met en pause tout seul quand l'app
  * passe en arrière-plan (plus de timers à gérer à la main).
  *
- * TODO (roadmap) : edge-to-edge, adaptivité tablette.
+ * TODO (phase bonus) : seed partageable, undo, tailles custom,
+ * thèmes daltoniens.
  */
 class MainActivity : AppCompatActivity() {
 
@@ -38,8 +40,14 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // M6 : bord à bord — la toolbar passe sous la barre d'état, le
+        // plateau reste au-dessus de la barre de navigation.
+        EdgeToEdge.apply(window)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        EdgeToEdge.padSystemBars(binding.toolbar, top = true)
+        EdgeToEdge.padSystemBars(binding.statusRow)
+        EdgeToEdge.padSystemBars(binding.boardContainer, bottom = true)
         setSupportActionBar(binding.toolbar)
 
         viewModel = ViewModelProvider(this)[GameViewModel::class.java]
