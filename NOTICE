@@ -1,0 +1,18 @@
+Scrambled Net 2 est un travail dérivé de :
+
+  Scrambled Net
+  © 2007-2010 Ian Cameron Smith <johantheghost@yahoo.com>
+  © 2014 Michael Mueller <michael.mueller@silentservices.de>
+  https://github.com/SilentServices/Scrambled-Net
+  lui-même une implémentation Android du jeu KDE « knetwalk »
+  (Andi Peredri, Thomas Nagy, Reinhold Kainhofer).
+
+Le jeu d'origine est distribué sous licence GPL-2.0 ; ce projet l'est donc
+également (voir LICENSE). Les graphismes SVG du projet d'origine (sous la
+même licence) sont la base des assets de cette refonte : les 19
+VectorDrawables de app/src/main/res/drawable/ (cable*, computer*, server*)
+en sont des conversions fidèles, avec les dégradés d'origine préservés.
+
+Cette refonte ne réutilise aucun code des bibliothèques HermitAndroid /
+HermitLibrary : le moteur de jeu est une réécriture. La conception du jeu
+(règles, niveaux, mécanismes) provient de l'original.

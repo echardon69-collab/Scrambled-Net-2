@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Palette de l'option A (dégradés d'origine) : le plateau en toile de
+         fond des tuiles VectorDrawable. Couleurs validées dans l'aperçu. -->
+    <color name="brand_primary">#00695C</color>
+    <color name="brand_on_primary">#FFFFFF</color>
+
+    <color name="board_background">#C9CED4</color>
+</resources>

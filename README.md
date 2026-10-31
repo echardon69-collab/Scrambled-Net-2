@@ -1,2 +1,85 @@
-Scrambled-Net
-=============
+Scrambled Net 2
+===============
+
+Refonte moderne de Scrambled Net (jeu de puzzle « désembrouille-réseau »,
+portage Android du jeu KDE KNetWalk) :
+
+- un seul projet Gradle (l'ancienne usine à bibliothèques HermitAndroid /
+  HermitLibrary a été supprimée — seules les classes réellement utilisées
+  ont été réintégrées) ;
+- Kotlin, Views + Material 3 ;
+- graphismes : 19 VectorDrawables convertis automatiquement depuis les SVG
+  d'origine (15 tuiles câbles, computer1/computer2, server/server1) avec
+  leurs dégradés natifs API 24+ (<aapt:attr>) — fidèles au look historique,
+  un seul fichier pour toutes les densités, netteté parfaite à tout zoom,
+  ~68 Ko au total contre ~1,1 Mo de SVG ;
+- rendu événementiel (aucune boucle à 33 fps) : économe en batterie ;
+- viewport « caméra » : plateau virtuel déplaçable au doigt, zoom au
+  pinçage, taille de case minimale garantie (26 dp) ;
+- entrées tactiles uniquement (smartphones et tablettes) ;
+- i18n conservée et étendue (anglais de base + français) ;
+- moteur de jeu pur (aucune dépendance Android) couvert de tests unitaires
+  JVM ;
+- zéro permission Android, aucun tracking → éligible F-Droid.
+
+Origine et licence
+------------------
+Basé sur Scrambled Net © 2007–2010 Ian Cameron Smith (Moonblink),
+© 2014 Michael Mueller (SilentServices), licence GPL-2.0 (voir LICENSE
+et NOTICE). Ce projet en est un travail dérivé, donc GPL-2.0.
+
+Prérequis
+---------
+- JDK 21 (JDK 17 minimum pour l'AGP)
+- Android Studio (recommandé) ou SDK Android avec `sdkmanager`
+- L'ébauche n'inclut pas le binaire du wrapper Gradle : générer le wrapper
+  une fois le projet ouvert, ou en ligne de commande :
+      gradle wrapper --gradle-version 9.8.2
+  puis committer gradle/wrapper/gradle-wrapper.jar.
+
+Versions retenues (octobre 2026, voir gradle/libs.versions.toml)
+----------------------------------------------------------------
+- Gradle 9.8.2, plugin Android 9.4.1, Kotlin 2.4.21
+- compileSdk / targetSdk 36, minSdk 24 (Android 7.0 — dégradés natifs)
+
+Identifiant
+-----------
+applicationId = `net.chardons.netscramble2` (définitif — ne plus le changer
+une fois publié sur F-Droid).
+
+Commandes utiles
+----------------
+    ./gradlew testDebugUnitTest    # tests unitaires (aucun émulateur requis)
+    ./gradlew assembleDebug        # APK de debug
+    ./gradlew assembleRelease      # APK de release (R8 + shrinkResources)
+
+Publication F-Droid : checklist
+-------------------------------
+1. Icône adaptative (mipmap-anydpi-v26) en remplacement du vecteur
+   provisoire `ic_launcher`.
+2. Build reproductible : versionner le wrapper, pas de dépendance de binaire
+   préconstruit ; signatures en local uniquement (les keystores ne sont pas
+   versionnés, voir .gitignore).
+3. Remplir les métadonnées (résumé, description, captures, licence GPL-2.0,
+   lien du dépôt) et soumettre le build à fdroiddata.
+
+Structure
+---------
+    app/src/main/kotlin/net/chardons/netscramble2/
+        game/     moteur pur : Dir, Board (génération/mélange/connexité), Skill
+        ui/       BoardView : rendu VectorDrawable + viewport pan/zoom
+        MainActivity.kt, GameViewModel.kt
+    app/src/main/res/drawable/   19 tuiles VectorDrawable converties des
+                                  SVG d'origine (cable*, computer*, server*)
+    app/src/test/                tests unitaires JVM du moteur
+
+Feuille de route (validée)
+--------------------------
+- M0 amorçage / build vert (état actuel : ébauche)
+- M1 moteur complet : cellules aveugles, verrouillage, auto-solveur
+- M2 rendu de parité : animations de rotation, « blips » de données
+- M3 sons modernes
+- M4 scores / persistance
+- M5 aide / réglages
+- M6 finition UI/UX
+- Phase bonus : seed partageable, undo, tailles custom, thèmes daltoniens

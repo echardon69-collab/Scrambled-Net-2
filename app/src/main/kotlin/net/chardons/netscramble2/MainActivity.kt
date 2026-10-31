@@ -1,0 +1,133 @@
+package net.chardons.netscramble2
+
+import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
+import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.launch
+import net.chardons.netscramble2.databinding.ActivityMainBinding
+import net.chardons.netscramble2.game.Skill
+
+/**
+ * Activité unique. Le stateflow du ViewModel est collecté de façon
+ * lifecycle-aware : l'affichage se met en pause tout seul quand l'app
+ * passe en arrière-plan (plus de timers à gérer à la main).
+ *
+ * TODO (roadmap) : écran d'aide, liste des records, écran de réglages
+ * (sons, animation), edge-to-edge, adaptivité tablette.
+ */
+class MainActivity : AppCompatActivity() {
+
+    private lateinit var binding: ActivityMainBinding
+    private lateinit var viewModel: GameViewModel
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+        setSupportActionBar(binding.toolbar)
+
+        viewModel = ViewModelProvider(this)[GameViewModel::class.java]
+
+        binding.boardView.onCellTapped = { viewModel.onCellTapped(it) }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState.collect { state -> render(state) }
+            }
+        }
+    }
+
+    private fun render(state: GameUiState) {
+        val board = state.board ?: return
+        binding.boardView.update(board, state.connected ?: return)
+        binding.statusClicks.text = getString(R.string.status_clicks, state.clicks)
+        binding.statusSkill.text = getString(
+            listOf(
+                R.string.skill_novice, R.string.skill_normal, R.string.skill_expert,
+                R.string.skill_master, R.string.skill_insane
+            )[state.skill.ordinal]
+        )
+        binding.statusTime.text = getString(R.string.status_time, formatTime(state.elapsedMs))
+        if (state.solved) {
+            Snackbar.make(binding.root, R.string.game_solved, Snackbar.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun formatTime(ms: Long): String {
+        val totalSeconds = ms / 1000
+        return "%02d:%02d".format(totalSeconds / 60, totalSeconds % 60)
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.menu_main, menu)
+        // Coche le niveau courant.
+        val skillMenu = menu.findItem(R.id.menu_skill).subMenu
+        val current = viewModel.uiState.value.skill
+        when (current) {
+            Skill.NOVICE -> skillMenu?.findItem(R.id.skill_novice)
+            Skill.NORMAL -> skillMenu?.findItem(R.id.skill_normal)
+            Skill.EXPERT -> skillMenu?.findItem(R.id.skill_expert)
+            Skill.MASTER -> skillMenu?.findItem(R.id.skill_master)
+            Skill.INSANE -> skillMenu?.findItem(R.id.skill_insane)
+        }?.isChecked = true
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        val skill = when (item.itemId) {
+            R.id.skill_novice -> Skill.NOVICE
+            R.id.skill_normal -> Skill.NORMAL
+            R.id.skill_expert -> Skill.EXPERT
+            R.id.skill_master -> Skill.MASTER
+            R.id.skill_insane -> Skill.INSANE
+            else -> null
+        }
+        return when {
+            item.itemId == R.id.menu_new -> {
+                viewModel.newGame(viewModel.uiState.value.skill)
+                true
+            }
+            skill != null -> {
+                item.isChecked = true
+                viewModel.newGame(skill)
+                true
+            }
+            item.itemId == R.id.menu_scores -> {
+                showStub(R.string.menu_scores)
+                true
+            }
+            item.itemId == R.id.menu_help -> {
+                showStub(R.string.menu_help)
+                true
+            }
+            item.itemId == R.id.menu_about -> {
+                showAbout()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    private fun showStub(labelRes: Int) {
+        Snackbar.make(
+            binding.root,
+            getString(R.string.not_implemented_yet, getString(labelRes)),
+            Snackbar.LENGTH_SHORT
+        ).show()
+    }
+
+    private fun showAbout() {
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.about_title)
+            .setMessage(R.string.about_message)
+            .setPositiveButton(android.R.string.ok, null)
+            .show()
+    }
+}

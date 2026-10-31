@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/menu_new"
+        android:title="@string/menu_new"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/menu_skill"
+        android:title="@string/menu_skill"
+        app:showAsAction="never">
+        <menu>
+            <group android:checkableBehavior="single">
+                <item
+                    android:id="@+id/skill_novice"
+                    android:title="@string/skill_novice" />
+                <item
+                    android:id="@+id/skill_normal"
+                    android:title="@string/skill_normal" />
+                <item
+                    android:id="@+id/skill_expert"
+                    android:title="@string/skill_expert" />
+                <item
+                    android:id="@+id/skill_master"
+                    android:title="@string/skill_master" />
+                <item
+                    android:id="@+id/skill_insane"
+                    android:title="@string/skill_insane" />
+            </group>
+        </menu>
+    </item>
+
+    <item
+        android:id="@+id/menu_scores"
+        android:title="@string/menu_scores"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/menu_help"
+        android:title="@string/menu_help"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/menu_about"
+        android:title="@string/menu_about"
+        app:showAsAction="never" />
+
+</menu>

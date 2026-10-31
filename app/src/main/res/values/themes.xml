@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Thème Material 3, adapté au mode sombre du système.
+      DayNight bascule automatiquement les palettes clair/sombre.
+    -->
+    <style name="Theme.ScrambledNet2" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/brand_primary</item>
+        <item name="colorOnPrimary">@color/brand_on_primary</item>
+    </style>
+</resources>

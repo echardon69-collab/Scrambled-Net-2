@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Scrambled Net 2</string>
+
+    <string name="menu_new">Nouvelle partie</string>
+    <string name="menu_skill">Niveau de difficulté</string>
+    <string name="menu_scores">Meilleurs scores</string>
+    <string name="menu_help">Aide</string>
+    <string name="menu_about">À propos</string>
+    <string name="not_implemented_yet">« %1$s » sera implémenté dans une étape ultérieure.</string>
+
+    <string name="skill_novice">Novice</string>
+    <string name="skill_normal">Normal</string>
+    <string name="skill_expert">Expert</string>
+    <string name="skill_master">Maître</string>
+    <string name="skill_insane">Dément</string>
+
+    <string name="status_clicks">Clics : %1$d</string>
+    <string name="status_time">Temps : %1$s</string>
+
+    <string name="game_solved">Réseau résolu !</string>
+
+    <string name="about_title">À propos de Scrambled Net 2</string>
+    <string name="about_message">Refonte moderne et libre de Scrambled Net, lui-même portage
+        Android du jeu KDE KNetWalk.\n\nJeu d\'origine © 2007–2010 Ian Cameron Smith,
+        © 2014 Michael Mueller (GPL-2.0).\n\nCette version : © 2026 Eric Chardon (GPL-2.0).\n
+        Source : https://github.com/echardon69-collab/Scrambled-Net-2</string>
+</resources>

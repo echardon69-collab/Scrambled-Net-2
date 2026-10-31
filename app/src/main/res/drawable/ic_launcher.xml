@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Icône de lancement provisoire (vecteur, aucune densité requise).
+     TODO avant publication : icône adaptative (mipmap-anydpi-v26) — le
+     vecteur suffit comme repli API 24–25. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="96"
+    android:viewportHeight="96">
+
+    <path
+        android:fillColor="#00695C"
+        android:pathData="M16,8h64a8,8 0 0 1,8 8v64a8,8 0 0 1,-8 8h-64a8,8 0 0 1,-8 -8v-64a8,8 0 0 1,8 -8z" />
+
+    <path
+        android:pathData="M48,16 L48,80"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="9"
+        android:strokeLineCap="round" />
+
+    <path
+        android:pathData="M16,48 L80,48"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="9"
+        android:strokeLineCap="round" />
+
+    <path
+        android:fillColor="#B71C1C"
+        android:pathData="M48,36a12,12 0 1,0 12,12a12,12 0 1,0 -12,-12z" />
+</vector>
