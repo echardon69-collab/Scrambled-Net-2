@@ -24,8 +24,7 @@ import net.chardons.netscramble2.game.Skill
  * lifecycle-aware : l'affichage se met en pause tout seul quand l'app
  * passe en arrière-plan (plus de timers à gérer à la main).
  *
- * TODO (roadmap) : écran d'aide, écran de réglages (animation),
- * edge-to-edge, adaptivité tablette.
+ * TODO (roadmap) : edge-to-edge, adaptivité tablette.
  */
 class MainActivity : AppCompatActivity() {
 
@@ -34,6 +33,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var soundEffects: SoundEffects
     private lateinit var scoresStore: ScoresStore
     private var soundMode = SoundMode.FULL
+    private var animEnabled = true
     private var lastSolving = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -54,6 +54,10 @@ class MainActivity : AppCompatActivity() {
         soundMode = loadSoundMode()
         soundEffects = SoundEffects(this)
         scoresStore = ScoresStore(this)
+
+        // Réglage « Animation » (même clé que l'original, activé par défaut).
+        animEnabled = getPreferences(MODE_PRIVATE).getBoolean(ANIM_ENABLED_KEY, true)
+        binding.boardView.blipsEnabled = animEnabled
 
         binding.boardView.onCellTapped = { viewModel.onCellTapped(it) }
         binding.boardView.onCellLongPressed = { viewModel.onCellLongPressed(it) }
@@ -137,6 +141,10 @@ class MainActivity : AppCompatActivity() {
             SoundMode.FULL -> R.id.sounds_full
         }
         soundMenu?.findItem(modeItem)?.isChecked = true
+        // Coche le réglage d'animation courant.
+        val animMenu = menu.findItem(R.id.menu_anim).subMenu
+        val animItem = if (animEnabled) R.id.anim_on else R.id.anim_off
+        animMenu?.findItem(animItem)?.isChecked = true
         return true
     }
 
@@ -186,9 +194,20 @@ class MainActivity : AppCompatActivity() {
                 }
                 true
             }
+            item.itemId == R.id.anim_off || item.itemId == R.id.anim_on -> {
+                item.isChecked = true
+                animEnabled = item.itemId == R.id.anim_on
+                binding.boardView.blipsEnabled = animEnabled
+                getPreferences(MODE_PRIVATE).edit {
+                    putBoolean(ANIM_ENABLED_KEY, animEnabled)
+                }
+                true
+            }
             skill != null -> {
                 item.isChecked = true
+                val previous = viewModel.uiState.value.skill
                 viewModel.newGame(skill)
+                showSkillHelpIfNeeded(skill, previous)
                 true
             }
             item.itemId == R.id.menu_scores -> {
@@ -196,7 +215,7 @@ class MainActivity : AppCompatActivity() {
                 true
             }
             item.itemId == R.id.menu_help -> {
-                showStub(R.string.menu_help)
+                startActivity(Intent(this, HelpActivity::class.java))
                 true
             }
             item.itemId == R.id.menu_about -> {
@@ -248,17 +267,30 @@ class MainActivity : AppCompatActivity() {
         return SoundMode.entries.firstOrNull { it.name == stored } ?: SoundMode.FULL
     }
 
+    /**
+     * Comme dans l'original (startGame) : en arrivant au niveau Maître
+     * ou Dément, un message rappelle les règles spéciales (bords qui
+     * se referment, câbles invisibles). Pas de rappel en descendant du
+     * niveau Dément — les règles sont connues.
+     */
+    private fun showSkillHelpIfNeeded(skill: Skill, previous: Skill) {
+        val message = when (skill) {
+            Skill.INSANE if previous != Skill.INSANE -> R.string.help_insane
+            Skill.MASTER if previous != Skill.MASTER && previous != Skill.INSANE ->
+                R.string.help_master
+            else -> 0
+        }
+        if (message != 0) {
+            MaterialAlertDialogBuilder(this)
+                .setMessage(message)
+                .setPositiveButton(android.R.string.ok, null)
+                .show()
+        }
+    }
+
     override fun onDestroy() {
         soundEffects.release()
         super.onDestroy()
-    }
-
-    private fun showStub(labelRes: Int) {
-        Snackbar.make(
-            binding.root,
-            getString(R.string.not_implemented_yet, getString(labelRes)),
-            Snackbar.LENGTH_SHORT
-        ).show()
     }
 
     private fun showAbout() {
@@ -275,5 +307,8 @@ class MainActivity : AppCompatActivity() {
 
         /** Clé de la partie en cours photographiée pour persistance. */
         private const val GAME_SPEC_KEY = "gameSpec"
+
+        /** Clé du réglage d'animation, reprise de l'original. */
+        private const val ANIM_ENABLED_KEY = "animEnable"
     }
 }

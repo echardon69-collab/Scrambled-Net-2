@@ -13,10 +13,21 @@
     <string name="sounds_off">Muted</string>
     <string name="sounds_quiet">Quiet</string>
     <string name="sounds_full">Full</string>
+    <string name="menu_anim">Animation</string>
+    <string name="anim_off">No animation</string>
+    <string name="anim_on">Animation</string>
+
+    <!-- Aide (niveaux Master et Insane) -->
+    <string name="help_master">At Master level, the board edges wrap around;
+        cells on the right edge connect to those on the left edge, and vice
+        versa. Similarly for the top and bottom edges.</string>
+    <string name="help_insane">At Insane level, the board edges wrap around;
+        cells on the right edge connect to those on the left edge, and vice
+        versa. Similarly for the top and bottom edges. But in addition, in
+        cells with 3 or 4 connections, the wiring is invisible. Good luck!</string>
     <string name="menu_scores">High scores</string>
     <string name="menu_help">Help</string>
     <string name="menu_about">About</string>
-    <string name="not_implemented_yet">“%1$s” will be implemented in a later milestone.</string>
 
     <!-- Niveaux de difficulté -->
     <string name="skill_novice">Novice</string>

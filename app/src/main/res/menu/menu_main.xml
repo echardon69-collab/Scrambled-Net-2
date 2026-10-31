@@ -57,6 +57,22 @@
     </item>
 
     <item
+        android:id="@+id/menu_anim"
+        android:title="@string/menu_anim"
+        app:showAsAction="never">
+        <menu>
+            <group android:checkableBehavior="single">
+                <item
+                    android:id="@+id/anim_off"
+                    android:title="@string/anim_off" />
+                <item
+                    android:id="@+id/anim_on"
+                    android:title="@string/anim_on" />
+            </group>
+        </menu>
+    </item>
+
+    <item
         android:id="@+id/menu_scores"
         android:title="@string/menu_scores"
         app:showAsAction="never" />

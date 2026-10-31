@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Titres des sections de l'aide (même structure que l'original). -->
+    <string-array name="help_titles">
+        <item>Le jeu</item>
+        <item>Commandes</item>
+        <item>Niveaux de difficulté</item>
+        <item>Scores</item>
+        <item>Astuces</item>
+    </string-array>
+
+    <!-- Textes des sections de l'aide. -->
+    <string-array name="help_texts">
+        <item>Scrambled Net 2 est un jeu de réflexion tout simple : il s\'agit
+            de rétablir les connexions d\'un réseau informatique afin que tous
+            les terminaux soient reliés au serveur. Le réseau est fait de
+            tuiles ; elles sont toutes à la bonne place, mais elles ont été
+            tournées au hasard dans un méli-mélo inutilisable.\n\nFaites
+            tourner les tuiles une à une pour reconnecter le réseau. Les
+            tuiles reliées au serveur sont mises en évidence. Quand tous les
+            terminaux sont connectés, vous avez gagné.</item>
+        <item>Toucher une tuile la fait tourner d\'un quart de tour, dans le
+            sens horaire. Un appui long verrouille une tuile dont vous êtes
+            sûr, ou la déverrouille ; une tuile verrouillée répond par un
+            bref clic.\n\nFaites glisser un doigt pour déplacer le plateau,
+            pincez deux doigts pour zoomer.</item>
+        <item>Il y a cinq niveaux de difficulté. Les niveaux supérieurs ont
+            des plateaux plus grands, et les plus avancés ont des règles
+            spéciales :\n\n• Novice : un petit plateau.\n\n• Normal : un
+            plateau un peu plus grand.\n\n• Expert : un grand
+            plateau.\n\n• Maître : un grand plateau dont les bords se
+            referment sur eux-mêmes — une connexion sortant par le bord
+            droit entre par le bord gauche, et de même pour les bords haut
+            et bas.\n\n• Dément : comme Maître, mais toutes les tuiles à 3
+            ou 4 connexions sont invisibles. Il vous faudra tout un
+            nouvel art de la déduction pour venir à bout d\'un plateau
+            dément.</item>
+        <item>Chaque victoire compte vos clics et votre temps, et vos
+            records personnels sont conservés pour chaque niveau — mais
+            seulement si vous avez résolu le puzzle vous-même : une partie
+            où le solveur a servi n\'est jamais comptée.\n\nVoir
+            « Meilleurs scores » dans le menu.</item>
+        <item>Partez du serveur vers l\'extérieur : les tuiles confirmées
+            sont vos points d\'appui, verrouillez-les au fur et à
+            mesure.\n\nLes tuiles à connexion unique sont des terminaux —
+            des culs-de-sac : orientez-les vers le voisin qui en a
+            besoin.\n\nSi vous préférez un plateau calme, vous pouvez
+            couper l\'animation du réseau dans le menu.</item>
+    </string-array>
+
+</resources>

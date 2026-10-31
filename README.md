@@ -75,6 +75,7 @@ Structure
         MainActivity.kt, GameViewModel.kt
         ScoresStore.kt, ScoresActivity.kt : records personnels par
                   niveau (M4)
+        HelpActivity.kt : manuel du jeu en sections (M5)
     app/src/main/res/drawable/   19 tuiles VectorDrawable converties des
                                   SVG d'origine (cable*, computer*, server*)
     app/src/main/res/raw/        6 effets sonores WAV synthétisés
@@ -91,6 +92,8 @@ Feuille de route (validée)
 - M4 scores / persistance : records par niveau, écran des records,
   partie sauvegardée (survit à la mort du processus), chrono gelé en
   arrière-plan, dialogue de victoire (livré)
-- M5 aide / réglages
+- M5 aide / réglages : manuel du jeu, réglage Animation
+  (les blips seuls, comme l'original), rappels Maître/Dément au
+  changement de niveau (livré)
 - M6 finition UI/UX
 - Phase bonus : seed partageable, undo, tailles custom, thèmes daltoniens

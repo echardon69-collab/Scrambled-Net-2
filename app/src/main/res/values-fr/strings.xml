@@ -11,10 +11,23 @@
     <string name="sounds_off">Désactivés</string>
     <string name="sounds_quiet">Discrets</string>
     <string name="sounds_full">Complets</string>
+    <string name="menu_anim">Animation</string>
+    <string name="anim_off">Sans animation</string>
+    <string name="anim_on">Animation</string>
+
+    <!-- Aide (niveaux Maître et Dément) -->
+    <string name="help_master">Au niveau Maître, les bords du plateau se
+        referment sur eux-mêmes : les cellules du bord droit se connectent à
+        celles du bord gauche, et inversement. De même pour les bords haut et
+        bas.</string>
+    <string name="help_insane">Au niveau Dément, les bords du plateau se
+        referment sur eux-mêmes : les cellules du bord droit se connectent à
+        celles du bord gauche, et inversement. De même pour les bords haut et
+        bas. Mais en plus, dans les cellules à 3 ou 4 connexions, les câbles
+        sont invisibles. Bonne chance !</string>
     <string name="menu_scores">Meilleurs scores</string>
     <string name="menu_help">Aide</string>
     <string name="menu_about">À propos</string>
-    <string name="not_implemented_yet">« %1$s » sera implémenté dans une étape ultérieure.</string>
 
     <string name="skill_novice">Novice</string>
     <string name="skill_normal">Normal</string>

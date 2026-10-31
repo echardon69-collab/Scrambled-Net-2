@@ -90,6 +90,21 @@ class BoardView @JvmOverloads constructor(
     private var blips: BlipField? = null
     private var blipsLastAdvanceMs = 0L
 
+    /**
+     * Réglage « Animation » (M5, parité avec setAnimEnable de
+     * l'original) : coupe les blips de données et le bruit des écrans
+     * de terminaux. Les rotations restent animées — comme dans
+     * l'original, ce réglage n'agit que sur le flux permanent.
+     * La valeur est persistée par l'activité (clé « animEnable »).
+     */
+    var blipsEnabled: Boolean = true
+        set(value) {
+            field = value
+            // Rallumage : reprendre le rendu immédiatement (sinon la
+            // boucle de trame, arrêtée, ne redémarre pas d'elle-même).
+            if (value) postInvalidateOnAnimation()
+        }
+
     // Bruit visuel des « données » sur les écrans de terminaux.
     private val rng = Random.Default
 
@@ -386,9 +401,11 @@ class BoardView @JvmOverloads constructor(
 
             // --- M2 : passe des blips de données, séparée des cellules et
             //     sans rognage : un blip qui traverse un bord déborde sur la
-            //     cellule voisine (comme l'original, BoardView.doDraw) ---
+            //     cellule voisine (comme l'original, BoardView.doDraw).
+            //     M5 : sautée entièrement quand l'animation est coupée
+            //     (le modèle BlipField gèle, puis reprend tel quel).
             val field = blips
-            if (field != null) {
+            if (field != null && blipsEnabled) {
                 if (now - blipsLastAdvanceMs >= BLIPS_MS) {
                     field.advance()
                     // Rattrapage borné : si on a raté plus d'une période
@@ -465,8 +482,11 @@ class BoardView @JvmOverloads constructor(
         // M2 : tant que la vue est affichée, demander la trame suivante
         // (rotations en cours, blips). C'est l'équivalent de la boucle
         // permanente de l'original (setDelay(30)), mais arrêté
-        // automatiquement dès que la vue quitte l'écran.
-        postInvalidateOnAnimation()
+        // automatiquement dès que la vue quitte l'écran — ou dès que
+        // plus rien ne s'anime (M5 : animation coupée, rotations finies).
+        if (blipsEnabled || animDurationMs.any { it > 0L }) {
+            postInvalidateOnAnimation()
+        }
     }
 
     /** Dessine un blip sur la jambe [dir] de la cellule centrée en (cx, cy). */

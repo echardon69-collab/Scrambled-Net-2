@@ -28,6 +28,12 @@
             android:exported="false"
             android:label="@string/scores_title"
             android:parentActivityName=".MainActivity" />
+
+        <activity
+            android:name=".HelpActivity"
+            android:exported="false"
+            android:label="@string/menu_help"
+            android:parentActivityName=".MainActivity" />
     </application>
 
 </manifest>

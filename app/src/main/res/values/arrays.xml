@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Titres des sections de l'aide (même structure que l'original). -->
+    <string-array name="help_titles">
+        <item>The game</item>
+        <item>Controls</item>
+        <item>Skill levels</item>
+        <item>Scoring</item>
+        <item>Hints</item>
+    </string-array>
+
+    <!-- Textes des sections de l'aide. -->
+    <string-array name="help_texts">
+        <item>Scrambled Net 2 is a simple puzzle game in which you sort out
+            the connections in a computer network, so that all the terminals
+            are connected to the server. The network is made up of tiles;
+            they are all in the right place, but they have been randomly
+            rotated into a useless mess.\n\nRotate individual tiles to
+            re-connect the network. Tiles connected to the server are shown
+            highlighted. When every terminal is connected, you win.</item>
+        <item>Touch a tile to rotate it clockwise. Press and hold a tile to
+            lock it when you are sure it is correct, or to unlock it; locked
+            tiles answer with a short click.\n\nDrag with one finger to pan
+            the board, pinch with two fingers to zoom.</item>
+        <item>There are five levels of difficulty. Higher levels have larger
+            boards, and the most advanced have special twists:\n\n•
+            Novice: a small board.\n\n• Normal: a somewhat larger
+            board.\n\n• Expert: a large board.\n\n• Master: a large board
+            whose edges wrap around — a connection leaving the right edge
+            enters the left edge, and likewise for the top and bottom
+            edges.\n\n• Insane: like Master, but all 3-way and 4-way tiles
+            are invisible. You will need a whole new set of deductions to
+            complete an insane puzzle.</item>
+        <item>Each win counts your clicks and your time, and your personal
+            bests are kept for every skill level — but only if you solved
+            the puzzle yourself: a game in which the auto-solver was used is
+            never scored.\n\nSee “High scores” in the menu.</item>
+        <item>Work outwards from the server: confirmed tiles are your
+            anchors, so lock them in as you go.\n\nTiles with a single
+            connection are terminals — dead ends; aim them at the neighbour
+            that needs them.\n\nIf you prefer a quiet board, you can switch
+            the network animation off in the menu.</item>
+    </string-array>
+
+</resources>
