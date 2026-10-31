@@ -1,0 +1,5 @@
+# Fin de lignes : le script gradlew doit rester en LF (bash), le .bat en CRLF.
+* text=auto
+gradlew text eol=lf
+*.bat text eol=crlf
+*.jar binary
