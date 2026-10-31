@@ -21,7 +21,11 @@ class Board(
     val width: Int,
     val height: Int,
     val wrap: Boolean,
-    val blind: Boolean,
+    /**
+     * Seuil de masquage (niveau Insane) : une cellule avec au moins
+     * autant de connexions masque ses câbles. 9 = jamais atteint.
+     */
+    val hiddenThreshold: Int,
     seed: Long
 ) {
     /** Nombre total de cellules. */
@@ -36,8 +40,11 @@ class Board(
     /** Rotation courante (0..3) de chaque cellule, choisie au mélange initial. */
     val rotations = IntArray(size)
 
-    /** Cellules verrouillées par le joueur (appui long) — TODO UI. */
+    /** Cellules verrouillées par le joueur (appui long). */
     val locked = BooleanArray(size)
+
+    /** Cellules cachées dont les câbles ont été révélés (solveur, fin). */
+    val revealed = BooleanArray(size)
 
     init {
         generate(Random(seed))
@@ -123,6 +130,58 @@ class Board(
         index != serverIndex && Integer.bitCount(connections[index]) == 1
 
     /**
+     * Cellule cachée (niveau Insane) : elle possède au moins
+     * [hiddenThreshold] connexions — embranchement ou carrefour — et le
+     * joueur ne voit pas ses câbles ; il doit raisonner par déduction,
+     * comme dans l'original (qui la dit « blind »). L'équipement (serveur,
+     * terminal) reste visible.
+     */
+    fun isHidden(index: Int): Boolean =
+        Integer.bitCount(connections[index]) >= hiddenThreshold
+
+    /** Verrouille / déverrouille une cellule (appui long). */
+    fun toggleLock(index: Int) {
+        locked[index] = !locked[index]
+    }
+
+    /** Révèle les câbles d'une cellule cachée (solveur, fin de partie). */
+    fun reveal(index: Int) {
+        revealed[index] = true
+    }
+
+    /**
+     * Liste des cellules que l'auto-solveur doit tourner pour remettre le
+     * plateau en solution, dans l'ordre d'un parcours en largeur depuis le
+     * serveur : le réseau se construit visuellement depuis le cœur, comme
+     * dans l'original. La rotation précise est recalculée au moment de jouer
+     * chaque coup, donc la liste reste valable même si le joueur continue
+     * à toucher le plateau pendant que le solveur travaille.
+     */
+    fun solveMoves(): List<Int> {
+        val visited = BooleanArray(size)
+        val queue = ArrayDeque<Int>()
+        val moves = mutableListOf<Int>()
+        visited[serverIndex] = true
+        queue.addLast(serverIndex)
+
+        while (queue.isNotEmpty()) {
+            val current = queue.removeFirst()
+            if (rotations[current] != 0) moves.add(current)
+            // Parcours de la SOLUTION (pas des rotations courantes) : l'ordre
+            // est stable, indépendant des coups déjà joués.
+            val mask = connections[current]
+            for (dir in Dir.entries) {
+                if (!Dir.contains(mask, dir)) continue
+                val neighbor = neighborIndex(current, dir)
+                if (neighbor < 0 || visited[neighbor]) continue
+                visited[neighbor] = true
+                queue.addLast(neighbor)
+            }
+        }
+        return moves
+    }
+
+    /**
      * Cellules connectées au serveur, compte tenu des rotations courantes.
      * Parcours en largeur : une arête existe si les deux cellules se
      * déclarent mutuellement (masques courants symétriques).
@@ -162,6 +221,6 @@ class Board(
     companion object {
         /** Fabrique un plateau mélangé pour le niveau [skill] avec une graine. */
         fun generate(skill: Skill, seed: Long): Board =
-            Board(skill.width, skill.height, skill.wrap, skill.blind, seed)
+            Board(skill.width, skill.height, skill.wrap, skill.hiddenThreshold, seed)
     }
 }

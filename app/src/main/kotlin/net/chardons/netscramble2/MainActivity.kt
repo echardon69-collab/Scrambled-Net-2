@@ -26,6 +26,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var viewModel: GameViewModel
+    private var lastSolving = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,6 +37,7 @@ class MainActivity : AppCompatActivity() {
         viewModel = ViewModelProvider(this)[GameViewModel::class.java]
 
         binding.boardView.onCellTapped = { viewModel.onCellTapped(it) }
+        binding.boardView.onCellLongPressed = { viewModel.onCellLongPressed(it) }
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -46,7 +48,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun render(state: GameUiState) {
         val board = state.board ?: return
-        binding.boardView.update(board, state.connected ?: return)
+        binding.boardView.update(board, state.connected ?: return, state.solved)
         binding.statusClicks.text = getString(R.string.status_clicks, state.clicks)
         binding.statusSkill.text = getString(
             listOf(
@@ -57,6 +59,11 @@ class MainActivity : AppCompatActivity() {
         binding.statusTime.text = getString(R.string.status_time, formatTime(state.elapsedMs))
         if (state.solved) {
             Snackbar.make(binding.root, R.string.game_solved, Snackbar.LENGTH_SHORT).show()
+        }
+        // Le menu « Résoudre » devient « Arrêter le solveur » pendant le travail.
+        if (state.solving != lastSolving) {
+            lastSolving = state.solving
+            invalidateOptionsMenu()
         }
     }
 
@@ -80,6 +87,15 @@ class MainActivity : AppCompatActivity() {
         return true
     }
 
+    override fun onPrepareOptionsMenu(menu: Menu): Boolean {
+        // Titre du solveur selon son état (démarré / arrêté).
+        menu.findItem(R.id.menu_solve)?.setTitle(
+            if (viewModel.uiState.value.solving) R.string.menu_stop_solve
+            else R.string.menu_solve
+        )
+        return super.onPrepareOptionsMenu(menu)
+    }
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         val skill = when (item.itemId) {
             R.id.skill_novice -> Skill.NOVICE
@@ -92,6 +108,16 @@ class MainActivity : AppCompatActivity() {
         return when {
             item.itemId == R.id.menu_new -> {
                 viewModel.newGame(viewModel.uiState.value.skill)
+                true
+            }
+            item.itemId == R.id.menu_solve -> {
+                val starting = !viewModel.uiState.value.solving
+                viewModel.toggleSolver()
+                if (starting) {
+                    // Comme dans l'original : avertir que la partie est grillée.
+                    Snackbar.make(binding.root, R.string.solver_used, Snackbar.LENGTH_LONG)
+                        .show()
+                }
                 true
             }
             skill != null -> {

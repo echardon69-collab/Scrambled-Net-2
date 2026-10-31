@@ -26,7 +26,9 @@ data class GameUiState(
     val elapsedMs: Long = 0,
     val solved: Boolean = false,
     /** L'auto-solveur a-t-il été utilisé ? (les scores ne comptent plus). */
-    val solverUsed: Boolean = false
+    val solverUsed: Boolean = false,
+    /** L'auto-solveur travaille-t-il en ce moment ? */
+    val solving: Boolean = false
 ) {
     // Tableau dans une data class : on compare les contenus, pas les références.
     override fun equals(other: Any?): Boolean {
@@ -38,7 +40,8 @@ data class GameUiState(
                 clicks == other.clicks &&
                 elapsedMs == other.elapsedMs &&
                 solved == other.solved &&
-                solverUsed == other.solverUsed
+                solverUsed == other.solverUsed &&
+                solving == other.solving
     }
 
     override fun hashCode(): Int {
@@ -49,6 +52,7 @@ data class GameUiState(
         result = 31 * result + elapsedMs.hashCode()
         result = 31 * result + solved.hashCode()
         result = 31 * result + solverUsed.hashCode()
+        result = 31 * result + solving.hashCode()
         return result
     }
 }
@@ -62,8 +66,7 @@ data class GameUiState(
  *  - sauvegarde persistante de la partie (fichier) pour survivre à un kill
  *    du processus par le système ;
  *  - pause du chrono quand l'app passe en arrière-plan ;
- *  - records par niveau de difficulté (meilleurs clics / meilleur temps) ;
- *  - auto-solveur animé, annulation du score si utilisé.
+ *  - records par niveau de difficulté (meilleurs clics / meilleur temps).
  */
 class GameViewModel : ViewModel() {
 
@@ -73,16 +76,22 @@ class GameViewModel : ViewModel() {
     private var elapsedMs = 0L
     private var solverUsed = false
 
+    /** File des coups restant à jouer par l'auto-solveur (null = inactif). */
+    private var solveQueue: ArrayDeque<Int>? = null
+
     private val _uiState = MutableStateFlow(refresh())
     val uiState: StateFlow<GameUiState> = _uiState.asStateFlow()
 
     init {
         // Horloge de jeu : ne publie que toutes les 250 ms (comme l'original),
         // en tirant parti de la coroutine (annulable automatiquement).
+        // L'auto-solveur, quand il est actif, y joue aussi un coup par tick :
+        // on voit le réseau se construire, comme dans l'original.
         viewModelScope.launch {
             while (isActive) {
                 delay(TICK_MS)
                 if (!solvedNow) {
+                    playOneSolveMoveIfNeeded()
                     elapsedMs += TICK_MS.inWholeMilliseconds
                     publish()
                 }
@@ -96,13 +105,15 @@ class GameViewModel : ViewModel() {
         clicks = 0
         elapsedMs = 0
         solverUsed = false
+        solveQueue = null
         publish()
     }
 
     /**
      * Le joueur a touché une cellule : rotation horaire d'un quart de tour.
      * Comme dans l'original, les clics répétés sur la même cellule ne
-     * comptent qu'une fois (l'interface tactile ne tourne qu'horaire).
+     * comptent qu'une fois (l'interface tactile ne tourne qu'horaire), et
+     * une cellule verrouillée ne tourne pas.
      */
     fun onCellTapped(index: Int) {
         if (solvedNow || board.locked[index]) return
@@ -112,6 +123,64 @@ class GameViewModel : ViewModel() {
             prevClicked = index
         }
         publish()
+    }
+
+    /**
+     * Appui long : verrouille / déverrouille la cellule, comme dans
+     * l'original — un repère visuel pour les tuiles dont le joueur est sûr.
+     */
+    fun onCellLongPressed(index: Int) {
+        if (solvedNow) return
+        board.toggleLock(index)
+        publish()
+    }
+
+    /**
+     * Auto-solveur, comme dans l'original : il joue un coup par tick (la
+     * progression est visible), un second appel l'arrête. Toute partie où
+     * il a servi ne compte pas au score. Une cellule verrouillée sur son
+     * passage est d'abord déverrouillée (c'est son coup du tour), puis
+     * tournée au coup suivant ; les cellules cachées qu'il règle sont
+     * révélées.
+     */
+    fun toggleSolver() {
+        val queue = solveQueue
+        if (queue != null) {
+            solveQueue = null
+            publish()
+            return
+        }
+        if (solvedNow) return
+        solverUsed = true
+        solveQueue = ArrayDeque(board.solveMoves())
+        publish()
+    }
+
+    /**
+     * Joue au plus un coup du solveur : soit déverrouiller une cellule
+     * verrouillée, soit l'amener à son orientation de solution (rotation
+     * recalculée au dernier moment : robuste même si le joueur a touché
+     * la cellule entre-temps). Les cellules déjà en place sont sautées.
+     */
+    private fun playOneSolveMoveIfNeeded() {
+        val queue = solveQueue ?: return
+        while (queue.isNotEmpty()) {
+            val index = queue.removeFirst()
+            val steps = (4 - board.rotations[index]) % 4
+            when {
+                board.locked[index] -> {
+                    board.toggleLock(index)
+                    return
+                }
+                steps != 0 -> {
+                    board.rotateCell(index, steps)
+                    board.reveal(index)
+                    return
+                }
+                // Déjà en place : le joueur l'a tournée lui-même, au suivant.
+            }
+        }
+        solveQueue = null // file épuisée : le plateau est résolu
     }
 
     private val solvedNow: Boolean
@@ -133,12 +202,14 @@ class GameViewModel : ViewModel() {
             clicks = clicks,
             elapsedMs = elapsedMs,
             solved = solved,
-            solverUsed = solverUsed
+            solverUsed = solverUsed,
+            solving = solveQueue != null
         )
     }
 
     private fun Board.skillOf(): Skill = Skill.entries.first {
-        it.width == width && it.height == height && it.wrap == wrap && it.blind == blind
+        it.width == width && it.height == height && it.wrap == wrap &&
+            it.hiddenThreshold == hiddenThreshold
     }
 
     companion object {

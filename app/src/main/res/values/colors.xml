@@ -6,4 +6,14 @@
     <color name="brand_on_primary">#FFFFFF</color>
 
     <color name="board_background">#C9CED4</color>
+
+    <!-- Cadre des cellules verrouillées (appui long). -->
+    <color name="cell_locked_border">#37474F</color>
+
+    <!-- M2 : blips de données qui parcourent les câbles (parité de
+         l'original : couleur pleine sur les cellules connectées, gris
+         ailleurs), et « données » affichées sur les écrans des terminaux. -->
+    <color name="blip_active">#FFEE58</color>
+    <color name="blip_idle">#90A4AE</color>
+    <color name="term_data">#00C853</color>
 </resources>

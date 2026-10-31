@@ -65,8 +65,10 @@ Publication F-Droid : checklist
 Structure
 ---------
     app/src/main/kotlin/net/chardons/netscramble2/
-        game/     moteur pur : Dir, Board (génération/mélange/connexité), Skill
-        ui/       BoardView : rendu VectorDrawable + viewport pan/zoom
+        game/     moteur pur : Dir, Board (génération/mélange/connexité),
+                  BlipField (blips de données), Skill
+        ui/       BoardView : rendu VectorDrawable + viewport pan/zoom,
+                  animations de rotation et blips (M2)
         MainActivity.kt, GameViewModel.kt
     app/src/main/res/drawable/   19 tuiles VectorDrawable converties des
                                   SVG d'origine (cable*, computer*, server*)
@@ -74,9 +76,9 @@ Structure
 
 Feuille de route (validée)
 --------------------------
-- M0 amorçage / build vert (état actuel : ébauche)
-- M1 moteur complet : cellules aveugles, verrouillage, auto-solveur
-- M2 rendu de parité : animations de rotation, « blips » de données
+- M0 amorçage / build vert (fait)
+- M1 moteur complet : cellules cachées, verrouillage, auto-solveur (livré)
+- M2 rendu de parité : animations de rotation, « blips » de données (livré)
 - M3 sons modernes
 - M4 scores / persistance
 - M5 aide / réglages

@@ -5,6 +5,9 @@
 
     <!-- Menu -->
     <string name="menu_new">New game</string>
+    <string name="menu_solve">Solve</string>
+    <string name="menu_stop_solve">Stop solving</string>
+    <string name="solver_used">Auto-solver used — this game won’t be scored.</string>
     <string name="menu_skill">Skill level</string>
     <string name="menu_scores">High scores</string>
     <string name="menu_help">Help</string>

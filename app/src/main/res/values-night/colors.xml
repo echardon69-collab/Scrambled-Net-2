@@ -2,4 +2,12 @@
 <resources>
     <!-- Palette (mode sombre, automatique avec le thème du système). -->
     <color name="board_background">#15191D</color>
+
+    <!-- Cadre des cellules verrouillées (appui long). -->
+    <color name="cell_locked_border">#90A4AE</color>
+
+    <!-- M2 : blips de données (palette sombre). -->
+    <color name="blip_active">#FFD600</color>
+    <color name="blip_idle">#78909C</color>
+    <color name="term_data">#69F0AE</color>
 </resources>
