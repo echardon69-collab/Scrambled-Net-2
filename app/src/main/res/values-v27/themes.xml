@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      API 27+ : contraste des icônes de la barre de navigation, qui
+      bascule avec le thème via le bool ci-dessous (icônes sombres sur
+      le fond clair du plateau en jour, claires en nuit). L'attribut
+      exige l'API 27, d'où ce qualifier ; sur API 24-26 il est
+      simplement absent (barre de navigation système d'origine).
+    -->
+    <style name="Theme.ScrambledNet2" parent="Theme.ScrambledNet2.Base">
+        <item name="android:windowLightNavigationBar">@bool/navbar_light_icons</item>
+    </style>
+</resources>
