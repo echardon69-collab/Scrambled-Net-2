@@ -16,10 +16,14 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      # Les images GitHub ubuntu-latest incluent déjà le SDK Android
-      # (ANDROID_HOME). Sinon, utiliser android-actions/setup-android.
+      # Les images ubuntu-24.04 n'embarquent plus le SDK Android.
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
+        with:
+          validate-wrappers: true
 
       - name: Unit tests (JVM)
         run: ./gradlew testDebugUnitTest --stacktrace

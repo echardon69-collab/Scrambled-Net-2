@@ -32,10 +32,9 @@ Prérequis
 ---------
 - JDK 21 (JDK 17 minimum pour l'AGP)
 - Android Studio (recommandé) ou SDK Android avec `sdkmanager`
-- L'ébauche n'inclut pas le binaire du wrapper Gradle : générer le wrapper
-  une fois le projet ouvert, ou en ligne de commande :
-      gradle wrapper --gradle-version 9.8.2
-  puis committer gradle/wrapper/gradle-wrapper.jar.
+- Le wrapper Gradle est versionné (build reproductible, exigence F-Droid) :
+  `./gradlew` télécharge Gradle 9.8.2 et vérifie son empreinte SHA-256
+  (`distributionSha256Sum` dans gradle/wrapper/gradle-wrapper.properties).
 
 Versions retenues (octobre 2026, voir gradle/libs.versions.toml)
 ----------------------------------------------------------------
@@ -57,8 +56,8 @@ Publication F-Droid : checklist
 -------------------------------
 1. Icône adaptative (mipmap-anydpi-v26) en remplacement du vecteur
    provisoire `ic_launcher`.
-2. Build reproductible : versionner le wrapper, pas de dépendance de binaire
-   préconstruit ; signatures en local uniquement (les keystores ne sont pas
+2. Build reproductible : wrapper Gradle versionné avec empreinte vérifiée
+   (fait) ; signatures en local uniquement (les keystores ne sont pas
    versionnés, voir .gitignore).
 3. Remplir les métadonnées (résumé, description, captures, licence GPL-2.0,
    lien du dépôt) et soumettre le build à fdroiddata.
