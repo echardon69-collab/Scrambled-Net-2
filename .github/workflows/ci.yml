@@ -20,7 +20,7 @@ jobs:
       # platforms et build-tools récents). setup-android ne sert ici qu'à
       # accepter les licences : ses paquets par défaut (l'obsolète 'tools')
       # n'existent plus dans le dépôt SDK et font échouer l'action.
-      - name: Android SDK : accepter les licences
+      - name: Accepter les licences du SDK Android
         uses: android-actions/setup-android@v3
         with:
           packages: ''
