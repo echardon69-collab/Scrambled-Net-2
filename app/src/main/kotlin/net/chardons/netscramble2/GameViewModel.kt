@@ -8,9 +8,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlin.random.Random
+import kotlin.time.Duration.Companion.milliseconds
 import net.chardons.netscramble2.game.Board
 import net.chardons.netscramble2.game.Skill
-import kotlin.random.Random
+
 
 /**
  * État observable du jeu, publié à l'UI via un StateFlow.
@@ -25,7 +27,31 @@ data class GameUiState(
     val solved: Boolean = false,
     /** L'auto-solveur a-t-il été utilisé ? (les scores ne comptent plus). */
     val solverUsed: Boolean = false
-)
+) {
+    // Tableau dans une data class : on compare les contenus, pas les références.
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is GameUiState) return false
+        return skill == other.skill &&
+                board == other.board &&
+                connected.contentEquals(other.connected) &&
+                clicks == other.clicks &&
+                elapsedMs == other.elapsedMs &&
+                solved == other.solved &&
+                solverUsed == other.solverUsed
+    }
+
+    override fun hashCode(): Int {
+        var result = skill.hashCode()
+        result = 31 * result + board.hashCode()
+        result = 31 * result + (connected?.contentHashCode() ?: 0)
+        result = 31 * result + clicks
+        result = 31 * result + elapsedMs.hashCode()
+        result = 31 * result + solved.hashCode()
+        result = 31 * result + solverUsed.hashCode()
+        return result
+    }
+}
 
 /**
  * Détient l'état du jeu et survit aux rotations de l'écran et à la
@@ -57,7 +83,7 @@ class GameViewModel : ViewModel() {
             while (isActive) {
                 delay(TICK_MS)
                 if (!solvedNow) {
-                    elapsedMs += TICK_MS
+                    elapsedMs += TICK_MS.inWholeMilliseconds
                     publish()
                 }
             }
@@ -116,6 +142,6 @@ class GameViewModel : ViewModel() {
     }
 
     companion object {
-        private const val TICK_MS = 250L
+        private val TICK_MS = 250.milliseconds
     }
 }

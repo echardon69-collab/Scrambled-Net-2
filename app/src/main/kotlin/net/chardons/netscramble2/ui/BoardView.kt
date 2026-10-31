@@ -14,6 +14,7 @@ import androidx.core.content.ContextCompat
 import net.chardons.netscramble2.R
 import net.chardons.netscramble2.game.Board
 import net.chardons.netscramble2.game.Dir
+import androidx.core.graphics.withTranslation
 
 /**
  * Le plateau de jeu : vue custom rendue à partir de VectorDrawables.
@@ -195,52 +196,56 @@ class BoardView @JvmOverloads constructor(
         val b = board ?: return
         val connected = connected ?: return
 
-        canvas.save()
-        canvas.translate(panX, panY)
+        canvas.withTranslation(panX, panY) {
+            // Fond du plateau (une seule peinture, un seul rect).
+            boardPaint.color = ContextCompat.getColor(context, R.color.board_background)
+            drawRect(0f, 0f, b.width * cellPx, b.height * cellPx, boardPaint)
 
-        // Fond du plateau (une seule peinture, un seul rect).
-        boardPaint.color = ContextCompat.getColor(context, R.color.board_background)
-        canvas.drawRect(0f, 0f, b.width * cellPx, b.height * cellPx, boardPaint)
+            val serverWired = serverIsFullyWired(b, connected)
+            val disconnectedAlpha = (DISCONNECTED_ALPHA * 255).toInt()
 
-        val serverWired = serverIsFullyWired(b, connected)
-        val disconnectedAlpha = (DISCONNECTED_ALPHA * 255).toInt()
+            for (y in 0 until b.height) {
+                for (x in 0 until b.width) {
+                    val index = y * b.width + x
+                    val left = x * cellPx
+                    val top = y * cellPx
+                    val isConnected = connected[index]
 
-        for (y in 0 until b.height) {
-            for (x in 0 until b.width) {
-                val index = y * b.width + x
-                val left = x * cellPx
-                val top = y * cellPx
-                val isConnected = connected[index]
-
-                // Câble : drawable du masque courant, atténué si déconnecté.
-                val dirs = b.currentDirs(index)
-                if (dirs != Dir.NO_DIRS) {
-                    val tile = tiles[dirs]
-                    if (tile != null) {
-                        tile.alpha = if (isConnected) 255 else disconnectedAlpha
-                        tile.setBounds(left.toInt(), top.toInt(),
-                            (left + cellPx).toInt(), (top + cellPx).toInt())
-                        tile.draw(canvas)
+                    // Câble : drawable du masque courant, atténué si déconnecté.
+                    val dirs = b.currentDirs(index)
+                    if (dirs != Dir.NO_DIRS) {
+                        val tile = tiles[dirs]
+                        if (tile != null) {
+                            tile.alpha = if (isConnected) 255 else disconnectedAlpha
+                            tile.setBounds(
+                                left.toInt(), top.toInt(),
+                                (left + cellPx).toInt(), (top + cellPx).toInt()
+                            )
+                            tile.draw(this)
+                        }
                     }
-                }
 
-                // Équipement : serveur / terminal, par-dessus le câble.
-                val equip: Drawable? = when {
-                    index == b.serverIndex ->
-                        if (serverWired) serverFull else serverPartial
-                    b.isTerminal(index) ->
-                        if (isConnected) computerOn else computerOff
-                    else -> null
-                }
-                if (equip != null) {
-                    equip.alpha = 255
-                    equip.setBounds(left.toInt(), top.toInt(),
-                        (left + cellPx).toInt(), (top + cellPx).toInt())
-                    equip.draw(canvas)
+                    // Équipement : serveur / terminal, par-dessus le câble.
+                    val equip: Drawable? = when {
+                        index == b.serverIndex ->
+                            if (serverWired) serverFull else serverPartial
+
+                        b.isTerminal(index) ->
+                            if (isConnected) computerOn else computerOff
+
+                        else -> null
+                    }
+                    if (equip != null) {
+                        equip.alpha = 255
+                        equip.setBounds(
+                            left.toInt(), top.toInt(),
+                            (left + cellPx).toInt(), (top + cellPx).toInt()
+                        )
+                        equip.draw(this)
+                    }
                 }
             }
         }
-        canvas.restore()
     }
 
     companion object {
