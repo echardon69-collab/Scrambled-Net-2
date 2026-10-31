@@ -38,6 +38,25 @@
     </item>
 
     <item
+        android:id="@+id/menu_sounds"
+        android:title="@string/menu_sounds"
+        app:showAsAction="never">
+        <menu>
+            <group android:checkableBehavior="single">
+                <item
+                    android:id="@+id/sounds_off"
+                    android:title="@string/sounds_off" />
+                <item
+                    android:id="@+id/sounds_quiet"
+                    android:title="@string/sounds_quiet" />
+                <item
+                    android:id="@+id/sounds_full"
+                    android:title="@string/sounds_full" />
+            </group>
+        </menu>
+    </item>
+
+    <item
         android:id="@+id/menu_scores"
         android:title="@string/menu_scores"
         app:showAsAction="never" />

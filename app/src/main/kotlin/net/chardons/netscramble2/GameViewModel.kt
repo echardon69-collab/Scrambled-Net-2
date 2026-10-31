@@ -2,9 +2,13 @@ package net.chardons.netscramble2
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -12,6 +16,7 @@ import kotlin.random.Random
 import kotlin.time.Duration.Companion.milliseconds
 import net.chardons.netscramble2.game.Board
 import net.chardons.netscramble2.game.Skill
+import net.chardons.netscramble2.game.Sound
 
 
 /**
@@ -79,6 +84,24 @@ class GameViewModel : ViewModel() {
     /** File des coups restant à jouer par l'auto-solveur (null = inactif). */
     private var solveQueue: ArrayDeque<Int>? = null
 
+    /**
+     * Événements sonores, repris de l'original : rotation, refus,
+     * verrou, changement de connexité, victoire, nouvelle partie.
+     * L'UI les collecte de façon lifecycle-aware et les joue selon le
+     * mode choisi par le joueur (voir SoundEffects).
+     */
+    private val _soundEvents = MutableSharedFlow<Sound>(
+        extraBufferCapacity = 16,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
+    val soundEvents: SharedFlow<Sound> = _soundEvents.asSharedFlow()
+
+    /**
+     * Nombre de cellules connectées à la dernière publication.
+     * -1 = plateau neuf (aucun son de connexion à la première publication).
+     */
+    private var lastConnectedCount = -1
+
     private val _uiState = MutableStateFlow(refresh())
     val uiState: StateFlow<GameUiState> = _uiState.asStateFlow()
 
@@ -106,6 +129,9 @@ class GameViewModel : ViewModel() {
         elapsedMs = 0
         solverUsed = false
         solveQueue = null
+        // Plateau neuf : pas de son de connexion, juste le son de départ.
+        lastConnectedCount = -1
+        emit(Sound.START)
         publish()
     }
 
@@ -113,15 +139,19 @@ class GameViewModel : ViewModel() {
      * Le joueur a touché une cellule : rotation horaire d'un quart de tour.
      * Comme dans l'original, les clics répétés sur la même cellule ne
      * comptent qu'une fois (l'interface tactile ne tourne qu'horaire), et
-     * une cellule verrouillée ne tourne pas.
+     * une cellule verrouillée ne tourne pas — elle répond d'un clic sec.
      */
     fun onCellTapped(index: Int) {
-        if (solvedNow || board.locked[index]) return
+        if (solvedNow || board.locked[index]) {
+            emit(Sound.CLICK)
+            return
+        }
         board.rotateCell(index, 1)
         if (index != prevClicked) {
             ++clicks
             prevClicked = index
         }
+        emit(Sound.TURN)
         publish()
     }
 
@@ -132,6 +162,7 @@ class GameViewModel : ViewModel() {
     fun onCellLongPressed(index: Int) {
         if (solvedNow) return
         board.toggleLock(index)
+        emit(Sound.POP)
         publish()
     }
 
@@ -188,8 +219,24 @@ class GameViewModel : ViewModel() {
 
     private fun newSeed(): Long = Random.nextLong()
 
+    /** Envoie un événement sonore à l'UI (jamais bloquant). */
+    private fun emit(sound: Sound) {
+        _soundEvents.tryEmit(sound)
+    }
+
     private fun publish() {
-        _uiState.value = refresh()
+        val state = refresh()
+        // Sons de connexion / victoire, comme dans l'original : CONNECT à
+        // chaque variation de connexité (dans les deux sens), WIN quand le
+        // réseau vient d'être résolu (après CONNECT).
+        val count = state.connected?.count { it } ?: 0
+        val previousCount = lastConnectedCount
+        lastConnectedCount = count
+        if (previousCount >= 0) {
+            if (count != previousCount) emit(Sound.CONNECT)
+            if (!_uiState.value.solved && state.solved) emit(Sound.WIN)
+        }
+        _uiState.value = state
     }
 
     private fun refresh(): GameUiState {

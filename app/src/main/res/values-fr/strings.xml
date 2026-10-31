@@ -7,6 +7,10 @@
     <string name="menu_stop_solve">Arrêter le solveur</string>
     <string name="solver_used">Solveur utilisé — cette partie ne comptera pas au score.</string>
     <string name="menu_skill">Niveau de difficulté</string>
+    <string name="menu_sounds">Sons</string>
+    <string name="sounds_off">Désactivés</string>
+    <string name="sounds_quiet">Discrets</string>
+    <string name="sounds_full">Complets</string>
     <string name="menu_scores">Meilleurs scores</string>
     <string name="menu_help">Aide</string>
     <string name="menu_about">À propos</string>

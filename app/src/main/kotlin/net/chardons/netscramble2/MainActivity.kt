@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.edit
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -11,6 +12,8 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
+import net.chardons.netscramble2.audio.SoundEffects
+import net.chardons.netscramble2.audio.SoundMode
 import net.chardons.netscramble2.databinding.ActivityMainBinding
 import net.chardons.netscramble2.game.Skill
 
@@ -26,6 +29,8 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var viewModel: GameViewModel
+    private lateinit var soundEffects: SoundEffects
+    private var soundMode = SoundMode.FULL
     private var lastSolving = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,12 +41,24 @@ class MainActivity : AppCompatActivity() {
 
         viewModel = ViewModelProvider(this)[GameViewModel::class.java]
 
+        // Mode sonore persisté (même clé que l'original), puis lecteur.
+        soundMode = loadSoundMode()
+        soundEffects = SoundEffects(this)
+
         binding.boardView.onCellTapped = { viewModel.onCellTapped(it) }
         binding.boardView.onCellLongPressed = { viewModel.onCellLongPressed(it) }
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { state -> render(state) }
+            }
+        }
+        // Les sons ne sont joués que pendant que l'app est visible.
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.soundEvents.collect { sound ->
+                    soundEffects.play(sound, soundMode)
+                }
             }
         }
     }
@@ -84,6 +101,14 @@ class MainActivity : AppCompatActivity() {
             Skill.MASTER -> skillMenu?.findItem(R.id.skill_master)
             Skill.INSANE -> skillMenu?.findItem(R.id.skill_insane)
         }?.isChecked = true
+        // Coche le mode sonore courant.
+        val soundMenu = menu.findItem(R.id.menu_sounds).subMenu
+        val modeItem = when (soundMode) {
+            SoundMode.NONE -> R.id.sounds_off
+            SoundMode.QUIET -> R.id.sounds_quiet
+            SoundMode.FULL -> R.id.sounds_full
+        }
+        soundMenu?.findItem(modeItem)?.isChecked = true
         return true
     }
 
@@ -108,6 +133,19 @@ class MainActivity : AppCompatActivity() {
         return when {
             item.itemId == R.id.menu_new -> {
                 viewModel.newGame(viewModel.uiState.value.skill)
+                true
+            }
+            item.itemId == R.id.sounds_off || item.itemId == R.id.sounds_quiet ||
+                item.itemId == R.id.sounds_full -> {
+                item.isChecked = true
+                soundMode = when (item.itemId) {
+                    R.id.sounds_off -> SoundMode.NONE
+                    R.id.sounds_quiet -> SoundMode.QUIET
+                    else -> SoundMode.FULL
+                }
+                getPreferences(MODE_PRIVATE).edit {
+                    putString(SOUND_MODE_KEY, soundMode.name)
+                }
                 true
             }
             item.itemId == R.id.menu_solve -> {
@@ -141,6 +179,19 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Mode sonore sauvegardé (même clé que l'original), FULL par défaut.
+     */
+    private fun loadSoundMode(): SoundMode {
+        val stored = getPreferences(MODE_PRIVATE).getString(SOUND_MODE_KEY, null)
+        return SoundMode.entries.firstOrNull { it.name == stored } ?: SoundMode.FULL
+    }
+
+    override fun onDestroy() {
+        soundEffects.release()
+        super.onDestroy()
+    }
+
     private fun showStub(labelRes: Int) {
         Snackbar.make(
             binding.root,
@@ -155,5 +206,10 @@ class MainActivity : AppCompatActivity() {
             .setMessage(R.string.about_message)
             .setPositiveButton(android.R.string.ok, null)
             .show()
+    }
+
+    companion object {
+        /** Clé SharedPreferences du mode sonore, reprise de l'original. */
+        private const val SOUND_MODE_KEY = "soundMode"
     }
 }

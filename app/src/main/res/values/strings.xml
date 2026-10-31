@@ -9,6 +9,10 @@
     <string name="menu_stop_solve">Stop solving</string>
     <string name="solver_used">Auto-solver used — this game won’t be scored.</string>
     <string name="menu_skill">Skill level</string>
+    <string name="menu_sounds">Sounds</string>
+    <string name="sounds_off">Muted</string>
+    <string name="sounds_quiet">Quiet</string>
+    <string name="sounds_full">Full</string>
     <string name="menu_scores">High scores</string>
     <string name="menu_help">Help</string>
     <string name="menu_about">About</string>
