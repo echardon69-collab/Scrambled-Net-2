@@ -131,9 +131,9 @@ class GameSpecTest {
             return parts.joinToString("|")
         }
 
-        assertNull(withRotations("0000"))                 // trop court
-        assertNull(withRotations("0".repeat(26)))         // trop long
-        assertNull(withRotations("4" + "0".repeat(24)))  // chiffre impossible
+        assertNull(GameSpec.decode(withRotations("0000")))                 // trop court
+        assertNull(GameSpec.decode(withRotations("0".repeat(26))))         // trop long
+        assertNull(GameSpec.decode(withRotations("4" + "0".repeat(24))))  // chiffre impossible
 
         fun withField(index: Int, value: String): String {
             val parts = good.split('|').toMutableList()
@@ -141,10 +141,10 @@ class GameSpecTest {
             return parts.joinToString("|")
         }
 
-        assertNull(withField(2, "pas-un-nombre"))  // graine
-        assertNull(withField(3, "-3"))            // clics négatifs
-        assertNull(withField(6, "999"))           // cellule précédente hors plateau
-        assertNull(withField(7, "1,999,x"))       // file du solveur incohérente
+        assertNull(GameSpec.decode(withField(2, "pas-un-nombre")))  // graine
+        assertNull(GameSpec.decode(withField(3, "-3")))            // clics négatifs
+        assertNull(GameSpec.decode(withField(6, "999")))           // cellule précédente hors plateau
+        assertNull(GameSpec.decode(withField(7, "1,999,x")))       // file du solveur incohérente
     }
 
     @Test
