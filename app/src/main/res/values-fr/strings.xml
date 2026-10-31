@@ -35,25 +35,25 @@
     <string name="skill_master">Maître</string>
     <string name="skill_insane">Dément</string>
 
-    <string name="status_clicks">Clics : %1$d</string>
+    <string name="status_moves">Coups : %1$d</string>
     <string name="status_time">Temps : %1$s</string>
 
     <!-- Jeu -->
     <string name="win_title">Gagné !</string>
     <string name="win_pbest_title">Nouveau record !</string>
-    <string name="win_text">Félicitations ! Vous avez résolu le puzzle en %1$s avec %2$d clics.</string>
-    <string name="best_clicks_text">C\'est votre meilleur nombre de clics à ce niveau !</string>
+    <string name="win_text">Félicitations ! Vous avez résolu le puzzle en %1$s avec %2$d coups.</string>
+    <string name="best_moves_text">C\'est votre meilleur nombre de coups à ce niveau !</string>
     <string name="best_time_text">C\'est votre temps le plus rapide à ce niveau !</string>
-    <string name="best_both_text">C\'est votre meilleur nombre de clics et votre temps le plus rapide à ce niveau !</string>
+    <string name="best_both_text">C\'est votre meilleur nombre de coups et votre temps le plus rapide à ce niveau !</string>
     <string name="win_new">Nouvelle partie</string>
     <string name="win_continue">Continuer</string>
 
     <!-- Records personnels -->
     <string name="scores_title">Records personnels</string>
-    <string name="scores_clickstitle">Moins de clics</string>
+    <string name="scores_movestitle">Moins de coups</string>
     <string name="scores_timestitle">Temps le plus rapide</string>
     <string name="scores_skill">Niveau</string>
-    <string name="scores_clicks">Clics</string>
+    <string name="scores_moves">Coups</string>
     <string name="scores_time">Temps</string>
     <string name="scores_when">Date</string>
     <string name="menu_scores_reset">Effacer tous les scores</string>

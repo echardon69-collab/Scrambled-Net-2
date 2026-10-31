@@ -36,10 +36,16 @@ import kotlin.random.Random
  *    bitmaps par tuile : normal/gris), et images dédiées pour l'équipement
  *    (computer1 écran rouge / computer2 écran vert, server DEL rouges /
  *    server1 DEL vertes), exactement comme Cell.java de l'original ;
+ *  - fonds de tuile biseautés « relief » (clair haut/gauche, sombre
+ *    bas/droite) : marbré bleu clair, bleu plus foncé pour les cellules
+ *    verrouillées, gris pour les cellules libres hors réseau — la parité
+ *    des images background / background_locked / empty de l'original,
+ *    déclinée en jour et nuit (drawable-night) ;
  *  - viewport « caméra » : le plateau est un monde virtuel, potentiellement
  *    plus grand que l'écran ; on le déplace (pan) et on le zoome au pinçage,
  *    avec une taille de case minimale garantie.
- *  - appui long : verrouille une cellule (cadre), qui ne tourne plus ;
+ *  - appui long : verrouille une cellule (fond de tuile dédié, comme
+ *    background_locked.png), qui ne tourne plus ;
  *  - cellules cachées (Insane) : câbles masqués jusqu'à ce que le
  *    solveur les règle ou que la partie soit gagnée (révélation complète,
  *    comme l'original qui révèle tout à la fin) ;
@@ -119,10 +125,6 @@ class BoardView @JvmOverloads constructor(
 
     // --- Peintures (allouées une seule fois, jamais dans onDraw) ---
     private val boardPaint = Paint()
-    private val lockPaint = Paint().apply {
-        style = Paint.Style.STROKE
-        strokeWidth = LOCK_BORDER_DP * screenDensity
-    }
     private val blipPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val termPaint = Paint(Paint.ANTI_ALIAS_FLAG)
 
@@ -133,6 +135,13 @@ class BoardView @JvmOverloads constructor(
     private val computerOn: Drawable = load(R.drawable.computer2)
     private val serverPartial: Drawable = load(R.drawable.server)
     private val serverFull: Drawable = load(R.drawable.server1)
+
+    // --- Fonds de tuile « relief » (parité background /
+    //     background_locked / empty de l'original) ; la variante nuit est
+    //     choisie par la configuration (drawable-night). ---
+    private val tileBg: Drawable = load(R.drawable.tile_background)
+    private val tileBgLocked: Drawable = load(R.drawable.tile_background_locked)
+    private val tileBgEmpty: Drawable = load(R.drawable.tile_background_empty)
 
     init {
         boardPaint.style = Paint.Style.FILL
@@ -321,14 +330,14 @@ class BoardView @JvmOverloads constructor(
         }
 
         canvas.withTranslation(panX, panY) {
-            // Fond du plateau (une seule peinture, un seul rect).
+            // Fond du plateau, sous les tuiles : normalement recouvert
+            // par les fonds de tuile, mais filet de sécurité si un
+            // interstice apparaissait (zoom fractionnaire).
             boardPaint.color = ContextCompat.getColor(context, R.color.board_background)
             drawRect(0f, 0f, b.width * cellPx, b.height * cellPx, boardPaint)
 
             val serverWired = serverIsFullyWired(b, connected)
             val disconnectedAlpha = (DISCONNECTED_ALPHA * 255).toInt()
-            lockPaint.color = ContextCompat.getColor(context, R.color.cell_locked_border)
-            val lockInset = lockPaint.strokeWidth / 2f
 
             for (y in 0 until b.height) {
                 for (x in 0 until b.width) {
@@ -348,6 +357,22 @@ class BoardView @JvmOverloads constructor(
                     // l'écart résiduel : la tuile tourne sous le doigt. Seul
                     // le câble tourne — l'équipement reste fixe (Cell.doDraw).
                     val dirs = b.currentDirs(index)
+
+                    // Fond de tuile biseauté, parité background /
+                    // background_locked / empty de l'original. Priorité
+                    // comme Cell.doDraw : libre avant verrouillée avant
+                    // normale (une cellule libre verrouillée reste grise).
+                    val bg = when {
+                        dirs == Dir.NO_DIRS -> tileBgEmpty
+                        b.locked[index] -> tileBgLocked
+                        else -> tileBg
+                    }
+                    bg.setBounds(
+                        left.toInt(), top.toInt(),
+                        (left + cellPx).toInt(), (top + cellPx).toInt()
+                    )
+                    bg.draw(this)
+
                     if (dirs != Dir.NO_DIRS && !hideCables) {
                         val tile = tiles[dirs]
                         if (tile != null) {
@@ -385,16 +410,6 @@ class BoardView @JvmOverloads constructor(
                             (left + cellPx).toInt(), (top + cellPx).toInt()
                         )
                         equip.draw(this)
-                    }
-
-                    // Cellule verrouillée : cadre de repère (l'original avait
-                    // un fond dédié ; le cadre suffit et reste discret).
-                    if (b.locked[index]) {
-                        drawRect(
-                            left + lockInset, top + lockInset,
-                            left + cellPx - lockInset, top + cellPx - lockInset,
-                            lockPaint
-                        )
                     }
                 }
             }
@@ -505,7 +520,6 @@ class BoardView @JvmOverloads constructor(
     companion object {
         private const val MIN_CELL_DP = 26f   // jamais de case plus petite que ceci
         private const val MAX_CELL_DP = 96f
-        private const val LOCK_BORDER_DP = 2f
 
         /** Opacité des câbles non reliés au serveur (l'original utilisait
          *  une version grise de chaque bitmap ; ici une seule tuile). */

@@ -31,11 +31,11 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:paddingTop="8dp"
-                android:text="@string/scores_clickstitle"
+                android:text="@string/scores_movestitle"
                 android:textAppearance="?attr/textAppearanceTitleMedium" />
 
             <TableLayout
-                android:id="@+id/clicks_table"
+                android:id="@+id/moves_table"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:stretchColumns="0,1,2">
@@ -47,7 +47,7 @@
                         android:textAppearance="?attr/textAppearanceLabelMedium" />
                     <TextView
                         android:paddingTop="12dp"
-                        android:text="@string/scores_clicks"
+                        android:text="@string/scores_moves"
                         android:textAppearance="?attr/textAppearanceLabelMedium" />
                     <TextView
                         android:paddingTop="12dp"

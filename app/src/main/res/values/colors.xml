@@ -7,9 +7,6 @@
 
     <color name="board_background">#C9CED4</color>
 
-    <!-- Cadre des cellules verrouillées (appui long). -->
-    <color name="cell_locked_border">#37474F</color>
-
     <!-- M2 : blips de données qui parcourent les câbles (parité de
          l'original : couleur pleine sur les cellules connectées, gris
          ailleurs), et « données » affichées sur les écrans des terminaux. -->

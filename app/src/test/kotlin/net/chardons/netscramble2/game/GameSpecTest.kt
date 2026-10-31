@@ -19,7 +19,7 @@ class GameSpecTest {
     private fun snapshotOf(
         board: Board,
         seed: Long,
-        clicks: Int = 3,
+        moves: Int = 3,
         elapsedMs: Long = 42_500L,
         solverUsed: Boolean = false,
         prevClicked: Int = -1,
@@ -30,7 +30,7 @@ class GameSpecTest {
                 it.wrap == board.wrap && it.hiddenThreshold == board.hiddenThreshold
         },
         seed = seed,
-        clicks = clicks,
+        moves = moves,
         elapsedMs = elapsedMs,
         solverUsed = solverUsed,
         prevClicked = prevClicked,
@@ -111,7 +111,8 @@ class GameSpecTest {
         assertNull(GameSpec.decode(null))
         assertNull(GameSpec.decode(""))
         assertNull(GameSpec.decode("v0|NOVICE|1|0|0|false|-1||00000|00000|00000"))
-        assertNull(GameSpec.decode("v2|NOVICE|1|0|0|false|-1||00000|00000|00000"))
+        assertNull(GameSpec.decode("v1|NOVICE|1|0|0|false|-1||00000|00000|00000"))
+        assertNull(GameSpec.decode("v3|NOVICE|1|0|0|false|-1||00000|00000|00000"))
     }
 
     @Test
@@ -142,7 +143,7 @@ class GameSpecTest {
         }
 
         assertNull(GameSpec.decode(withField(2, "pas-un-nombre")))  // graine
-        assertNull(GameSpec.decode(withField(3, "-3")))            // clics négatifs
+        assertNull(GameSpec.decode(withField(3, "-3")))            // coups négatifs
         assertNull(GameSpec.decode(withField(6, "999")))           // cellule précédente hors plateau
         assertNull(GameSpec.decode(withField(7, "1,999,x")))       // file du solveur incohérente
     }

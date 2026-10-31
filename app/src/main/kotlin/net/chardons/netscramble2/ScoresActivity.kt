@@ -15,7 +15,7 @@ import net.chardons.netscramble2.ui.EdgeToEdge
 import kotlin.math.roundToInt
 
 /**
- * Écran des records personnels : meilleur nombre de clics et temps le
+ * Écran des records personnels : meilleur nombre de coups et temps le
  * plus rapide pour chaque niveau de difficulté, avec la date de chaque
  * record — parité avec l'écran « High scores » de l'original
  * (ScoreList), en Material 3. Le menu permet de tout effacer, avec
@@ -73,7 +73,7 @@ class ScoresActivity : AppCompatActivity() {
 
     /** Remplit les deux tables, une ligne par niveau de difficulté. */
     private fun showScores() {
-        fillTable(binding.clicksTable, store::bestClicks) { it.toString() }
+        fillTable(binding.movesTable, store::bestMoves) { it.toString() }
         fillTable(binding.timeTable, store::bestTime) { formatSeconds(it) }
     }
 

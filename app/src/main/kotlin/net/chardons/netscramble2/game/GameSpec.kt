@@ -8,11 +8,11 @@ package net.chardons.netscramble2.game
  * Le plateau est entièrement reproductible depuis (niveau, graine) —
  * la génération et le mélange sont déterministes — donc seuls les
  * états modifiés par le joueur (rotations, verrous, cellules
- * révélées) et l'avancement général (clics, chrono, solveur,
+ * révélées) et l'avancement général (coups, chrono, solveur,
  * file du solveur, cellule précédemment touchée) voyagent.
  *
- * Format « v1 », champs séparés par « | » :
- *   v1|NIVEAU|graine|clics|millisecondes|solveur|précédente|file|rotations|verrous|révélations
+ * Format « v2 », champs séparés par « | » :
+ *   v2|NIVEAU|graine|coups|millisecondes|solveur|précédente|file|rotations|verrous|révélations
  * où les rotations sont un chiffre 0 à 3 par cellule (sans séparateur),
  * les verrous et révélations un 0 ou 1 par cellule, et la file du
  * solveur des indices séparés par des virgules (vide si inactive).
@@ -24,7 +24,7 @@ package net.chardons.netscramble2.game
 class GameSpec(
     val skill: Skill,
     val seed: Long,
-    val clicks: Int,
+    val moves: Int,
     val elapsedMs: Long,
     val solverUsed: Boolean,
     val prevClicked: Int,
@@ -44,7 +44,7 @@ class GameSpec(
         append(VERSION).append(SEP)
         append(skill.name).append(SEP)
         append(seed).append(SEP)
-        append(clicks).append(SEP)
+        append(moves).append(SEP)
         append(elapsedMs).append(SEP)
         append(solverUsed).append(SEP)
         append(prevClicked).append(SEP)
@@ -75,7 +75,7 @@ class GameSpec(
         if (other !is GameSpec) return false
         return skill == other.skill &&
                 seed == other.seed &&
-                clicks == other.clicks &&
+                moves == other.moves &&
                 elapsedMs == other.elapsedMs &&
                 solverUsed == other.solverUsed &&
                 prevClicked == other.prevClicked &&
@@ -88,7 +88,7 @@ class GameSpec(
     override fun hashCode(): Int {
         var result = skill.hashCode()
         result = 31 * result + seed.hashCode()
-        result = 31 * result + clicks
+        result = 31 * result + moves
         result = 31 * result + elapsedMs.hashCode()
         result = 31 * result + solverUsed.hashCode()
         result = 31 * result + prevClicked
@@ -100,7 +100,7 @@ class GameSpec(
     }
 
     companion object {
-        private const val VERSION = "v1"
+        private const val VERSION = "v2"
         private const val SEP = '|'
         private const val QUEUE_SEP = ","
         private const val FIELDS = 11
@@ -141,20 +141,20 @@ class GameSpec(
             }
             return try {
                 val seed = parts[2].toLong()
-                val clicks = parts[3].toInt()
+                val moves = parts[3].toInt()
                 val elapsedMs = parts[4].toLong()
                 val prevClicked = parts[6].toInt()
                 val queue = parts[7].split(QUEUE_SEP)
                     .filter { it.isNotEmpty() }
                     .map { it.toInt() }
                 // Cohérence des données : toute incohérence est rejetée.
-                if (clicks < 0 || elapsedMs < 0) return null
+                if (moves < 0 || elapsedMs < 0) return null
                 if (prevClicked < -1 || prevClicked >= size) return null
                 if (queue.any { it !in 0..<size }) return null
                 GameSpec(
                     skill = skill,
                     seed = seed,
-                    clicks = clicks,
+                    moves = moves,
                     elapsedMs = elapsedMs,
                     solverUsed = solverUsed,
                     prevClicked = prevClicked,

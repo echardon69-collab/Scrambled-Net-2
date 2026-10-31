@@ -109,7 +109,7 @@ class MainActivity : AppCompatActivity() {
     private fun render(state: GameUiState) {
         val board = state.board ?: return
         binding.boardView.update(board, state.connected ?: return, state.solved)
-        binding.statusClicks.text = getString(R.string.status_clicks, state.clicks)
+        binding.statusMoves.text = getString(R.string.status_moves, state.moves)
         binding.statusSkill.text = getString(
             listOf(
                 R.string.skill_novice, R.string.skill_normal, R.string.skill_expert,
@@ -236,23 +236,23 @@ class MainActivity : AppCompatActivity() {
 
     /**
      * Dialogue de victoire, comme dans l'original (reportWin) : temps,
-     * clics, message de record le cas échéant, et « Nouvelle partie ».
+     * coups, message de record le cas échéant, et « Nouvelle partie ».
      * Si le solveur a servi, aucun record n'est enregistré et l'original
      * ne montre rien — on reste sur ce comportement.
      */
     private fun showWinDialog(event: WinEvent) {
         if (event.solverUsed) return
         val result = scoresStore.register(
-            event.skill, event.ntiles, event.clicks, event.seconds
+            event.skill, event.ntiles, event.moves, event.seconds
         )
         val recordMessage = when (result) {
-            ScoresStore.Result.BEST_CLICKS -> R.string.best_clicks_text
+            ScoresStore.Result.BEST_MOVES -> R.string.best_moves_text
             ScoresStore.Result.BEST_TIME -> R.string.best_time_text
             ScoresStore.Result.BEST_BOTH -> R.string.best_both_text
             ScoresStore.Result.NONE -> 0
         }
         val message = buildString {
-            append(getString(R.string.win_text, formatTime(event.seconds * 1000L), event.clicks))
+            append(getString(R.string.win_text, formatTime(event.seconds * 1000L), event.moves))
             if (recordMessage != 0) {
                 append("\n\n").append(getString(recordMessage))
             }

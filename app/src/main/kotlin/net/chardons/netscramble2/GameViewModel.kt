@@ -27,7 +27,7 @@ import net.chardons.netscramble2.game.Sound
  */
 data class WinEvent(
     val skill: Skill,
-    val clicks: Int,
+    val moves: Int,
     val seconds: Int,
     val solverUsed: Boolean,
     val ntiles: Int
@@ -42,7 +42,7 @@ data class GameUiState(
     val board: Board? = null,
     /** Cellules actuellement connectées au serveur (pour le rendu). */
     val connected: BooleanArray? = null,
-    val clicks: Int = 0,
+    val moves: Int = 0,
     val elapsedMs: Long = 0,
     val solved: Boolean = false,
     /** L'auto-solveur a-t-il été utilisé ? (les scores ne comptent plus). */
@@ -57,7 +57,7 @@ data class GameUiState(
         return skill == other.skill &&
                 board == other.board &&
                 connected.contentEquals(other.connected) &&
-                clicks == other.clicks &&
+                moves == other.moves &&
                 elapsedMs == other.elapsedMs &&
                 solved == other.solved &&
                 solverUsed == other.solverUsed &&
@@ -68,7 +68,7 @@ data class GameUiState(
         var result = skill.hashCode()
         result = 31 * result + board.hashCode()
         result = 31 * result + (connected?.contentHashCode() ?: 0)
-        result = 31 * result + clicks
+        result = 31 * result + moves
         result = 31 * result + elapsedMs.hashCode()
         result = 31 * result + solved.hashCode()
         result = 31 * result + solverUsed.hashCode()
@@ -91,7 +91,7 @@ class GameViewModel : ViewModel() {
     private var seed: Long = newSeed()
     private var board: Board = Board.generate(Skill.NORMAL, seed)
     private var prevClicked = -1
-    private var clicks = 0
+    private var moves = 0
     private var elapsedMs = 0L
     private var solverUsed = false
 
@@ -158,7 +158,7 @@ class GameViewModel : ViewModel() {
         seed = newSeed()
         board = Board.generate(skill, seed)
         prevClicked = -1
-        clicks = 0
+        moves = 0
         elapsedMs = 0
         solverUsed = false
         solveQueue = null
@@ -170,7 +170,7 @@ class GameViewModel : ViewModel() {
 
     /**
      * Le joueur a touché une cellule : rotation horaire d'un quart de tour.
-     * Comme dans l'original, les clics répétés sur la même cellule ne
+     * Comme dans l'original, les coups répétés sur la même cellule ne
      * comptent qu'une fois (l'interface tactile ne tourne qu'horaire), et
      * une cellule verrouillée ne tourne pas — elle répond d'un clic sec.
      */
@@ -181,7 +181,7 @@ class GameViewModel : ViewModel() {
         }
         board.rotateCell(index, 1)
         if (index != prevClicked) {
-            ++clicks
+            ++moves
             prevClicked = index
         }
         emit(Sound.TURN)
@@ -260,7 +260,7 @@ class GameViewModel : ViewModel() {
     fun currentSpec(): GameSpec = GameSpec(
         skill = board.skillOf(),
         seed = seed,
-        clicks = clicks,
+        moves = moves,
         elapsedMs = elapsedMs,
         solverUsed = solverUsed,
         prevClicked = prevClicked,
@@ -285,7 +285,7 @@ class GameViewModel : ViewModel() {
         seed = spec.seed
         board = spec.buildBoard()
         prevClicked = spec.prevClicked
-        clicks = spec.clicks
+        moves = spec.moves
         elapsedMs = spec.elapsedMs
         solverUsed = spec.solverUsed
         solveQueue = spec.solveQueue.takeIf { it.isNotEmpty() }
@@ -322,7 +322,7 @@ class GameViewModel : ViewModel() {
                 _winEvents.tryEmit(
                     WinEvent(
                         skill = state.skill,
-                        clicks = clicks,
+                        moves = moves,
                         seconds = (elapsedMs / 1000L).toInt(),
                         solverUsed = solverUsed,
                         ntiles = board.size
@@ -340,7 +340,7 @@ class GameViewModel : ViewModel() {
             skill = board.skillOf(),
             board = board,
             connected = connected,
-            clicks = clicks,
+            moves = moves,
             elapsedMs = elapsedMs,
             solved = solved,
             solverUsed = solverUsed,

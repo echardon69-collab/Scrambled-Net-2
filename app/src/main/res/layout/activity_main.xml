@@ -13,7 +13,7 @@
         app:title="@string/app_name"
         app:titleTextColor="@color/brand_on_primary" />
 
-    <!-- Barre d'état : clics, niveau, temps -->
+    <!-- Barre d'état : coups, niveau, temps -->
     <LinearLayout
         android:id="@+id/status_row"
         android:layout_width="match_parent"
@@ -24,7 +24,7 @@
         android:paddingVertical="8dp">
 
         <TextView
-            android:id="@+id/status_clicks"
+            android:id="@+id/status_moves"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
