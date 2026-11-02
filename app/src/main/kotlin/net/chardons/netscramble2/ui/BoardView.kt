@@ -2,7 +2,10 @@ package net.chardons.netscramble2.ui
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.ColorMatrix
+import android.graphics.ColorMatrixColorFilter
 import android.graphics.Paint
 import android.graphics.drawable.Drawable
 import android.os.SystemClock
@@ -18,6 +21,8 @@ import net.chardons.netscramble2.game.Board
 import net.chardons.netscramble2.game.Dir
 import androidx.core.graphics.withTranslation
 import androidx.core.graphics.withSave
+import kotlin.math.ceil
+import kotlin.math.floor
 import kotlin.random.Random
 
 /**
@@ -32,15 +37,22 @@ import kotlin.random.Random
  *  - tuiles = VectorDrawables convertis des SVG d'origine (dégradés natifs
  *    API 24+, un seul fichier pour toutes les densités, netteté parfaite à
  *    n'importe quel zoom) — fidèles au look historique du jeu ;
- *  - état connecté/déconnecté : opacité du câble (l'original avait deux
- *    bitmaps par tuile : normal/gris), et images dédiées pour l'équipement
+ *  - état connecté/déconnecté : câble gris par filtre de couleur (parité
+ *    greyOut de Cell.java de l'original : chaque canal RGB passe à
+ *    0,6 × valeur + 100, alpha inchangé — un gris clair opaque et
+ *    uniforme, exactement comme les bitmaps grisés de l'original), et
+ *    images dédiées pour l'équipement
  *    (computer1 écran rouge / computer2 écran vert, server DEL rouges /
  *    server1 DEL vertes), exactement comme Cell.java de l'original ;
  *  - fonds de tuile biseautés « relief » (clair haut/gauche, sombre
  *    bas/droite) : marbré bleu clair, bleu plus foncé pour les cellules
  *    verrouillées, gris pour les cellules libres hors réseau — la parité
  *    des images background / background_locked / empty de l'original,
- *    déclinée en jour et nuit (drawable-night) ;
+ *    déclinée en jour et nuit (drawable-night). Ce fond gris déborde du
+ *    plateau : au moins une tuile grise l'encadre (la limite du plateau
+ *    est toujours visible), le gris remplit le reste de la zone visible,
+ *    et le dézoom est borné pour ne jamais découvrir plus d'une tuile
+ *    grise horizontalement ;
  *  - viewport « caméra » : le plateau est un monde virtuel, potentiellement
  *    plus grand que l'écran ; on le déplace (pan) et on le zoome au pinçage,
  *    avec une taille de case minimale garantie.
@@ -129,8 +141,31 @@ class BoardView @JvmOverloads constructor(
     private val termPaint = Paint(Paint.ANTI_ALIAS_FLAG)
 
     // --- Drawables : 15 tuiles câbles (le masque 0 n'existe pas :
-    //     toute cellule de l'arbre couvrant a au moins une connexion) ---
+    //     toute cellule de l'arbre couvrant a au moins une connexion),
+    //     en deux versions : normale (reliée au serveur, dessin sombre)
+    //     et grise (déconnectée, parité greyOut de l'original). ---
     private val tiles = arrayOfNulls<Drawable>(16)
+    private val tilesGrey = arrayOfNulls<Drawable>(16)
+
+    // Ressource de chaque masque de câble, index 1 à 15.
+    private val cableResIds = intArrayOf(
+        0,
+        R.drawable.cable1000,      // 1 : U
+        R.drawable.cable0100,      // 2 : R
+        R.drawable.cable1100,      // 3 : U+R
+        R.drawable.cable0010,      // 4 : D
+        R.drawable.cable1010,      // 5 : U+D
+        R.drawable.cable0110,      // 6 : R+D
+        R.drawable.cable1110,      // 7 : U+R+D
+        R.drawable.cable0001,      // 8 : L
+        R.drawable.cable1001,      // 9 : U+L
+        R.drawable.cable0101,      // 10 : R+L
+        R.drawable.cable1101,      // 11 : U+R+L
+        R.drawable.cable0011,      // 12 : D+L
+        R.drawable.cable1011,      // 13 : U+D+L
+        R.drawable.cable0111,      // 14 : R+D+L
+        R.drawable.cable1111      // 15 : croix complète
+    )
     private val computerOff: Drawable = load(R.drawable.computer1)
     private val computerOn: Drawable = load(R.drawable.computer2)
     private val serverPartial: Drawable = load(R.drawable.server)
@@ -143,25 +178,28 @@ class BoardView @JvmOverloads constructor(
     private val tileBgLocked: Drawable = load(R.drawable.tile_background_locked)
     private val tileBgEmpty: Drawable = load(R.drawable.tile_background_empty)
 
+    // --- Cache du décor gris : la tuile « empty » pré-rendue en bitmap à
+    //     la taille de case courante. Le décor peut couvrir plusieurs
+    //     centaines de cases ; un blit de bitmap par case est bien plus
+    //     économique qu'un rendu VectorDrawable. Régénéré quand la
+    //     taille (entière) change, donc seulement pendant un zoom. ---
+    private var emptyTileCache: Bitmap? = null
+    private var emptyTileCachePx = 0
+
     init {
         boardPaint.style = Paint.Style.FILL
-        // Mutate() : chaque instance peut recevoir sa propre alpha sans
-        // affecter les autres usages du même drawable (thème/caches).
-        tiles[1] = load(R.drawable.cable1000)      // U
-        tiles[2] = load(R.drawable.cable0100)      // R
-        tiles[3] = load(R.drawable.cable1100)      // U+R
-        tiles[4] = load(R.drawable.cable0010)      // D
-        tiles[5] = load(R.drawable.cable1010)      // U+D
-        tiles[6] = load(R.drawable.cable0110)      // R+D
-        tiles[7] = load(R.drawable.cable1110)      // U+R+D
-        tiles[8] = load(R.drawable.cable0001)      // L
-        tiles[9] = load(R.drawable.cable1001)      // U+L
-        tiles[10] = load(R.drawable.cable0101)     // R+L
-        tiles[11] = load(R.drawable.cable1101)     // U+R+L
-        tiles[12] = load(R.drawable.cable0011)     // D+L
-        tiles[13] = load(R.drawable.cable1011)     // U+D+L
-        tiles[14] = load(R.drawable.cable0111)     // R+D+L
-        tiles[15] = load(R.drawable.cable1111)     // croix complète
+        // Mutate() : chaque instance reçoit son propre état (filtre de
+        // couleur pour la variante grise) sans affecter les autres
+        // usages du même drawable (thème/caches).
+        for (mask in 1..15) {
+            val resId = cableResIds[mask]
+            tiles[mask] = load(resId)
+            // Variante grise, parité greyOut de Cell.java de l'original :
+            // même image passée dans la matrice grisante (chaque canal
+            // RGB devient 0,6 × valeur + 100, alpha inchangé) — un gris
+            // clair opaque, indépendant du fond dessous.
+            tilesGrey[mask] = load(resId).apply { colorFilter = greyOutFilter }
+        }
     }
 
     private fun load(resId: Int): Drawable =
@@ -192,7 +230,11 @@ class BoardView @JvmOverloads constructor(
     })
     private val zoomDetector = ScaleGestureDetector(context, object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
         override fun onScale(detector: ScaleGestureDetector): Boolean {
-            cellPx = (cellPx * detector.scaleFactor).coerceIn(minCellPx, maxCellPx)
+            val b = board ?: return false
+            // Plancher de dézoom : plateau + anneau gris = largeur de la
+            // vue, jamais au-dessous (on ne découvrirait que du gris).
+            cellPx = (cellPx * detector.scaleFactor)
+                .coerceIn(floorCellPx(b), maxCellPx)
             clampPan()
             invalidate()
             return true
@@ -204,6 +246,9 @@ class BoardView @JvmOverloads constructor(
         this.board = board
         this.connected = connected
         this.solved = solved
+        // Une taille de case héritée d'un plateau précédent ne doit jamais
+        // rester sous le plancher du plateau courant.
+        cellPx = cellPx.coerceAtLeast(floorCellPx(board))
         val now = SystemClock.elapsedRealtime()
         if (board !== shownBoard || visualTarget.size != board.size) {
             // Nouveau plateau : tout est posé d'emblée, aucun angle résiduel.
@@ -250,23 +295,73 @@ class BoardView @JvmOverloads constructor(
         viewportInitialized = true
     }
 
-    /** Ajuste la taille de case pour voir tout le plateau, sans descendre sous le minimum. */
+    /**
+     * Plancher de dézoom (tuiles grises autour du plateau) : le plateau
+     * plus une tuile grise de chaque côté couvre exactement la largeur
+     * de la vue. En dessous, on découvrirait d'autres tuiles grises
+     * horizontalement, ce qui est exclu ; la hauteur n'entre pas dans le
+     * plancher — le gris remplit la zone visible, le pan vertical reste
+     * libre. Borné par les tailles min/max de case : si le plancher
+     * dépasse la taille max (plateau très étroit), le repli recentre
+     * et le gris remplit aussi horizontalement.
+     */
+    private fun floorCellPx(b: Board): Float =
+        (width / (b.width + 2f * GREY_RING_CELLS)).coerceIn(minCellPx, maxCellPx)
+
+    /**
+     * Taille de case par défaut : le plancher. Le plateau apparaît
+     * centré, encadré d'au moins une tuile grise horizontalement, le
+     * gris remplissant le reste de la zone visible.
+     */
     private fun fitBoard() {
         val b = board ?: return
-        cellPx = (minOf(width / b.width.toFloat(), height / b.height.toFloat()))
-            .coerceIn(minCellPx, maxCellPx)
+        cellPx = floorCellPx(b)
         clampPan()
     }
 
-    /** Maintient le plateau dans des limites raisonnables (collé aux bords ou centré). */
+    /**
+     * Maintient le plateau dans des limites raisonnables : le pan
+     * s'arrête à une tuile grise au-delà du plateau (la limite est
+     * toujours visible, jamais contournée). Si le plateau et son anneau
+     * tiennent entièrement dans la vue, il est centré et le gris remplit
+     * la zone visible.
+     */
     private fun clampPan() {
         val b = board ?: return
+        val ring = GREY_RING_CELLS * cellPx
         val boardW = b.width * cellPx
         val boardH = b.height * cellPx
-        panX = if (boardW <= width) (width - boardW) / 2f
-               else panX.coerceIn(width - boardW, 0f)
-        panY = if (boardH <= height) (height - boardH) / 2f
-               else panY.coerceIn(height - boardH, 0f)
+        if (boardW + 2f * ring <= width) {
+            panX = (width - boardW) / 2f
+        } else {
+            panX = panX.coerceIn(width - boardW - ring, ring)
+        }
+        if (boardH + 2f * ring <= height) {
+            panY = (height - boardH) / 2f
+        } else {
+            panY = panY.coerceIn(height - boardH - ring, ring)
+        }
+    }
+
+    /**
+     * Tuile « empty » pré-rendue en bitmap à la taille de case courante
+     * (cache régénéré seulement quand la taille entière change, donc
+     * pendant un zoom). Le décor peut couvrir des centaines de cases :
+     * un blit de bitmap par case est bien plus économique qu'un rendu
+     * VectorDrawable par case et par trame.
+     */
+    private fun emptyTileBitmap(): Bitmap? {
+        if (cellPx <= 0f) return null
+        val size = cellPx.toInt().coerceAtLeast(1)
+        var cache = emptyTileCache
+        if (cache == null || emptyTileCachePx != size) {
+            cache = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+            tileBgEmpty.setBounds(0, 0, size, size)
+            tileBgEmpty.draw(Canvas(cache))
+            emptyTileCache = cache
+            emptyTileCachePx = size
+        }
+        return cache
     }
 
     /** Traduit des coordonnées écran en index de cellule, ou null. */
@@ -330,14 +425,42 @@ class BoardView @JvmOverloads constructor(
         }
 
         canvas.withTranslation(panX, panY) {
-            // Fond du plateau, sous les tuiles : normalement recouvert
-            // par les fonds de tuile, mais filet de sécurité si un
-            // interstice apparaissait (zoom fractionnaire).
+            // --- Décor : tuiles grises partout dans la zone visible hors
+            //     plateau (parité findMatrix/cellMatrix de l'original,
+            //     qui couvrait tout l'écran de cellules, plateau centré).
+            //     Le plancher de dézoom et le clamp de pan garantissent
+            //     qu'on ne voit jamais plus d'une tuile grise
+            //     horizontalement au-delà du plateau ; verticalement le
+            //     gris remplit la zone visible. ---
             boardPaint.color = ContextCompat.getColor(context, R.color.board_background)
-            drawRect(0f, 0f, b.width * cellPx, b.height * cellPx, boardPaint)
+            if (cellPx > 0f) {
+                val minX = floor(-panX / cellPx).toInt()
+                val maxX = ceil((width - panX) / cellPx).toInt()
+                val minY = floor(-panY / cellPx).toInt()
+                val maxY = ceil((height - panY) / cellPx).toInt()
+
+                // Filet de sécurité sur toute la zone visible : normalement
+                // recouvert par les tuiles, il masque tout interstice
+                // sub-pixel (zoom fractionnaire) entre tuiles voisines.
+                drawRect(
+                    minX * cellPx, minY * cellPx,
+                    maxX * cellPx, maxY * cellPx, boardPaint
+                )
+
+                val decor = emptyTileBitmap()
+                if (decor != null) {
+                    for (y in minY until maxY) {
+                        val top = y * cellPx
+                        val inBoardRow = y in 0 until b.height
+                        for (x in minX until maxX) {
+                            if (inBoardRow && x in 0 until b.width) continue
+                            drawBitmap(decor, x * cellPx, top, null)
+                        }
+                    }
+                }
+            }
 
             val serverWired = serverIsFullyWired(b, connected)
-            val disconnectedAlpha = (DISCONNECTED_ALPHA * 255).toInt()
 
             for (y in 0 until b.height) {
                 for (x in 0 until b.width) {
@@ -352,10 +475,11 @@ class BoardView @JvmOverloads constructor(
                     val hideCables =
                         b.isHidden(index) && !solved && !b.revealed[index]
 
-                    // Câble : drawable du masque courant, atténué si déconnecté.
-                    // En animation, on dessine le masque final tourné de
-                    // l'écart résiduel : la tuile tourne sous le doigt. Seul
-                    // le câble tourne — l'équipement reste fixe (Cell.doDraw).
+                    // Câble : drawable du masque courant, version grise si
+                    // déconnecté. En animation, on dessine le masque final
+                    // tourné de l'écart résiduel : la tuile tourne sous le
+                    // doigt. Seul le câble tourne — l'équipement reste
+                    // fixe (Cell.doDraw).
                     val dirs = b.currentDirs(index)
 
                     // Fond de tuile biseauté, parité background /
@@ -374,9 +498,12 @@ class BoardView @JvmOverloads constructor(
                     bg.draw(this)
 
                     if (dirs != Dir.NO_DIRS && !hideCables) {
-                        val tile = tiles[dirs]
+                        // Parité greyOut de l'original : version grise
+                        // opaque (chaque canal RGB à 0,6 × valeur + 100)
+                        // quand la cellule n'est pas reliée au serveur,
+                        // dessin sombre normal sinon.
+                        val tile = if (isConnected) tiles[dirs] else tilesGrey[dirs]
                         if (tile != null) {
-                            tile.alpha = if (isConnected) 255 else disconnectedAlpha
                             tile.setBounds(
                                 left.toInt(), top.toInt(),
                                 (left + cellPx).toInt(), (top + cellPx).toInt()
@@ -521,9 +648,24 @@ class BoardView @JvmOverloads constructor(
         private const val MIN_CELL_DP = 26f   // jamais de case plus petite que ceci
         private const val MAX_CELL_DP = 96f
 
-        /** Opacité des câbles non reliés au serveur (l'original utilisait
-         *  une version grise de chaque bitmap ; ici une seule tuile). */
-        private const val DISCONNECTED_ALPHA = 0.55f
+        /** Tuiles grises encadrant le plateau (au moins une, et le pan
+         *  s'arrête dessus : la limite du plateau est toujours visible). */
+        private const val GREY_RING_CELLS = 1f
+
+        /** Parité greyOut de Cell.java de l'original : grisage opaque
+         *  uniforme — chaque canal RGB devient 0,6 × valeur + 100,
+         *  alpha inchangé. Comme l'original, le résultat est un gris
+         *  clair constant, indépendant du fond sous le câble. */
+        private val greyOutFilter = ColorMatrixColorFilter(
+            ColorMatrix(
+                floatArrayOf(
+                    0.6f, 0f, 0f, 0f, 100f,
+                    0f, 0.6f, 0f, 0f, 100f,
+                    0f, 0f, 0.6f, 0f, 100f,
+                    0f, 0f, 0f, 1f, 0f
+                )
+            )
+        )
 
         // --- M2 : parité des animations de l'original ---
 
