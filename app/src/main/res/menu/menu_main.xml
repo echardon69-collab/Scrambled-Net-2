@@ -2,76 +2,92 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
+    <!-- Barre sans titre (activity_main.xml) : trois boutons texte
+         visibles (Material 3 : actions essentielles de l'écran), le
+         reste dans le menu de débordement (⋮).
+
+         « always » : jamais sacrifié, même sur écran étroit.
+         « ifRoom » : replié automatiquement dans le débordement quand la
+         largeur manque (écrans < 360dp, ou pendant la résolution quand
+         le bouton devient « Arrêter le solveur », plus large). -->
+
     <item
         android:id="@+id/menu_new"
         android:title="@string/menu_new"
-        app:showAsAction="ifRoom" />
+        app:showAsAction="always" />
 
     <item
         android:id="@+id/menu_solve"
         android:title="@string/menu_solve"
-        app:showAsAction="never" />
+        app:showAsAction="ifRoom" />
 
+    <!-- Réglages regroupés (niveau, sons, animations) derrière un seul
+         bouton texte ; sous-menus en cascade, ids inchangés. -->
     <item
-        android:id="@+id/menu_skill"
-        android:title="@string/menu_skill"
-        app:showAsAction="never">
+        android:id="@+id/menu_settings"
+        android:title="@string/menu_settings"
+        app:showAsAction="ifRoom">
         <menu>
-            <group android:checkableBehavior="single">
-                <item
-                    android:id="@+id/skill_novice"
-                    android:title="@string/skill_novice" />
-                <item
-                    android:id="@+id/skill_normal"
-                    android:title="@string/skill_normal" />
-                <item
-                    android:id="@+id/skill_expert"
-                    android:title="@string/skill_expert" />
-                <item
-                    android:id="@+id/skill_master"
-                    android:title="@string/skill_master" />
-                <item
-                    android:id="@+id/skill_insane"
-                    android:title="@string/skill_insane" />
-            </group>
+            <item
+                android:id="@+id/menu_skill"
+                android:title="@string/menu_skill">
+                <menu>
+                    <group android:checkableBehavior="single">
+                        <item
+                            android:id="@+id/skill_novice"
+                            android:title="@string/skill_novice" />
+                        <item
+                            android:id="@+id/skill_normal"
+                            android:title="@string/skill_normal" />
+                        <item
+                            android:id="@+id/skill_expert"
+                            android:title="@string/skill_expert" />
+                        <item
+                            android:id="@+id/skill_master"
+                            android:title="@string/skill_master" />
+                        <item
+                            android:id="@+id/skill_insane"
+                            android:title="@string/skill_insane" />
+                    </group>
+                </menu>
+            </item>
+
+            <item
+                android:id="@+id/menu_sounds"
+                android:title="@string/menu_sounds">
+                <menu>
+                    <group android:checkableBehavior="single">
+                        <item
+                            android:id="@+id/sounds_off"
+                            android:title="@string/sounds_off" />
+                        <item
+                            android:id="@+id/sounds_quiet"
+                            android:title="@string/sounds_quiet" />
+                        <item
+                            android:id="@+id/sounds_full"
+                            android:title="@string/sounds_full" />
+                    </group>
+                </menu>
+            </item>
+
+            <item
+                android:id="@+id/menu_anim"
+                android:title="@string/menu_anim">
+                <menu>
+                    <group android:checkableBehavior="single">
+                        <item
+                            android:id="@+id/anim_off"
+                            android:title="@string/anim_off" />
+                        <item
+                            android:id="@+id/anim_on"
+                            android:title="@string/anim_on" />
+                    </group>
+                </menu>
+            </item>
         </menu>
     </item>
 
-    <item
-        android:id="@+id/menu_sounds"
-        android:title="@string/menu_sounds"
-        app:showAsAction="never">
-        <menu>
-            <group android:checkableBehavior="single">
-                <item
-                    android:id="@+id/sounds_off"
-                    android:title="@string/sounds_off" />
-                <item
-                    android:id="@+id/sounds_quiet"
-                    android:title="@string/sounds_quiet" />
-                <item
-                    android:id="@+id/sounds_full"
-                    android:title="@string/sounds_full" />
-            </group>
-        </menu>
-    </item>
-
-    <item
-        android:id="@+id/menu_anim"
-        android:title="@string/menu_anim"
-        app:showAsAction="never">
-        <menu>
-            <group android:checkableBehavior="single">
-                <item
-                    android:id="@+id/anim_off"
-                    android:title="@string/anim_off" />
-                <item
-                    android:id="@+id/anim_on"
-                    android:title="@string/anim_on" />
-            </group>
-        </menu>
-    </item>
-
+    <!-- Items génériques et rares : débordement uniquement. -->
     <item
         android:id="@+id/menu_scores"
         android:title="@string/menu_scores"

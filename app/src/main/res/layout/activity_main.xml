@@ -5,13 +5,26 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
+    <!-- Pas de titre sur l'écran de jeu : Material 3 veut que la barre ne
+         porte que le contexte de la page et 1 à 2 actions essentielles.
+         Le nom du jeu reste visible sur le lanceur et dans À propos ; la
+         largeur libérée (~170dp) accueille les boutons texte « Nouvelle
+         partie », « Résoudre » et « Réglages » (menu_main.xml).
+         Attention : setSupportActionBar remet le label de l'activité
+         comme titre ; MainActivity le désactive via
+         setDisplayShowTitleEnabled(false).
+         Hauteur : wrap_content + minHeight. À hauteur fixe
+         (?attr/actionBarSize = 56dp), le padding d'inset de barre d'état
+         ajouté par EdgeToEdge.padSystemBars écraserait le contenu à
+         14-25dp sur les écrans à grande découpe (titre rogné, boutons
+         invisibles) ; ici la toolbar grandit pour absorber l'inset et son
+         contenu garde au moins 56dp. -->
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorPrimary"
-        app:title="@string/app_name"
-        app:titleTextColor="@color/brand_on_primary" />
+        android:layout_height="wrap_content"
+        android:minHeight="?attr/actionBarSize"
+        android:background="?attr/colorPrimary" />
 
     <!-- Barre d'état : coups, niveau, temps -->
     <LinearLayout

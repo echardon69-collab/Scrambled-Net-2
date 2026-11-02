@@ -32,6 +32,12 @@ object EdgeToEdge {
      * [top] pour la barre d'état (toolbar), [bottom] pour la barre de
      * navigation (zone de contenu). Les insets gauche/droite sont
      * toujours appliqués (barre de navigation en paysage).
+     *
+     * Les insets top/bottom ajoutent du PADDING : la vue doit pouvoir
+     * grandir (hauteur wrap_content, minHeight conservée) — à hauteur
+     * fixe, le padding écrase la zone de contenu au lieu de la
+     * décaler (c'est le bug des toolbars rognées sous la barre d'état,
+     * corrigé dans les trois écrans).
      */
     fun padSystemBars(view: View, top: Boolean = false, bottom: Boolean = false) {
         val baseLeft = view.paddingLeft

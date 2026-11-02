@@ -4,6 +4,7 @@
 
     <string name="menu_new">Nouvelle partie</string>
     <string name="menu_solve">Résoudre</string>
+    <string name="menu_settings">Réglages</string>
     <string name="menu_stop_solve">Arrêter le solveur</string>
     <string name="solver_used">Solveur utilisé — cette partie ne comptera pas au score.</string>
     <string name="menu_skill">Niveau de difficulté</string>

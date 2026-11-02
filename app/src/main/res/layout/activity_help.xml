@@ -5,10 +5,16 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
+    <!-- Hauteur : wrap_content + minHeight. À hauteur fixe
+         (?attr/actionBarSize = 56dp), le padding d'inset de barre d'état
+         ajouté par EdgeToEdge.padSystemBars écraserait le contenu à
+         14-25dp (titre rogné) ; ici la toolbar grandit pour absorber
+         l'inset et son contenu garde au moins 56dp. -->
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/help_toolbar"
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
+        android:layout_height="wrap_content"
+        android:minHeight="?attr/actionBarSize"
         android:background="?attr/colorPrimary"
         app:title="@string/menu_help"
         app:titleTextColor="@color/brand_on_primary" />

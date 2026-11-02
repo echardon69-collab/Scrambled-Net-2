@@ -49,6 +49,10 @@ class MainActivity : AppCompatActivity() {
         EdgeToEdge.padSystemBars(binding.statusRow)
         EdgeToEdge.padSystemBars(binding.boardContainer, bottom = true)
         setSupportActionBar(binding.toolbar)
+        // Pas de titre sur l'écran de jeu : la toolbar ne porte que les
+        // boutons d'action (Material 3). Sans ceci, setSupportActionBar
+        // remet le label de l'activité (app_name) comme titre.
+        supportActionBar?.setDisplayShowTitleEnabled(false)
 
         viewModel = ViewModelProvider(this)[GameViewModel::class.java]
 
