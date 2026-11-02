@@ -4,8 +4,6 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.graphics.ColorMatrix
-import android.graphics.ColorMatrixColorFilter
 import android.graphics.Paint
 import android.graphics.drawable.Drawable
 import android.os.SystemClock
@@ -19,6 +17,7 @@ import net.chardons.netscramble2.R
 import net.chardons.netscramble2.game.BlipField
 import net.chardons.netscramble2.game.Board
 import net.chardons.netscramble2.game.Dir
+import androidx.core.graphics.createBitmap
 import androidx.core.graphics.withTranslation
 import androidx.core.graphics.withSave
 import kotlin.math.ceil
@@ -37,11 +36,14 @@ import kotlin.random.Random
  *  - tuiles = VectorDrawables convertis des SVG d'origine (dégradés natifs
  *    API 24+, un seul fichier pour toutes les densités, netteté parfaite à
  *    n'importe quel zoom) — fidèles au look historique du jeu ;
- *  - état connecté/déconnecté : câble gris par filtre de couleur (parité
- *    greyOut de Cell.java de l'original : chaque canal RGB passe à
- *    0,6 × valeur + 100, alpha inchangé — un gris clair opaque et
- *    uniforme, exactement comme les bitmaps grisés de l'original), et
- *    images dédiées pour l'équipement
+ *  - état connecté/déconnecté : câbles en deux jeux de drawables
+ *    générés par le pipeline tools/tiles/ a partir de 5 sources SVG
+ *    seulement (droit, coude, T, croix, bout — les 15 orientations du
+ *    jeu sont des rotations au dessin, pas des fichiers distincts) ;
+ *    la variante grise (parité greyOut de Cell.java de l'original :
+ *    chaque canal RGB à 0,6 × valeur + 100, alpha inchangé — un gris
+ *    clair opaque et uniforme) est produite par le même pipeline, et
+ *    les images dédiées restent pour l'équipement
  *    (computer1 écran rouge / computer2 écran vert, server DEL rouges /
  *    server1 DEL vertes), exactement comme Cell.java de l'original ;
  *  - fonds de tuile biseautés « relief » (clair haut/gauche, sombre
@@ -140,31 +142,48 @@ class BoardView @JvmOverloads constructor(
     private val blipPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val termPaint = Paint(Paint.ANTI_ALIAS_FLAG)
 
-    // --- Drawables : 15 tuiles câbles (le masque 0 n'existe pas :
-    //     toute cellule de l'arbre couvrant a au moins une connexion),
-    //     en deux versions : normale (reliée au serveur, dessin sombre)
-    //     et grise (déconnectée, parité greyOut de l'original). ---
-    private val tiles = arrayOfNulls<Drawable>(16)
-    private val tilesGrey = arrayOfNulls<Drawable>(16)
+    // --- Drawables câbles : 5 formes de base seulement (droit, coude,
+    //     T, croix, bout — le masque 0 n'existe pas : toute cellule de
+    //     l'arbre couvrant a au moins une connexion), en deux versions :
+    //     normale (reliée au serveur, dessin sombre) et grise
+    //     (déconnectée, parité greyOut de l'original : chaque canal RGB
+    //     à 0,6 x valeur + 100, alpha inchangé). Les variantes grises
+    //     sont générées par tools/tiles/convert_tiles.py depuis les
+    //     mêmes sources SVG que les normales (svg/tiles/), pas par un
+    //     filtre de couleur a l'exécution ; les 15 orientations du jeu
+    //     sont obtenues au dessin par canvas.rotate (shapeOf/rotOf). ---
+    private val tileShapes = arrayOf(
+        load(R.drawable.cable_straight),   // 0 : droit (U+D)
+        load(R.drawable.cable_elbow),      // 1 : coude (U+R)
+        load(R.drawable.cable_ttee),       // 2 : T (U+R+D)
+        load(R.drawable.cable_cross),      // 3 : croix complète
+        load(R.drawable.cable_stub)        // 4 : bout (serveur sans fil)
+    )
+    private val tileShapesGrey = arrayOf(
+        load(R.drawable.cable_straight_grey),
+        load(R.drawable.cable_elbow_grey),
+        load(R.drawable.cable_ttee_grey),
+        load(R.drawable.cable_cross_grey),
+        load(R.drawable.cable_stub_grey)
+    )
 
-    // Ressource de chaque masque de câble, index 1 à 15.
-    private val cableResIds = intArrayOf(
-        0,
-        R.drawable.cable1000,      // 1 : U
-        R.drawable.cable0100,      // 2 : R
-        R.drawable.cable1100,      // 3 : U+R
-        R.drawable.cable0010,      // 4 : D
-        R.drawable.cable1010,      // 5 : U+D
-        R.drawable.cable0110,      // 6 : R+D
-        R.drawable.cable1110,      // 7 : U+R+D
-        R.drawable.cable0001,      // 8 : L
-        R.drawable.cable1001,      // 9 : U+L
-        R.drawable.cable0101,      // 10 : R+L
-        R.drawable.cable1101,      // 11 : U+R+L
-        R.drawable.cable0011,      // 12 : D+L
-        R.drawable.cable1011,      // 13 : U+D+L
-        R.drawable.cable0111,      // 14 : R+D+L
-        R.drawable.cable1111      // 15 : croix complète
+    // Forme de base de chaque masque de directions, index 1 à 15
+    // (U=1, R=2, D=4, L=8 ; un quart de tour horaire fait passer le
+    // masque m au masque (m shl 1 or m ushr 3) and 15).
+    private val shapeOf = intArrayOf(
+        -1,                                   // 0 : n'existe pas
+        4, 4, 1, 4, 0,                        // 1-5 : bout, bout, coude, bout, droit
+        1, 2, 4, 1, 0,                        // 6-10 : coude, T, bout, coude, droit
+        2, 1, 2, 2, 3                        // 11-15 : T, coude, T, T, croix
+    )
+
+    // Rotation a appliquer a la forme de base pour obtenir le masque,
+    // en degrés horaires (0, 90, 180, 270).
+    private val rotOf = intArrayOf(
+        0,                                    // 0 : inutilisé
+        0, 90, 0, 180, 0,                     // 1-5
+        90, 0, 270, 270, 90,                  // 6-10
+        270, 180, 180, 90, 0                 // 11-15
     )
     private val computerOff: Drawable = load(R.drawable.computer1)
     private val computerOn: Drawable = load(R.drawable.computer2)
@@ -188,17 +207,26 @@ class BoardView @JvmOverloads constructor(
 
     init {
         boardPaint.style = Paint.Style.FILL
-        // Mutate() : chaque instance reçoit son propre état (filtre de
-        // couleur pour la variante grise) sans affecter les autres
-        // usages du même drawable (thème/caches).
+        // Les drawables de formes (normales et grises) sont déjà
+        // chargés au moment de leur déclaration ; ils ne portent plus
+        // de filtre de couleur, la variante grise est un drawable
+        // distinct généré par le pipeline tools/tiles/.
+        //
+        // Garde-fou : les tables shapeOf/rotOf sont écrites à la main ;
+        // on vérifie une bonne fois, à la construction, que chaque
+        // masque 1..15 est bien obtenu en pivotant sa forme de base
+        // de rotOf quarts de tour horaires (toute erreur dans ces
+        // littéraux produirait des formes fausses en silence).
+        require(shapeOf.size == 16 && rotOf.size == 16) {
+            "Tables shapeOf/rotOf : 16 entrées attendues"
+        }
+        val baseMaskOf = intArrayOf(5, 3, 7, 15, 1)
         for (mask in 1..15) {
-            val resId = cableResIds[mask]
-            tiles[mask] = load(resId)
-            // Variante grise, parité greyOut de Cell.java de l'original :
-            // même image passée dans la matrice grisante (chaque canal
-            // RGB devient 0,6 × valeur + 100, alpha inchangé) — un gris
-            // clair opaque, indépendant du fond dessous.
-            tilesGrey[mask] = load(resId).apply { colorFilter = greyOutFilter }
+            var m = baseMaskOf[shapeOf[mask]]
+            repeat((rotOf[mask] / 90) % 4) { m = (m shl 1 or m ushr 3) and 15 }
+            require(m == mask) {
+                "Tables shapeOf/rotOf incorrectes pour le masque $mask"
+            }
         }
     }
 
@@ -331,15 +359,15 @@ class BoardView @JvmOverloads constructor(
         val ring = GREY_RING_CELLS * cellPx
         val boardW = b.width * cellPx
         val boardH = b.height * cellPx
-        if (boardW + 2f * ring <= width) {
-            panX = (width - boardW) / 2f
+        panX = if (boardW + 2f * ring <= width) {
+            (width - boardW) / 2f
         } else {
-            panX = panX.coerceIn(width - boardW - ring, ring)
+            panX.coerceIn(width - boardW - ring, ring)
         }
-        if (boardH + 2f * ring <= height) {
-            panY = (height - boardH) / 2f
+        panY = if (boardH + 2f * ring <= height) {
+            (height - boardH) / 2f
         } else {
-            panY = panY.coerceIn(height - boardH - ring, ring)
+            panY.coerceIn(height - boardH - ring, ring)
         }
     }
 
@@ -355,7 +383,7 @@ class BoardView @JvmOverloads constructor(
         val size = cellPx.toInt().coerceAtLeast(1)
         var cache = emptyTileCache
         if (cache == null || emptyTileCachePx != size) {
-            cache = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+            cache = createBitmap(size, size)
             tileBgEmpty.setBounds(0, 0, size, size)
             tileBgEmpty.draw(Canvas(cache))
             emptyTileCache = cache
@@ -498,25 +526,29 @@ class BoardView @JvmOverloads constructor(
                     bg.draw(this)
 
                     if (dirs != Dir.NO_DIRS && !hideCables) {
-                        // Parité greyOut de l'original : version grise
-                        // opaque (chaque canal RGB à 0,6 × valeur + 100)
-                        // quand la cellule n'est pas reliée au serveur,
-                        // dessin sombre normal sinon.
-                        val tile = if (isConnected) tiles[dirs] else tilesGrey[dirs]
-                        if (tile != null) {
-                            tile.setBounds(
-                                left.toInt(), top.toInt(),
-                                (left + cellPx).toInt(), (top + cellPx).toInt()
-                            )
-                            val offset = visualCurrent[index] - visualTarget[index]
-                            if (offset != 0f) {
-                                withSave {
-                                    rotate(offset, left + cellPx / 2f, top + cellPx / 2f)
-                                    tile.draw(this)
-                                }
-                            } else {
-                                tile.draw(this)
+                        // Parité greyOut de l'original : variante grise
+                        // (chaque canal RGB à 0,6 × valeur + 100,
+                        // générée par le pipeline tools/tiles/) quand
+                        // la cellule n'est pas reliée au serveur,
+                        // dessin sombre normal sinon. La forme de base
+                        // est tournée au dessin vers l'orientation du
+                        // masque (rotOf), composée avec l'écart résiduel
+                        // d'animation : la tuile tourne sous le doigt.
+                        val shape = if (isConnected) tileShapes[shapeOf[dirs]]
+                                     else tileShapesGrey[shapeOf[dirs]]
+                        shape.setBounds(
+                            left.toInt(), top.toInt(),
+                            (left + cellPx).toInt(), (top + cellPx).toInt()
+                        )
+                        val angle = rotOf[dirs] +
+                            (visualCurrent[index] - visualTarget[index])
+                        if (angle != 0f) {
+                            withSave {
+                                rotate(angle, left + cellPx / 2f, top + cellPx / 2f)
+                                shape.draw(this)
                             }
+                        } else {
+                            shape.draw(this)
                         }
                     }
 
@@ -651,21 +683,6 @@ class BoardView @JvmOverloads constructor(
         /** Tuiles grises encadrant le plateau (au moins une, et le pan
          *  s'arrête dessus : la limite du plateau est toujours visible). */
         private const val GREY_RING_CELLS = 1f
-
-        /** Parité greyOut de Cell.java de l'original : grisage opaque
-         *  uniforme — chaque canal RGB devient 0,6 × valeur + 100,
-         *  alpha inchangé. Comme l'original, le résultat est un gris
-         *  clair constant, indépendant du fond sous le câble. */
-        private val greyOutFilter = ColorMatrixColorFilter(
-            ColorMatrix(
-                floatArrayOf(
-                    0.6f, 0f, 0f, 0f, 100f,
-                    0f, 0.6f, 0f, 0f, 100f,
-                    0f, 0f, 0.6f, 0f, 100f,
-                    0f, 0f, 0f, 1f, 0f
-                )
-            )
-        )
 
         // --- M2 : parité des animations de l'original ---
 

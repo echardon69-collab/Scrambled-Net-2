@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 226.77 226.77" width="64" height="64">
+  <!-- Source de skin : convertie en VectorDrawable par
+       tools/tiles/convert_tiles.py (normal + variantes grises).
+       Rotation au dessin (BoardView) : la forme est stockee
+       dans son orientation de base, les autres orientations
+       sont obtenues par canvas.rotate. -->
+  <defs>
+  <linearGradient id="g0" gradientUnits="userSpaceOnUse" x1="177.17" y1="95.67" x2="177.17" y2="131.1">
+    <stop offset="0" stop-color="#000000"/>
+    <stop offset="0.437932" stop-color="#646464"/>
+    <stop offset="0.50012" stop-color="#C8C8C8"/>
+    <stop offset="0.562233" stop-color="#646464"/>
+    <stop offset="1" stop-color="#000000"/>
+  </linearGradient>
+  <linearGradient id="g1" gradientUnits="userSpaceOnUse" x1="95.67" y1="49.61" x2="131.1" y2="49.61">
+    <stop offset="0" stop-color="#000000"/>
+    <stop offset="0.437932" stop-color="#646464"/>
+    <stop offset="0.50012" stop-color="#C8C8C8"/>
+    <stop offset="0.562233" stop-color="#646464"/>
+    <stop offset="1" stop-color="#000000"/>
+  </linearGradient>
+  <radialGradient id="g2" gradientUnits="userSpaceOnUse" cx="131.1" cy="95.67" r="35.43">
+    <stop offset="0" stop-color="#000000"/>
+    <stop offset="0.437932" stop-color="#646464"/>
+    <stop offset="0.50012" stop-color="#C8C8C8"/>
+    <stop offset="0.562233" stop-color="#646464"/>
+    <stop offset="1" stop-color="#000000"/>
+  </radialGradient>
+  </defs>
+  <path d="M226.77,95.67,226.77,131.1,131.1,131.1,131.1,95.67,226.77,95.67Z" fill="url(#g0)"/>
+  <path d="M95.67,0,131.1,0,131.1,95.67,95.67,95.67,95.67,0Z" fill="url(#g1)"/>
+  <path d="M131.1,95.67 L95.67,95.67 A35.43,35.43 0 0,0 131.1,131.1 Z" fill-rule="evenOdd" fill="url(#g2)"/>
+</svg>

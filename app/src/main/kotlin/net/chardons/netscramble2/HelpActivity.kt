@@ -51,7 +51,7 @@ class HelpActivity : AppCompatActivity() {
         }
 
     /**
-     * Applique un attribut de typographie Material 3 résolu via le thème
+     * Applique un attribut de typographie "Material 3" résolu via le thème
      * (cohérent en jour comme en nuit, sans référence directe à un style).
      */
     private fun TextView.applyTextAppearance(attr: Int): TextView {

@@ -10,7 +10,7 @@ import androidx.core.view.WindowInsetsCompat
  * Mise en page « bord à bord » (M6) : la fenêtre dessine sous la barre
  * d'état et sous la barre de navigation — comportement imposé par
  * Android 15+ (targetSdk 35+), rendu volontaire et propre ici, et
- * rétro-compatible jusqu'à la minSdk via WindowCompat.
+ * rétrocompatible jusqu'à la minSdk via WindowCompat.
  *
  * Chaque activité place ses marges via [padSystemBars] : la toolbar
  * reçoit l'inset haut (sa couleur s'étend derrière la barre d'état),

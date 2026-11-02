@@ -10,7 +10,7 @@ package net.chardons.netscramble2.game
  *    bord) ; il avance d'une demi-cellule à chaque [advance] ;
  *  - arrivé au centre, un blip entrant repart sur toutes les autres
  *    jambes câblées : le flux « tourne » aux embranchements ;
- *  - un blip sortant traversé le bord rejoint la cellule voisine si son
+ *  - un blip sortant traversant le bord rejoint la cellule voisine si son
  *    câble est aligné, sinon il disparaît ;
  *  - le serveur émet de nouveaux blips sur toutes ses jambes une
  *    génération sur [SERVER_EVERY_GENERATIONS] ;

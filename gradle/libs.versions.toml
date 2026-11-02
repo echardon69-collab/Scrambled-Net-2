@@ -2,7 +2,7 @@
 # Versions vérifiées en octobre 2026 : Gradle 9.8.2, AGP 9.4.1, Kotlin 2.4.21.
 
 [versions]
-agp = "9.4.1"
+agp = "9.5.0"
 kotlin = "2.4.21"
 coreKtx = "1.19.1"
 appcompat = "1.8.0"
