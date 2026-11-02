@@ -169,7 +169,7 @@ class BoardView @JvmOverloads constructor(
 
     // Forme de base de chaque masque de directions, index 1 à 15
     // (U=1, R=2, D=4, L=8 ; un quart de tour horaire fait passer le
-    // masque m au masque (m shl 1 or m ushr 3) and 15).
+    // masque m au masque ((m shl 1) or (m ushr 3)) and 15).
     private val shapeOf = intArrayOf(
         -1,                                   // 0 : n'existe pas
         4, 4, 1, 4, 0,                        // 1-5 : bout, bout, coude, bout, droit
@@ -223,7 +223,7 @@ class BoardView @JvmOverloads constructor(
         val baseMaskOf = intArrayOf(5, 3, 7, 15, 1)
         for (mask in 1..15) {
             var m = baseMaskOf[shapeOf[mask]]
-            repeat((rotOf[mask] / 90) % 4) { m = (m shl 1 or m ushr 3) and 15 }
+            repeat((rotOf[mask] / 90) % 4) { m = ((m shl 1) or (m ushr 3)) and 15 }
             require(m == mask) {
                 "Tables shapeOf/rotOf incorrectes pour le masque $mask"
             }
