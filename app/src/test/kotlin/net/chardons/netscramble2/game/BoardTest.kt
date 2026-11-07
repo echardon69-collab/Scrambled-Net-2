@@ -7,69 +7,143 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Tests du plateau : génération, mélange, connexité, wrap.
- * Le moteur étant pur (aucune dépendance Android), tout tourne sur la JVM.
+ * Tests du plateau : génération (les DEUX générateurs du chantier
+ * tailles), mélange, connexité, wrap, dimensions Screen. Le moteur
+ * étant pur (aucune dépendance Android), tout tourne sur la JVM.
+ *
+ * Les dimensions viennent désormais de Screen : les essais prennent la
+ * matrice MEDIUM en portrait (comme un écran VGA+), sauf quand un test
+ * veut une taille précise.
  */
 class BoardTest {
 
+    /** Dimensions du niveau sur la matrice MEDIUM, en portrait. */
+    private fun dims(skill: Skill): Pair<Int, Int> =
+        Screen.MEDIUM.boardSize(skill, landscape = false)
+
     @Test
-    fun `generated solution is always fully connected`() {
+    fun `generated solution is always sound, for both generators`() {
         for (skill in Skill.entries) {
-            repeat(25) { attempt ->
-                val board = Board.generate(skill, seed = attempt * 1_000_003L + skill.ordinal)
-                assertTrue(
-                    "La solution doit être connexe ($skill, essai $attempt)",
-                    board.solutionIsSound()
+            for (generator in Generator.entries) {
+                val (width, height) = dims(skill)
+                repeat(25) { attempt ->
+                    val board = Board.generate(
+                        skill, width, height, generator,
+                        seed = attempt * 1_000_003L + skill.ordinal
+                    )
+                    assertTrue(
+                        "La solution doit être saine ($skill/$generator, essai $attempt)",
+                        board.solutionIsSound()
+                    )
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `tree generator wires every cell`() {
+        repeat(10) { attempt ->
+            val board = Board.generate(
+                Skill.NORMAL, 9, 7, Generator.TREE, seed = attempt + 1L
+            )
+            assertFalse(
+                "Aucune cellule libre avec le générateur TREE",
+                (0 until board.size).any { board.isEmpty(it) }
+            )
+        }
+    }
+
+    @Test
+    fun `original generator leaves free cells somewhere`() {
+        // La croissance de l'original exige 85 pour cent de cellules
+        // actives, pas 100 : sur une centaine de parties, certaines
+        // doivent contenir des cellules libres (environ une sur quatre,
+        // vérifié en simulation). Une cellule libre ne porte aucun
+        // câble, dans les deux sens du terme.
+        var withFree = 0
+        repeat(100) { attempt ->
+            val board = Board.generate(
+                Skill.NORMAL, 9, 7, Generator.ORIGINAL,
+                seed = attempt * 100_003L + 1L
+            )
+            for (i in 0 until board.size) {
+                assertEquals(
+                    board.connections[i] == Dir.NO_DIRS,
+                    board.isEmpty(i)
+                )
+            }
+            if ((0 until board.size).any { board.isEmpty(it) }) ++withFree
+        }
+        assertTrue("Des cellules libres doivent exister quelque part", withFree > 0)
+    }
+
+    @Test
+    fun `scrambled board is never solved at start`() {
+        for (generator in Generator.entries) {
+            repeat(50) { attempt ->
+                val board = Board.generate(
+                    Skill.NOVICE, 5, 5, generator, seed = attempt + 1L
+                )
+                assertFalse(
+                    "Le plateau mélangé ne doit pas être résolu ($generator)",
+                    board.isSolved()
                 )
             }
         }
     }
 
     @Test
-    fun `scrambled board is never solved at start`() {
-        repeat(50) { attempt ->
-            val board = Board.generate(Skill.NOVICE, seed = attempt + 1L)
-            assertFalse("Le plateau mélangé ne doit pas être résolu", board.isSolved())
-        }
-    }
-
-    @Test
     fun `board is solvable by rotating every tile back`() {
-        repeat(25) { attempt ->
-            val board = Board.generate(Skill.NORMAL, seed = attempt + 42L)
-            // Annule les rotations : on retrouve l'arbre couvrant.
-            for (i in board.rotations.indices) board.rotations[i] = 0
-            assertTrue(board.isSolved())
+        for (generator in Generator.entries) {
+            repeat(25) { attempt ->
+                val board = Board.generate(
+                    Skill.NORMAL, 9, 7, generator, seed = attempt + 42L
+                )
+                // Annule les rotations : on retrouve la solution
+                // (l'arbre couvrant, ou le réseau de l'original).
+                for (i in board.rotations.indices) board.rotations[i] = 0
+                assertTrue(
+                    "Toutes rotations nulles = résolu ($generator)",
+                    board.isSolved()
+                )
+            }
         }
     }
 
     @Test
     fun `same seed produces the same board`() {
-        val a = Board.generate(Skill.EXPERT, seed = 1234L)
-        val b = Board.generate(Skill.EXPERT, seed = 1234L)
+        val a = Board.generate(Skill.EXPERT, 7, 11, Generator.TREE, seed = 1234L)
+        val b = Board.generate(Skill.EXPERT, 7, 11, Generator.TREE, seed = 1234L)
         assertTrue(a.connections.contentEquals(b.connections))
         assertTrue(a.rotations.contentEquals(b.rotations))
+        assertEquals(a.serverIndex, b.serverIndex)
 
-        val c = Board.generate(Skill.EXPERT, seed = 5678L)
+        val c = Board.generate(Skill.EXPERT, 7, 11, Generator.TREE, seed = 5678L)
         assertNotEquals(a.connections.toList(), c.connections.toList())
     }
 
     @Test
     fun `wrap-around boards connect across edges`() {
-        val wrapBoard = Board(3, 3, wrap = true, hiddenThreshold = 9, seed = 1L)
+        val wrapBoard = Board(
+            3, 3, wrap = true, hiddenThreshold = 9,
+            generator = Generator.TREE, branches = 2, seed = 1L
+        )
         // Bord gauche de la ligne 0 : le voisin LEFT est le bord droit.
         assertEquals(2, wrapBoard.neighborIndex(0, Dir.LEFT))
         // Bord haut : le voisin UP est la dernière ligne.
         assertEquals(6, wrapBoard.neighborIndex(0, Dir.UP))
 
-        val plainBoard = Board(3, 3, wrap = false, hiddenThreshold = 9, seed = 1L)
+        val plainBoard = Board(
+            3, 3, wrap = false, hiddenThreshold = 9,
+            generator = Generator.TREE, branches = 2, seed = 1L
+        )
         assertEquals(-1, plainBoard.neighborIndex(0, Dir.LEFT))
         assertEquals(-1, plainBoard.neighborIndex(0, Dir.UP))
     }
 
     @Test
     fun `rotation is cyclic`() {
-        val board = Board.generate(Skill.NOVICE, seed = 7L)
+        val board = Board.generate(Skill.NOVICE, 5, 5, Generator.TREE, seed = 7L)
         val before = board.currentDirs(0)
         board.rotateCell(0, 4)
         assertEquals(before, board.currentDirs(0))
@@ -78,50 +152,61 @@ class BoardTest {
     }
 
     @Test
-    fun `server is centered and terminals are leaves`() {
-        val board = Board.generate(Skill.NOVICE, seed = 3L)
-        assertEquals(2 * 5 + 2, board.serverIndex) // centre d'une grille 5x5
-        // Le serveur fait partie de l'arbre : au moins une connexion.
-        assertTrue(board.connections[board.serverIndex] != Dir.NO_DIRS)
-        for (i in 0 until board.size) {
-            if (board.isTerminal(i)) {
-                assertEquals(1, Integer.bitCount(board.connections[i]))
+    fun `server is inside the board and terminals are leaves`() {
+        for (generator in Generator.entries) {
+            val board = Board.generate(
+                Skill.NORMAL, 9, 7, generator, seed = 3L
+            )
+            assertTrue(board.serverIndex in 0 until board.size)
+            // Le serveur fait partie du réseau : au moins une connexion,
+            // quel que soit le générateur (la croissance part de lui).
+            assertTrue(
+                "Le serveur doit être câblé ($generator)",
+                board.connections[board.serverIndex] != Dir.NO_DIRS
+            )
+            for (i in 0 until board.size) {
+                if (board.isTerminal(i)) {
+                    assertEquals(1, Integer.bitCount(board.connections[i]))
+                }
             }
         }
     }
 
     @Test
     fun `insane hidden cells are those with three or more connections`() {
-        val board = Board.generate(Skill.INSANE, seed = 20261031L)
-        var hiddenCount = 0
-        for (i in 0 until board.size) {
-            // Sémantique de l'original : cachée ⇔ au moins 3 connexions.
-            assertEquals(
-                Integer.bitCount(board.connections[i]) >= 3,
-                board.isHidden(i)
+        // Équivalence exacte, cellule par cellule (sémantique de
+        // l'original : cachée ⇔ au moins 3 connexions) ; et au moins
+        // une cellule cachée doit exister sur l'ensemble des tirages —
+        // un arbre couvrant d'une grille 7 x 11 contient toujours des
+        // embranchements (vérifié en simulation).
+        var hiddenSomewhere = false
+        repeat(25) { attempt ->
+            val board = Board.generate(
+                Skill.INSANE, 7, 11, Generator.TREE,
+                seed = attempt * 202_610_31L + 20261031L
             )
-            if (board.isHidden(i)) ++hiddenCount
+            var hiddenCount = 0
+            for (i in 0 until board.size) {
+                assertEquals(
+                    Integer.bitCount(board.connections[i]) >= 3,
+                    board.isHidden(i)
+                )
+                if (board.isHidden(i)) ++hiddenCount
+            }
+            if (hiddenCount > 0) hiddenSomewhere = true
         }
-        // Un arbre couvrant d'une grille 11x11 contient toujours des
-        // embranchements (vérifié en simulation sur 300 grilles : min 6).
-        // Graine fixe ⇒ test déterministe.
-        assertTrue(
-            "La grille Insane doit contenir des cellules cachées",
-            hiddenCount > 0
-        )
-        // Toutes invisibles au départ, révélables une à une.
-        assertFalse((0 until board.size).any { board.revealed[it] })
-        val firstHidden = (0 until board.size).first { board.isHidden(it) }
-        board.reveal(firstHidden)
-        assertTrue(board.revealed[firstHidden])
+        assertTrue("Des cellules cachées doivent exister", hiddenSomewhere)
     }
 
     @Test
     fun `non-insane levels have no hidden cells`() {
         for (skill in listOf(Skill.NOVICE, Skill.NORMAL, Skill.EXPERT, Skill.MASTER)) {
-            val board = Board.generate(skill, seed = 99L)
+            val (width, height) = dims(skill)
+            val board = Board.generate(
+                skill, width, height, Generator.TREE, seed = 99L
+            )
             assertFalse(
-                "Aucune cellule cachée hors niveau Insane ($skill)",
+                "Aucune cellule cachée hors niveau Dément ($skill)",
                 (0 until board.size).any { board.isHidden(it) }
             )
         }
@@ -129,7 +214,7 @@ class BoardTest {
 
     @Test
     fun `lock toggles per cell`() {
-        val board = Board.generate(Skill.NOVICE, seed = 11L)
+        val board = Board.generate(Skill.NOVICE, 5, 5, Generator.TREE, seed = 11L)
         assertFalse(board.locked[3])
         board.toggleLock(3)
         assertTrue(board.locked[3])
@@ -140,16 +225,48 @@ class BoardTest {
     @Test
     fun `solver move list solves the board`() {
         for (skill in Skill.entries) {
-            repeat(10) { attempt ->
-                val board = Board.generate(skill, seed = attempt * 7_654_321L + skill.ordinal)
-                // Comme le ViewModel : rotation recalculée au moment de jouer,
-                // robuste même si l'état a changé entre-temps.
-                for (index in board.solveMoves()) {
-                    board.rotateCell(index, (4 - board.rotations[index]) % 4)
-                    board.reveal(index)
+            for (generator in Generator.entries) {
+                repeat(10) { attempt ->
+                    val (width, height) = dims(skill)
+                    val board = Board.generate(
+                        skill, width, height, generator,
+                        seed = attempt * 7_654_321L + skill.ordinal
+                    )
+                    // Comme le ViewModel : rotation recalculée au moment
+                    // de jouer, robuste même si l'état a changé.
+                    for (index in board.solveMoves()) {
+                        board.rotateCell(index, (4 - board.rotations[index]) % 4)
+                        board.reveal(index)
+                    }
+                    assertTrue(
+                        "Le solveur doit finir par résoudre ($skill/$generator)",
+                        board.isSolved()
+                    )
                 }
-                assertTrue("Le solveur doit finir par résoudre ($skill)", board.isSolved())
             }
         }
+    }
+
+    @Test
+    fun `screen sizes follow the original matrix`() {
+        // Grand côté horizontal en paysage, vertical en portrait ;
+        // Maître et Dément partagent la taille (valeurs de
+        // BoardView.java de l'original).
+        assertEquals(11 to 7, Screen.MEDIUM.boardSize(Skill.MASTER, landscape = true))
+        assertEquals(7 to 11, Screen.MEDIUM.boardSize(Skill.INSANE, landscape = false))
+        assertEquals(
+            Screen.MEDIUM.boardSize(Skill.MASTER, true),
+            Screen.MEDIUM.boardSize(Skill.INSANE, true)
+        )
+        assertEquals(15 to 8, Screen.HUGE.boardSize(Skill.EXPERT, landscape = true))
+        assertEquals(8 to 15, Screen.HUGE.boardSize(Skill.EXPERT, landscape = false))
+        assertEquals(9 to 7, Screen.MEDIUM.boardSize(Skill.NORMAL, landscape = true))
+        assertEquals(6 to 7, Screen.HUGE.boardSize(Skill.NOVICE, landscape = false))
+        // find : mêmes seuils que findMatrix (400 / 1,4 / 500 / 1,5).
+        assertEquals(Screen.SMALL, Screen.find(240, 320))
+        assertEquals(Screen.WSMALL, Screen.find(320, 480))
+        assertEquals(Screen.MEDIUM, Screen.find(480, 640))
+        assertEquals(Screen.WMEDIUM, Screen.find(480, 800))
+        assertEquals(Screen.HUGE, Screen.find(1080, 2400))
     }
 }

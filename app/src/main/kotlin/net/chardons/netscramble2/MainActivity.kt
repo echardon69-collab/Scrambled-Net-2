@@ -17,6 +17,7 @@ import net.chardons.netscramble2.audio.SoundEffects
 import net.chardons.netscramble2.audio.SoundMode
 import net.chardons.netscramble2.databinding.ActivityMainBinding
 import net.chardons.netscramble2.game.GameSpec
+import net.chardons.netscramble2.game.Screen
 import net.chardons.netscramble2.game.Skill
 import net.chardons.netscramble2.ui.EdgeToEdge
 
@@ -58,9 +59,13 @@ class MainActivity : AppCompatActivity() {
 
         // Partie précédente : survit à la mort du processus. Appelé avant
         // toute collecte ; sans effet sur un ViewModel déjà vivant
-        // (rotation d'écran), qui est forcément plus à jour.
+        // (rotation d'écran), qui est forcément plus à jour. Sinon,
+        // première visite : une partie Normal aux dimensions de l'écran.
         val savedSpec = getPreferences(MODE_PRIVATE).getString(GAME_SPEC_KEY, null)
-        viewModel.restoreIfPending(GameSpec.decode(savedSpec))
+        if (!viewModel.restoreIfPending(GameSpec.decode(savedSpec))) {
+            val (width, height) = boardSize(Skill.NORMAL)
+            viewModel.newGame(Skill.NORMAL, width, height)
+        }
 
         // Mode sonore persisté (même clé que l'original), puis lecteur.
         soundMode = loadSoundMode()
@@ -133,6 +138,22 @@ class MainActivity : AppCompatActivity() {
         return "%02d:%02d".format(totalSeconds / 60, totalSeconds % 60)
     }
 
+    /**
+     * Taille du plateau pour [skill] sur l'écran courant, comme
+     * findMatrix puis Screen.getBoardWidth et getBoardHeight de
+     * l'original : la matrice dépend de la plus petite dimension et du
+     * ratio d'aspect, le grand côté du plateau est horizontal en
+     * paysage, vertical en portrait. Figée à la création de la partie —
+     * tourner l'écran en cours de partie ne régénère rien, la caméra
+     * du plateau s'occupe du reste.
+     */
+    private fun boardSize(skill: Skill): Pair<Int, Int> {
+        val metrics = resources.displayMetrics
+        val landscape = metrics.widthPixels > metrics.heightPixels
+        return Screen.find(metrics.widthPixels, metrics.heightPixels)
+            .boardSize(skill, landscape)
+    }
+
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.menu_main, menu)
         // Coche le niveau courant.
@@ -180,7 +201,9 @@ class MainActivity : AppCompatActivity() {
         }
         return when {
             item.itemId == R.id.menu_new -> {
-                viewModel.newGame(viewModel.uiState.value.skill)
+                val current = viewModel.uiState.value.skill
+                val (width, height) = boardSize(current)
+                viewModel.newGame(current, width, height)
                 true
             }
             item.itemId == R.id.sounds_off || item.itemId == R.id.sounds_quiet ||
@@ -218,7 +241,8 @@ class MainActivity : AppCompatActivity() {
             skill != null -> {
                 item.isChecked = true
                 val previous = viewModel.uiState.value.skill
-                viewModel.newGame(skill)
+                val (width, height) = boardSize(skill)
+                viewModel.newGame(skill, width, height)
                 showSkillHelpIfNeeded(skill, previous)
                 true
             }
@@ -265,7 +289,9 @@ class MainActivity : AppCompatActivity() {
             .setTitle(if (recordMessage != 0) R.string.win_pbest_title else R.string.win_title)
             .setMessage(message)
             .setPositiveButton(R.string.win_new) { _, _ ->
-                viewModel.newGame(viewModel.uiState.value.skill)
+                val current = viewModel.uiState.value.skill
+                val (width, height) = boardSize(current)
+                viewModel.newGame(current, width, height)
             }
             .setNegativeButton(R.string.win_continue, null)
             .show()

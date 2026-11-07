@@ -3,36 +3,87 @@ package net.chardons.netscramble2.game
 import kotlin.random.Random
 
 /**
+ * Générateur du réseau d'une partie.
+ */
+enum class Generator {
+    /**
+     * Traduction exacte de createNet de l'original (BoardView.java) :
+     * croissance par branchements aléatoires depuis le serveur, jusqu'à
+     * 10 essais pour couvrir au moins 85 pour cent des cellules. Les
+     * cellules restantes sont libres : vides dans le plateau, elles ne
+     * portent aucun câble. La partie est gagnée quand tous les
+     * terminaux (cellules à une seule connexion) sont reliés — des
+     * sections de câble inutilisées ne bloquent pas la victoire.
+     */
+    ORIGINAL,
+
+    /**
+     * Notre générateur historique : arbre couvrant aléatoire (parcours
+     * en profondeur randomisé). Toutes les cellules sont actives et la
+     * partie est gagnée quand tout le plateau est relié au serveur.
+     */
+    TREE
+}
+
+/**
  * Le plateau de jeu : un modèle PUR (aucune dépendance Android), donc
  * testable sur la JVM et portable tel quel.
  *
  * Représentation :
- *  - [connections] : masque de la SOLUTION pour chaque cellule (arbre couvrant
- *    du réseau, généré une fois pour toutes) ;
- *  - [rotations] : rotation courante (0..3 quarts de tour horaires) de chaque
- *    cellule — c'est ce que le joueur modifie ;
- *  - les connexions courantes d'une cellule = [Dir.rotateMask] de sa solution
- *    par sa rotation.
+ *  - [connections] : masque de la SOLUTION pour chaque cellule (réseau
+ *    généré une fois pour toutes ; avec le générateur ORIGINAL, une
+ *    cellule libre garde le masque 0) ;
+ *  - [rotations] : rotation courante (0..3 quarts de tour horaires) de
+ *    chaque cellule — c'est ce que le joueur modifie ;
+ *  - les connexions courantes d'une cellule = [Dir.rotateMask] de sa
+ *    solution par sa rotation.
  *
- * Le plateau est toujours soluble par rotation : en remettant chaque cellule
- * à la rotation 0, on retrouve l'arbre couvrant complet.
+ * Le plateau est toujours soluble par rotation : en remettant chaque
+ * cellule à la rotation 0, on retrouve la solution générée.
+ *
+ * Tout est reproductible depuis (dimensions, générateur, graine,
+ * racine) : la génération et le mélange tirent uniquement du
+ * générateur pseudo-aléatoire enraciné sur la graine, ce qui permet à
+ * une partie sauvegardée de se reconstruire à l'identique.
  */
 class Board(
     val width: Int,
     val height: Int,
     val wrap: Boolean,
     /**
-     * Seuil de masquage (niveau Insane) : une cellule avec au moins
+     * Seuil de masquage (niveau Dément) : une cellule avec au moins
      * autant de connexions masque ses câbles. 9 = jamais atteint.
      */
     val hiddenThreshold: Int,
-    seed: Long
+    /** Générateur employé pour créer le réseau. */
+    val generator: Generator,
+    /**
+     * Nombre maximal d'embranchements par cellule (générateur ORIGINAL),
+     * repris de l'enum Skill de l'original.
+     */
+    val branches: Int,
+    seed: Long,
+    /**
+     * Racine imposée du réseau, ou -1 pour la tirer du générateur. Une
+     * racine imposée ne consomme AUCUN tirage : c'est ce que fait la
+     * reconstruction des anciennes parties v2, dont le code d'alors
+     * plaçait le serveur au centre sans tirer la racine — leur flux
+     * aléatoire doit être rejoué exactement. Les parties v3, elles,
+     * portent -1 : la régénération retire la racine du flux comme à la
+     * création, et retrouve ainsi le même arbre.
+     */
+    val forcedRoot: Int = -1
 ) {
     /** Nombre total de cellules. */
     val size: Int = width * height
 
-    /** Index de la cellule du serveur (le cœur du réseau, au centre). */
-    val serverIndex: Int = (height / 2) * width + (width / 2)
+    /**
+     * Index de la cellule du serveur (la racine du réseau). Tiré au
+     * hasard, comme l'original qui choisit un serveur au hasard à
+     * chaque essai de createNet ; les anciennes parties restaurées
+     * imposent la leur.
+     */
+    val serverIndex: Int
 
     /** Masque de connexions de la solution, par cellule. */
     val connections = IntArray(size)
@@ -47,8 +98,9 @@ class Board(
     val revealed = BooleanArray(size)
 
     init {
-        generate(Random(seed))
-        scramble(Random(seed xor -0x5DEECE66DL))
+        val rnd = Random(seed)
+        serverIndex = generate(rnd, forcedRoot)
+        scramble(Random(seed xor SCRAMBLE_SALT))
     }
 
     // ******************************************************************** //
@@ -56,16 +108,38 @@ class Board(
     // ******************************************************************** //
 
     /**
-     * Construit un arbre couvrant aléatoire du plateau (parcours en profondeur
-     * randomisé) : chaque cellule obtient au moins une connexion, le serveur
-     * est la racine. Les feuilles de l'arbre (une seule connexion) sont les
-     * « terminaux ».
+     * Construit le réseau selon le générateur et renvoie l'index de la
+     * racine (le serveur).
      */
-    private fun generate(rnd: Random) {
+    private fun generate(rnd: Random, forcedRoot: Int): Int = when (generator) {
+        Generator.TREE -> {
+            // Racine aléatoire, sauf racine imposée (reconstruction
+            // d'une ancienne partie v2 : aucune valeur tirée, le flux
+            // du générateur reste celui de l'époque). Une partie v3,
+            // elle, garde -1 : la régénération retire la racine du
+            // flux exactement comme à la création, et retrouve ainsi
+            // le même arbre, au tirage près.
+            val root =
+                if (forcedRoot in 0 until size) forcedRoot else rnd.nextInt(size)
+            generateTree(rnd, root)
+            root
+        }
+        Generator.ORIGINAL -> generateOriginal(rnd)
+    }
+
+    /**
+     * Arbre couvrant aléatoire (parcours en profondeur randomisé)
+     * enraciné en [root] : chaque cellule obtient au moins une connexion,
+     * les feuilles de l'arbre (une seule connexion) sont les
+     * « terminaux ». Avec la racine centrale imposée (restauration des
+     * anciennes parties), le réseau est exactement celui de l'ancien
+     * code à même graine.
+     */
+    private fun generateTree(rnd: Random, root: Int) {
         val visited = BooleanArray(size)
         val stack = ArrayDeque<Int>()
-        visited[serverIndex] = true
-        stack.addLast(serverIndex)
+        visited[root] = true
+        stack.addLast(root)
 
         while (stack.isNotEmpty()) {
             val current = stack.last()
@@ -86,6 +160,82 @@ class Board(
     }
 
     /**
+     * Réplique exacte de createNet de l'original : la croissance part
+     * d'une racine tirée au hasard À CHAQUE essai (le serveur bouge
+     * tant que le réseau n'est pas assez dense) et se propage par
+     * [addRandomDir], en différant parfois la cellule de tête pour
+     * éviter les longues lignes droites. Un essai est accepté dès que
+     * 85 pour cent des cellules sont actives, au bout de 10 essais au
+     * plus — passé ce cap, l'original garde la dernière tentative.
+     * Renvoie la racine retenue et laisse sa solution dans
+     * [connections].
+     */
+    private fun generateOriginal(rnd: Random): Int {
+        val minCells = (size * 0.85).toInt()
+        var root = 0
+        var cells = 0
+        var tries = 0
+        while (cells < minCells && tries < MAX_TRIES) {
+            connections.fill(Dir.NO_DIRS)
+            root = rnd.nextInt(width) + width * rnd.nextInt(height)
+
+            // File des cellules en attente de connexion, la racine
+            // d'abord — et une première extension la moitié du temps,
+            // comme l'original.
+            val list = ArrayDeque<Int>()
+            list.addLast(root)
+            if (rnd.nextBoolean()) addRandomDir(list, rnd)
+
+            while (list.isNotEmpty()) {
+                if (rnd.nextBoolean()) {
+                    // Prolonger la tête de file ; la moitié du temps une
+                    // seconde direction ; une troisième seulement pour
+                    // trois branches ou plus (une fois sur trois), qui
+                    // introduit les carrefours et parfois les croix.
+                    addRandomDir(list, rnd)
+                    if (rnd.nextBoolean()) addRandomDir(list, rnd)
+                    if (branches >= 3 && rnd.nextInt(3) == 0) {
+                        addRandomDir(list, rnd)
+                    }
+                } else {
+                    // Différer la tête : la cellule reviendra plus tard,
+                    // ce qui évite les filières trop rectilignes.
+                    list.addLast(list.first())
+                }
+                list.removeFirst()
+            }
+
+            cells = connections.count { it != Dir.NO_DIRS }
+            ++tries
+        }
+        return root
+    }
+
+    /**
+     * Réplique de addRandomDir de l'original : relie la tête de [list] à
+     * un voisin libre choisi au hasard. Le test de liberté porte sur le
+     * masque de connexions — la racine, pas encore reliée, est « libre »
+     * elle aussi et peut donc être rattrapée par la croissance,
+     * exactement comme dans l'original. La cellule élue rejoint la file.
+     */
+    private fun addRandomDir(list: ArrayDeque<Int>, rnd: Random) {
+        val cell = list.first()
+        val free = mutableListOf<Dir>()
+        for (dir in Dir.entries) {
+            val neighbor = neighborIndex(cell, dir)
+            if (neighbor >= 0 && connections[neighbor] == Dir.NO_DIRS) {
+                free.add(dir)
+            }
+        }
+        if (free.isEmpty()) return
+        val key = free[rnd.nextInt(free.size)]
+        val dest = neighborIndex(cell, key)
+        connections[cell] = connections[cell] or key.bit
+        connections[dest] = connections[dest] or key.opposite.bit
+        list.addLast(dest)
+    }
+
+    /**
      * Mélange le plateau en tournant chaque cellule aléatoirement, en
      * s'assurant de ne jamais présenter un plateau déjà résolu.
      */
@@ -103,7 +253,8 @@ class Board(
 
     /**
      * Index du voisin dans la direction [dir], -1 s'il n'existe pas.
-     * Avec [wrap], les bords bouclent sur eux-mêmes (tore).
+     * Avec [wrap], les bords bouclent sur eux-mêmes (tore) — bornés au
+     * plateau, comme decr et incr de l'original.
      */
     fun neighborIndex(index: Int, dir: Dir): Int {
         val x = index % width
@@ -130,11 +281,17 @@ class Board(
         index != serverIndex && Integer.bitCount(connections[index]) == 1
 
     /**
-     * Cellule cachée (niveau Insane) : elle possède au moins
+     * Cellule libre (générateur ORIGINAL) : aucune connexion, aucun
+     * câble. Le joueur peut la toucher, il ne se passe rien.
+     */
+    fun isEmpty(index: Int): Boolean = connections[index] == Dir.NO_DIRS
+
+    /**
+     * Cellule cachée (niveau Dément) : elle possède au moins
      * [hiddenThreshold] connexions — embranchement ou carrefour — et le
      * joueur ne voit pas ses câbles ; il doit raisonner par déduction,
-     * comme dans l'original (qui la dit « blind »). L'équipement (serveur,
-     * terminal) reste visible.
+     * comme dans l'original (qui la dit « blind »). L'équipement
+     * (serveur, terminal) reste visible.
      */
     fun isHidden(index: Int): Boolean =
         Integer.bitCount(connections[index]) >= hiddenThreshold
@@ -153,9 +310,11 @@ class Board(
      * Liste des cellules que l'auto-solveur doit tourner pour remettre le
      * plateau en solution, dans l'ordre d'un parcours en largeur depuis le
      * serveur : le réseau se construit visuellement depuis le cœur, comme
-     * dans l'original. La rotation précise est recalculée au moment de jouer
-     * chaque coup, donc la liste reste valable même si le joueur continue
-     * à toucher le plateau pendant que le solveur travaille.
+     * dans l'original. La rotation précise est recalculée au moment de
+     * jouer chaque coup, donc la liste reste valable même si le joueur
+     * continue à toucher le plateau pendant que le solveur travaille.
+     * Les cellules libres du générateur ORIGINAL n'y figurent jamais :
+     * elles ne portent pas de câble.
      */
     fun solveMoves(): List<Int> {
         val visited = BooleanArray(size)
@@ -209,18 +368,73 @@ class Board(
         return connected
     }
 
-    /** Partie gagnée : toutes les cellules sont reliées au serveur. */
-    fun isSolved(): Boolean = connectedCells().all { it }
+    /**
+     * Partie gagnée, selon le générateur :
+     *  - ORIGINAL : tous les terminaux (une seule connexion) sont reliés
+     *    au serveur, comme isSolved de l'original — des sections de
+     *    câble inutilisées ne bloquent pas la victoire ;
+     *  - TREE : tout le plateau est relié au serveur.
+     */
+    fun isSolved(): Boolean {
+        val connected = connectedCells()
+        return when (generator) {
+            Generator.TREE -> connected.all { it }
+            Generator.ORIGINAL -> (0 until size).none { index ->
+                Integer.bitCount(connections[index]) == 1 && !connected[index]
+            }
+        }
+    }
 
     /**
-     * La solution théorique est-elle bien connexe (garantie de génération,
-     * utilisée par les tests) ?
+     * La solution théorique est-elle saine (garantie de génération,
+     * utilisée par les vérifications) ? Le réseau câblé est connexe
+     * depuis le serveur — pour le générateur ORIGINAL, seules les
+     * cellules actives comptent, les cellules libres ne font pas partie
+     * du réseau.
      */
-    fun solutionIsSound(): Boolean = connectedCells(useRotations = false).all { it }
+    fun solutionIsSound(): Boolean {
+        val connected = connectedCells(useRotations = false)
+        return (0 until size).all { index ->
+            when (generator) {
+                Generator.TREE -> connected[index]
+                Generator.ORIGINAL ->
+                    connections[index] == Dir.NO_DIRS || connected[index]
+            }
+        }
+    }
 
     companion object {
-        /** Fabrique un plateau mélangé pour le niveau [skill] avec une graine. */
-        fun generate(skill: Skill, seed: Long): Board =
-            Board(skill.width, skill.height, skill.wrap, skill.hiddenThreshold, seed)
+        /**
+         * Sel du générateur du mélange. Historique : ne jamais le
+         * changer, les parties enregistrées en dépendent.
+         */
+        private const val SCRAMBLE_SALT = -0x5DEECE66DL
+
+        /** Essais maximum du générateur ORIGINAL (l'original : 10). */
+        private const val MAX_TRIES = 10
+
+        /**
+         * Fabrique un plateau mélangé : niveau [skill] (règles, branches),
+         * dimensions explicites (le niveau ne les porte plus), réseau
+         * construit par [generator], le tout reproductible depuis la
+         * graine. [forcedRoot] impose la racine (restauration).
+         */
+        fun generate(
+            skill: Skill,
+            width: Int,
+            height: Int,
+            generator: Generator,
+            seed: Long,
+            forcedRoot: Int = -1
+        ): Board = Board(
+            width = width,
+            height = height,
+            wrap = skill.wrap,
+            hiddenThreshold = skill.hiddenThreshold,
+            generator = generator,
+            branches = skill.branches,
+            seed = seed,
+            forcedRoot = forcedRoot
+        )
     }
 }

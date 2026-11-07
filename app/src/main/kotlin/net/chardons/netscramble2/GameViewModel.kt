@@ -16,6 +16,7 @@ import kotlin.random.Random
 import kotlin.time.Duration.Companion.milliseconds
 import net.chardons.netscramble2.game.Board
 import net.chardons.netscramble2.game.GameSpec
+import net.chardons.netscramble2.game.Generator
 import net.chardons.netscramble2.game.Skill
 import net.chardons.netscramble2.game.Sound
 
@@ -89,7 +90,21 @@ data class GameUiState(
 class GameViewModel : ViewModel() {
 
     private var seed: Long = newSeed()
-    private var board: Board = Board.generate(Skill.NORMAL, seed)
+
+    /**
+     * Niveau de la partie en cours. Depuis le chantier tailles, le
+     * niveau ne se déduit plus du plateau (les dimensions viennent de
+     * l'écran) : il est porté ici, et voyage dans la photographie.
+     */
+    private var skill: Skill = Skill.NORMAL
+
+    /**
+     * Plateau d'attente, aussitôt remplacé : l'activité restaure la
+     * partie sauvegardée ou en lance une neuve aux dimensions de
+     * l'écran, dans tous les cas dès l'onCreate.
+     */
+    private var board: Board =
+        Board.generate(Skill.NORMAL, 7, 7, Generator.TREE, seed)
     private var prevClicked = -1
     private var moves = 0
     private var elapsedMs = 0L
@@ -154,9 +169,20 @@ class GameViewModel : ViewModel() {
         }
     }
 
-    fun newGame(skill: Skill) {
+    /**
+     * Nouvelle partie au niveau [skill], sur un plateau de [width] x
+     * [height] — dimensions choisies par l'activité d'après l'écran
+     * (Screen.find, comme findMatrix de l'original) et figées pour
+     * toute la partie. Le générateur du réseau est tiré à pile ou face
+     * depuis la graine (donc reproductible à la restauration) : notre
+     * arbre couvrant, ou la croissance par branchements de l'original.
+     */
+    fun newGame(skill: Skill, width: Int, height: Int) {
         seed = newSeed()
-        board = Board.generate(skill, seed)
+        this.skill = skill
+        val generator =
+            if ((seed and 1L) == 0L) Generator.TREE else Generator.ORIGINAL
+        board = Board.generate(skill, width, height, generator, seed)
         prevClicked = -1
         moves = 0
         elapsedMs = 0
@@ -175,7 +201,9 @@ class GameViewModel : ViewModel() {
      * une cellule verrouillée ne tourne pas — elle répond d'un clic sec.
      */
     fun onCellTapped(index: Int) {
-        if (solvedNow || board.locked[index]) {
+        if (solvedNow || board.locked[index] || board.isEmpty(index)) {
+            // Cellule verrouillée ou libre du générateur ORIGINAL (aucun
+            // câble à tourner) : clic sec, comme une cellule verrouillée.
             emit(Sound.CLICK)
             return
         }
@@ -193,7 +221,8 @@ class GameViewModel : ViewModel() {
      * l'original — un repère visuel pour les tuiles dont le joueur est sûr.
      */
     fun onCellLongPressed(index: Int) {
-        if (solvedNow) return
+        // Rien à verrouiller sur une cellule libre (générateur ORIGINAL).
+        if (solvedNow || board.isEmpty(index)) return
         board.toggleLock(index)
         emit(Sound.POP)
         publish()
@@ -258,8 +287,12 @@ class GameViewModel : ViewModel() {
 
     /** Photographie sérialisable de la partie en cours (persistance). */
     fun currentSpec(): GameSpec = GameSpec(
-        skill = board.skillOf(),
+        skill = skill,
         seed = seed,
+        width = board.width,
+        height = board.height,
+        generator = board.generator,
+        root = board.forcedRoot,
         moves = moves,
         elapsedMs = elapsedMs,
         solverUsed = solverUsed,
@@ -283,6 +316,7 @@ class GameViewModel : ViewModel() {
         restored = true
         if (spec == null) return false
         seed = spec.seed
+        skill = spec.skill
         board = spec.buildBoard()
         prevClicked = spec.prevClicked
         moves = spec.moves
@@ -335,22 +369,16 @@ class GameViewModel : ViewModel() {
 
     private fun refresh(): GameUiState {
         val connected = board.connectedCells()
-        val solved = connected.all { it }
         return GameUiState(
-            skill = board.skillOf(),
+            skill = skill,
             board = board,
             connected = connected,
             moves = moves,
             elapsedMs = elapsedMs,
-            solved = solved,
+            solved = board.isSolved(),
             solverUsed = solverUsed,
             solving = solveQueue != null
         )
-    }
-
-    private fun Board.skillOf(): Skill = Skill.entries.first {
-        it.width == width && it.height == height && it.wrap == wrap &&
-            it.hiddenThreshold == hiddenThreshold
     }
 
     companion object {

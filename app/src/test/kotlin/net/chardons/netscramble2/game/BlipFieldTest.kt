@@ -18,7 +18,13 @@ class BlipFieldTest {
 
     /** Plateau 3×3 : serveur en T, deux bouts de chaîne, un terminal. */
     private fun tBoard(): Board {
-        val board = Board(3, 3, wrap = false, hiddenThreshold = 9, seed = 1L)
+        // Le serveur est imposé au centre (index 4) : la racine
+        // aléatoire du générateur ne doit pas troubler ce réseau fait
+        // main.
+        val board = Board(
+            3, 3, wrap = false, hiddenThreshold = 9,
+            generator = Generator.TREE, branches = 2, seed = 1L, forcedRoot = 4
+        )
         // On écrase la génération aléatoire par un réseau connu
         // (connections et rotations sont des tableaux mutables).
         for (i in 0 until board.size) {
@@ -103,7 +109,9 @@ class BlipFieldTest {
 
     @Test
     fun `every cell of a solved board eventually sees a blip`() {
-        val board = Board.generate(Skill.NOVICE, seed = 20261031L)
+        val board = Board.generate(
+            Skill.NOVICE, 5, 5, Generator.TREE, seed = 20261031L
+        )
         // On remet le plateau en solution : tous les câbles sont alignés.
         for (i in 0 until board.size) {
             if (board.rotations[i] != 0) board.rotateCell(i, (4 - board.rotations[i]) % 4)

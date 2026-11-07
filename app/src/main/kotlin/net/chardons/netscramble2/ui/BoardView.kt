@@ -143,9 +143,10 @@ class BoardView @JvmOverloads constructor(
     private val termPaint = Paint(Paint.ANTI_ALIAS_FLAG)
 
     // --- Drawables câbles : 5 formes de base seulement (droit, coude,
-    //     T, croix, bout — le masque 0 n'existe pas : toute cellule de
-    //     l'arbre couvrant a au moins une connexion), en deux versions :
-    //     normale (reliée au serveur, dessin sombre) et grise
+    //     T, croix, bout — le masque 0 n'a pas de forme : une cellule
+    //     libre du générateur ORIGINAL ne porte aucun câble et le
+    //     dessin la court-circuite avant de chercher sa forme), en deux
+    //     versions : normale (reliée au serveur, dessin sombre) et grise
     //     (déconnectée, parité greyOut de l'original : chaque canal RGB
     //     à 0,6 x valeur + 100, alpha inchangé). Les variantes grises
     //     sont générées par tools/tiles/convert_tiles.py depuis les
@@ -171,7 +172,7 @@ class BoardView @JvmOverloads constructor(
     // (U=1, R=2, D=4, L=8 ; un quart de tour horaire fait passer le
     // masque m au masque ((m shl 1) or (m ushr 3)) and 15).
     private val shapeOf = intArrayOf(
-        -1,                                   // 0 : n'existe pas
+        -1,                                   // 0 : cellule libre, jamais indexée ici
         4, 4, 1, 4, 0,                        // 1-5 : bout, bout, coude, bout, droit
         1, 2, 4, 1, 0,                        // 6-10 : coude, T, bout, coude, droit
         2, 1, 2, 2, 3                        // 11-15 : T, coude, T, T, croix
@@ -514,6 +515,10 @@ class BoardView @JvmOverloads constructor(
                     // background_locked / empty de l'original. Priorité
                     // comme Cell.doDraw : libre avant verrouillée avant
                     // normale (une cellule libre verrouillée reste grise).
+                    // Une cellule libre DU plateau (générateur ORIGINAL)
+                    // reçoit le fond empty, exactement comme Cell.doDraw
+                    // de l'original (Dir.FREE -> Image.EMPTY) : elle se
+                    // fond dans le décor hors plateau.
                     val bg = when {
                         dirs == Dir.NO_DIRS -> tileBgEmpty
                         b.locked[index] -> tileBgLocked
