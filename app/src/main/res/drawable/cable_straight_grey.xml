@@ -3,21 +3,21 @@
     xmlns:aapt="http://schemas.android.com/aapt"
     android:width="64dp"
     android:height="64dp"
-    android:viewportWidth="226.77"
-    android:viewportHeight="226.77"
+    android:viewportWidth="170.079"
+    android:viewportHeight="170.079"
 >
   <path
-    android:pathData="M131.1,226.77 L95.67,226.77 L95.67,0 L131.1,0 L131.1,226.77 Z"
+    android:pathData="M71.752,0 L98.327,0 L98.327,170.079 L71.752,170.079 Z"
       >
     <aapt:attr name="android:fillColor">
         <gradient
         android:type="linear"
-        android:startX="131.1" android:startY="177.17"
-        android:endX="95.67" android:endY="177.17">
+        android:startX="98.327" android:startY="119.685"
+        android:endX="71.752" android:endY="119.685">
         <item android:offset="0" android:color="#FF646464"/>
-        <item android:offset="0.437932" android:color="#FFA0A0A0"/>
-        <item android:offset="0.50012" android:color="#FFDCDCDC"/>
-        <item android:offset="0.562233" android:color="#FFA0A0A0"/>
+        <item android:offset="0.4379" android:color="#FFA0A0A0"/>
+        <item android:offset="0.5001" android:color="#FFDCDCDC"/>
+        <item android:offset="0.5622" android:color="#FFA0A0A0"/>
         <item android:offset="1" android:color="#FF646464"/>
         </gradient>
     </aapt:attr>

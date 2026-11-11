@@ -270,6 +270,78 @@ class Gradient(object):
     stops = []   # (offset, '#RRGGBB', alpha 0-255)
 
 
+def parse_gradient(g, path):
+    """Lit un <linearGradient>/<radialGradient> en Gradient (regles VD).
+
+    Reutilise par tools/graphics/generate_graphics.py (SVG a calques) :
+    source unique des regles de conversion.
+    """
+    grad = Gradient()
+    grad.kind = 'linear' if g.tagName == 'linearGradient' else 'radial'
+    if g.getAttribute('gradientUnits') != 'userSpaceOnUse':
+        raise ValueError('%s : gradient %s hors userSpaceOnUse '
+                         '(le VD ne sait pas faire autrement)'
+                         % (path, g.getAttribute('id')))
+    grad.attrs = {
+        'startX': g.getAttribute('x1'), 'startY': g.getAttribute('y1'),
+        'endX': g.getAttribute('x2'), 'endY': g.getAttribute('y2'),
+        'centerX': g.getAttribute('cx'), 'centerY': g.getAttribute('cy'),
+        'gradientRadius': g.getAttribute('r'),
+    }
+    stops = []
+    for s in g.getElementsByTagName('stop'):
+        col = s.getAttribute('stop-color')
+        if not re.match(r'^#[0-9A-Fa-f]{6}$', col):
+            raise ValueError('%s : stop-color %r non supporte '
+                             '(attendu #RRGGBB)' % (path, col))
+        op = s.getAttribute('stop-opacity')
+        alpha = int(round(float(op) * 255)) if op else 255
+        stops.append((s.getAttribute('offset'), col, alpha))
+    grad.stops = stops
+    return grad
+
+
+def collect_gradients(doc, path):
+    """Recense tous les gradients d'un document, par '#id'."""
+    grads = {}
+    for g in doc.getElementsByTagName('linearGradient') \
+            + doc.getElementsByTagName('radialGradient'):
+        grad = parse_gradient(g, path)
+        grads['#' + g.getAttribute('id')] = grad
+    return grads
+
+
+def path_fill(p, grads, path, allow_stroke=False):
+    """(fill, even_odd) d'un <path>, memes regles que le VectorDrawable.
+
+    fill = ('solid', '#RRGGBB', alpha) ou ('grad', Gradient).
+    Reutilise par tools/graphics/generate_graphics.py, qui demande
+    allow_stroke=True puis convertit le contour en attributs
+    android:stroke* (convert_tiles, lui, refuse toujours les contours).
+    """
+    if (not allow_stroke and p.hasAttribute('stroke')
+            and p.getAttribute('stroke') != 'none'):
+        raise ValueError('%s : stroke non supporte par le VD' % path)
+    fill = p.getAttribute('fill')
+    m = re.match(r'^url\(#([A-Za-z0-9_-]+)\)$', fill)
+    if m:
+        key = '#' + m.group(1)
+        if key not in grads:
+            raise ValueError('%s : gradient inconnu %s' % (path, fill))
+        f = ('grad', grads[key])
+    elif re.match(r'^#[0-9A-Fa-f]{6}$', fill):
+        f = ('solid', fill, 255)
+    elif re.match(r'^#[0-9A-Fa-f]{8}$', fill):
+        f = ('solid', fill[3:], int(fill[1:3], 16))
+    else:
+        raise ValueError('%s : fill non supporte : %r' % (path, fill))
+    rule = (p.getAttribute('fill-rule') or 'nonzero').lower()
+    if rule not in ('nonzero', 'evenodd'):
+        raise ValueError('%s : fill-rule non supporte : %r'
+                         % (path, rule))
+    return f, (rule == 'evenodd')
+
+
 def parse_svg(path):
     """Lit un SVG et renvoie (viewport, [element], gradients par id).
 
@@ -283,78 +355,55 @@ def parse_svg(path):
         raise ValueError('%s : viewBox attendu "0 0 L H", lu %r'
                          % (path, root.getAttribute('viewBox')))
     vp = (vb[2], vb[3])
-    grads = {}
-    for g in doc.getElementsByTagName('linearGradient') \
-            + doc.getElementsByTagName('radialGradient'):
-        grad = Gradient()
-        grad.kind = 'linear' if g.tagName == 'linearGradient' else 'radial'
-        if g.getAttribute('gradientUnits') != 'userSpaceOnUse':
-            raise ValueError('%s : gradient %s hors userSpaceOnUse '
-                             '(le VD ne sait pas faire autrement)'
-                             % (path, g.getAttribute('id')))
-        grad.attrs = {
-            'startX': g.getAttribute('x1'), 'startY': g.getAttribute('y1'),
-            'endX': g.getAttribute('x2'), 'endY': g.getAttribute('y2'),
-            'centerX': g.getAttribute('cx'), 'centerY': g.getAttribute('cy'),
-            'gradientRadius': g.getAttribute('r'),
-        }
-        stops = []
-        for s in g.getElementsByTagName('stop'):
-            col = s.getAttribute('stop-color')
-            if not re.match(r'^#[0-9A-Fa-f]{6}$', col):
-                raise ValueError('%s : stop-color %r non supporte '
-                                 '(attendu #RRGGBB)' % (path, col))
-            op = s.getAttribute('stop-opacity')
-            alpha = int(round(float(op) * 255)) if op else 255
-            stops.append((s.getAttribute('offset'), col, alpha))
-        grad.stops = stops
-        grads['#' + g.getAttribute('id')] = grad
+    grads = collect_gradients(doc, path)
     elements = []
     for p in doc.getElementsByTagName('path'):
-        d = p.getAttribute('d')
-        if p.hasAttribute('stroke') and p.getAttribute('stroke') != 'none':
-            raise ValueError('%s : stroke non supporte par le VD' % path)
         if p.hasAttribute('transform'):
             raise ValueError('%s : transform non supporte' % path)
-        fill = p.getAttribute('fill')
-        m = re.match(r'^url\(#([A-Za-z0-9_-]+)\)$', fill)
-        if m:
-            key = '#' + m.group(1)
-            if key not in grads:
-                raise ValueError('%s : gradient inconnu %s' % (path, fill))
-            f = ('grad', grads[key])
-        elif re.match(r'^#[0-9A-Fa-f]{6}$', fill):
-            f = ('solid', fill, 255)
-        elif re.match(r'^#[0-9A-Fa-f]{8}$', fill):
-            f = ('solid', fill[3:], int(fill[1:3], 16))
-        else:
-            raise ValueError('%s : fill non supporte : %r' % (path, fill))
-        rule = (p.getAttribute('fill-rule') or 'nonzero').lower()
-        if rule not in ('nonzero', 'evenodd'):
-            raise ValueError('%s : fill-rule non supporte : %r'
-                             % (path, rule))
-        elements.append(('path', d, f, rule == 'evenodd'))
+        f, even_odd = path_fill(p, grads, path)
+        elements.append(('path', p.getAttribute('d'), f, even_odd))
     return vp, elements
 
 
 # ---------------------------------------------------------------- sortie VD
 
-def write_vd(out_path, vp, elements, grey):
+def write_vd(out_path, vp, elements, grey, dp=64):
+    """Écrit le VectorDrawable.
+
+    elements = ('path', pathdata, fill, even_odd) ou, avec contour,
+    ('path', pathdata, fill, even_odd, stroke) où stroke =
+    (couleur_#RRGGBB, alpha, largeur, linejoin, linecap). Le contour
+    devient android:strokeColor / strokeWidth / strokeLineJoin /
+    strokeLineCap (support demandé par tools/graphics/
+    generate_graphics.py : les elements a 4 champs restent valides
+    et produisent une sortie inchangee, byte pour byte).
+    """
     lines = []
     lines.append('<?xml version="1.0" encoding="utf-8"?>')
     lines.append('<vector xmlns:android='
                  '"http://schemas.android.com/apk/res/android"')
     lines.append('    xmlns:aapt="http://schemas.android.com/aapt"')
-    lines.append('    android:width="64dp"')
-    lines.append('    android:height="64dp"')
+    lines.append('    android:width="%ddp"' % dp)
+    lines.append('    android:height="%ddp"' % dp)
     lines.append('    android:viewportWidth="%s"' % vp[0])
     lines.append('    android:viewportHeight="%s"' % vp[1])
     lines.append('>')
-    for _, d, fill, even_odd in elements:
+    for el in elements:
+        d, fill, even_odd = el[1], el[2], el[3]
+        stroke = el[4] if len(el) > 4 else None
         d_vd = convert_path(d)
         attrs = ['    android:pathData="%s"' % d_vd]
         if even_odd:
             attrs.append('    android:fillType="evenOdd"')
+        if stroke is not None:
+            s_rgb, s_alpha, s_width, s_join, s_cap = stroke
+            attrs.append('    android:strokeColor="%s"'
+                         % conv_color(s_rgb, s_alpha, grey))
+            attrs.append('    android:strokeWidth="%s"' % s_width)
+            if s_join and s_join != 'miter':
+                attrs.append('    android:strokeLineJoin="%s"' % s_join)
+            if s_cap and s_cap != 'butt':
+                attrs.append('    android:strokeLineCap="%s"' % s_cap)
         if fill[0] == 'solid':
             attrs.append('    android:fillColor="%s"'
                          % conv_color(fill[1], fill[2], grey))
