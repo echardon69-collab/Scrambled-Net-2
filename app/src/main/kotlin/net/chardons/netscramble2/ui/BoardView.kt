@@ -106,6 +106,18 @@ class BoardView @JvmOverloads constructor(
     private var animDurationMs = LongArray(0)
     private var lastRotations = IntArray(0)
 
+    // --- Correctif « l'apparence suit la rotation » : pendant son
+    //     animation, une cellule garde l'apparence (câble grisé ou
+    //     énergisé, écran de terminal, DEL du serveur) qu'elle avait
+    //     AVANT le coup. Le modèle tourne instantanément, mais la
+    //     bascule visuelle d'énergie ne se fait qu'à la fin de la
+    //     rotation. On fige pour cela l'état effectivement dessiné à
+    //     la trame précédente. ---
+    private var animFromConnected = BooleanArray(0)
+    private var lastDrawnConnected = BooleanArray(0)
+    private var animFromServerWired = false
+    private var lastDrawnServerWired = false
+
     // --- M2 : blips de données (modèle pur, voir BlipField) ---
     private var blips: BlipField? = null
     private var blipsLastAdvanceMs = 0L
@@ -288,6 +300,10 @@ class BoardView @JvmOverloads constructor(
             animFromAngle = FloatArray(board.size)
             animDurationMs = LongArray(board.size)
             lastRotations = board.rotations.copyOf()
+            animFromConnected = BooleanArray(board.size)
+            lastDrawnConnected = BooleanArray(board.size)
+            animFromServerWired = false
+            lastDrawnServerWired = false
             blips = BlipField(board)
             blipsLastAdvanceMs = now
         } else {
@@ -303,6 +319,14 @@ class BoardView @JvmOverloads constructor(
                     animFromAngle[i] = visualCurrent[i]
                     animStartMs[i] = now
                     animDurationMs[i] = ROTATE_MS_PER_QUARTER * delta
+                    // L'apparence de la cellule est gelée sur celle
+                    // d'avant le coup : l'énergie (câble énergisé, écran
+                    // de terminal, blips) n'apparaît qu'une fois la
+                    // rotation finie.
+                    animFromConnected[i] = lastDrawnConnected[i]
+                    if (i == board.serverIndex) {
+                        animFromServerWired = lastDrawnServerWired
+                    }
                     field?.clear(i)
                 }
             }
@@ -489,14 +513,27 @@ class BoardView @JvmOverloads constructor(
                 }
             }
 
-            val serverWired = serverIsFullyWired(b, connected)
+            val serverWiredNow = serverIsFullyWired(b, connected)
+            // Pendant sa propre rotation, le serveur garde aussi son
+            // apparence d'avant le coup (DEL pleines ou partielles).
+            val serverWired =
+                if (animDurationMs[b.serverIndex] > 0L) animFromServerWired
+                else serverWiredNow
+            lastDrawnServerWired = serverWired
 
             for (y in 0 until b.height) {
                 for (x in 0 until b.width) {
                     val index = y * b.width + x
                     val left = x * cellPx
                     val top = y * cellPx
-                    val isConnected = connected[index]
+                    // Apparence effective : pendant sa rotation, la
+                    // cellule garde son état d'avant le coup. Le câble
+                    // bascule gris ou énergisé, et le terminal s'allume
+                    // ou s'éteint, seulement une fois la rotation finie.
+                    val isConnected =
+                        if (animDurationMs[index] > 0L) animFromConnected[index]
+                        else connected[index]
+                    lastDrawnConnected[index] = isConnected
 
                     // Cellule cachée (Insane) : câbles masqués tant que la
                     // partie n'est pas gagnée et que le solveur ne les a pas
@@ -610,6 +647,11 @@ class BoardView @JvmOverloads constructor(
                     // Cellule cachée : pas de câble, pas de blip
                     // (l'équipement reste visible mais ne trahit rien).
                     if (b.isHidden(index) && !solved && !b.revealed[index]) continue
+                    // Rotation en cours : pas d'énergie visible avant la
+                    // fin de la rotation. La cellule a été vidée de ses
+                    // blips au début du coup ; un blip reçu pendant
+                    // l'animation n'apparaît qu'une fois celle-ci finie.
+                    if (animDurationMs[index] > 0L) continue
 
                     val x = (index % b.width) * cellPx
                     val y = (index / b.width) * cellPx
