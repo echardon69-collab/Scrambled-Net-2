@@ -106,13 +106,19 @@ class BoardView @JvmOverloads constructor(
     private var animDurationMs = LongArray(0)
     private var lastRotations = IntArray(0)
 
-    // --- Correctif « l'apparence suit la rotation » : pendant son
-    //     animation, une cellule garde l'apparence (câble grisé ou
-    //     énergisé, écran de terminal, DEL du serveur) qu'elle avait
-    //     AVANT le coup. Le modèle tourne instantanément, mais la
-    //     bascule visuelle d'énergie ne se fait qu'à la fin de la
-    //     rotation. On fige pour cela l'état effectivement dessiné à
-    //     la trame précédente. ---
+    // --- Correctif « l'apparence suit la rotation » : le modèle tourne
+    //     instantanément, mais la bascule visuelle d'énergie (câble grisé
+    //     ou énergisé, écran de terminal, DEL du serveur, blips) ne se
+    //     fait qu'à la fin de la rotation — et pas seulement pour la
+    //     cellule qui tourne : un coup peut alimenter ou priver d'énergie
+    //     une branche entière. Tant qu'une rotation est en cours
+    //     quelque part, TOUT le plateau garde l'apparence d'avant le
+    //     coup (l'état effectivement dessiné à la trame précédente) :
+    //     toutes les tuiles concernées basculent au même moment quand
+    //     la rotation s'achève. Sans cela, les autres tuiles changeaient
+    //     d'apparence immédiatement au tap, la tuile pivot gardant
+    //     encore son ancien état — le réseau paraissait à moitié à
+    //     jour pendant l'animation. ---
     private var animFromConnected = BooleanArray(0)
     private var lastDrawnConnected = BooleanArray(0)
     private var animFromServerWired = false
@@ -312,6 +318,7 @@ class BoardView @JvmOverloads constructor(
             // perdre ses blips à la cellule (comme Cell.rotate de
             // l'original).
             val field = blips
+            var rotating = false
             for (i in visualTarget.indices) {
                 val delta = ((board.rotations[i] - lastRotations[i]) % 4 + 4) % 4
                 if (delta != 0) {
@@ -319,16 +326,19 @@ class BoardView @JvmOverloads constructor(
                     animFromAngle[i] = visualCurrent[i]
                     animStartMs[i] = now
                     animDurationMs[i] = ROTATE_MS_PER_QUARTER * delta
-                    // L'apparence de la cellule est gelée sur celle
-                    // d'avant le coup : l'énergie (câble énergisé, écran
-                    // de terminal, blips) n'apparaît qu'une fois la
-                    // rotation finie.
-                    animFromConnected[i] = lastDrawnConnected[i]
-                    if (i == board.serverIndex) {
-                        animFromServerWired = lastDrawnServerWired
-                    }
                     field?.clear(i)
+                    rotating = true
                 }
+            }
+            if (rotating) {
+                // Un coup peut changer l'énergie d'une branche entière :
+                // c'est le PLATEAU ENTIER qui est gelé sur l'apparence
+                // d'avant le coup (état effectivement dessiné à la
+                // trame précédente). L'énergie — câbles énergisés,
+                // écrans de terminaux, DEL du serveur, blips — bascule
+                // partout au même moment, une fois la rotation finie.
+                animFromConnected = lastDrawnConnected.copyOf()
+                animFromServerWired = lastDrawnServerWired
             }
             lastRotations = board.rotations.copyOf()
         }
@@ -477,6 +487,12 @@ class BoardView @JvmOverloads constructor(
             }
         }
 
+        // Tant qu'une rotation est en cours quelque part, le plateau
+        // ENTIER garde l'apparence d'avant le coup (gelé dans update) :
+        // toutes les tuiles concernées par le coup basculent ensemble
+        // quand la dernière rotation s'achève.
+        val appearanceFrozen = animDurationMs.any { it > 0L }
+
         canvas.withTranslation(panX, panY) {
             // --- Décor : tuiles grises partout dans la zone visible hors
             //     plateau (parité findMatrix/cellMatrix de l'original,
@@ -514,10 +530,11 @@ class BoardView @JvmOverloads constructor(
             }
 
             val serverWiredNow = serverIsFullyWired(b, connected)
-            // Pendant sa propre rotation, le serveur garde aussi son
-            // apparence d'avant le coup (DEL pleines ou partielles).
+            // Pendant une rotation, le serveur garde aussi son
+            // apparence d'avant le coup (DEL pleines ou partielles) :
+            // c'est le gel du plateau entier, pas seulement le sien.
             val serverWired =
-                if (animDurationMs[b.serverIndex] > 0L) animFromServerWired
+                if (appearanceFrozen) animFromServerWired
                 else serverWiredNow
             lastDrawnServerWired = serverWired
 
@@ -526,12 +543,12 @@ class BoardView @JvmOverloads constructor(
                     val index = y * b.width + x
                     val left = x * cellPx
                     val top = y * cellPx
-                    // Apparence effective : pendant sa rotation, la
+                    // Apparence effective : pendant une rotation, chaque
                     // cellule garde son état d'avant le coup. Le câble
                     // bascule gris ou énergisé, et le terminal s'allume
                     // ou s'éteint, seulement une fois la rotation finie.
                     val isConnected =
-                        if (animDurationMs[index] > 0L) animFromConnected[index]
+                        if (appearanceFrozen) animFromConnected[index]
                         else connected[index]
                     lastDrawnConnected[index] = isConnected
 
@@ -620,8 +637,11 @@ class BoardView @JvmOverloads constructor(
             //     cellule voisine (comme l'original, BoardView.doDraw).
             //     M5 : sautée entièrement quand l'animation est coupée
             //     (le modèle BlipField gèle, puis reprend tel quel).
+            //     Gel d'apparence : sautée aussi pendant une rotation —
+            //     pas de flux de données visible tant que le réseau
+            //     n'a pas fini de basculer.
             val field = blips
-            if (field != null && blipsEnabled) {
+            if (field != null && blipsEnabled && !appearanceFrozen) {
                 if (now - blipsLastAdvanceMs >= BLIPS_MS) {
                     field.advance()
                     // Rattrapage borné : si on a raté plus d'une période
@@ -647,11 +667,6 @@ class BoardView @JvmOverloads constructor(
                     // Cellule cachée : pas de câble, pas de blip
                     // (l'équipement reste visible mais ne trahit rien).
                     if (b.isHidden(index) && !solved && !b.revealed[index]) continue
-                    // Rotation en cours : pas d'énergie visible avant la
-                    // fin de la rotation. La cellule a été vidée de ses
-                    // blips au début du coup ; un blip reçu pendant
-                    // l'animation n'apparaît qu'une fois celle-ci finie.
-                    if (animDurationMs[index] > 0L) continue
 
                     val x = (index % b.width) * cellPx
                     val y = (index / b.width) * cellPx
