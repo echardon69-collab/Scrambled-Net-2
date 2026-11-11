@@ -51,6 +51,12 @@
     <string name="win_new">New game</string>
     <string name="win_continue">Continue</string>
 
+    <!-- Confirmation avant d'ecraser une partie en cours -->
+    <string name="confirm_new_title">New game?</string>
+    <string name="confirm_change_title">Change level?</string>
+    <string name="confirm_change_ok">Change level</string>
+    <string name="confirm_progress_message">A game is in progress (%1$d moves, %2$s). It will be lost.</string>
+
     <!-- Records personnels -->
     <string name="scores_title">Personal bests</string>
     <string name="scores_movestitle">Fewest moves</string>

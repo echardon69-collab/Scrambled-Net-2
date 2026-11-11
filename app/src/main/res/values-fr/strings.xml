@@ -49,6 +49,12 @@
     <string name="win_new">Nouvelle partie</string>
     <string name="win_continue">Continuer</string>
 
+    <!-- Confirmation avant d'effacer une partie en cours -->
+    <string name="confirm_new_title">Nouvelle partie ?</string>
+    <string name="confirm_change_title">Changer de niveau ?</string>
+    <string name="confirm_change_ok">Changer de niveau</string>
+    <string name="confirm_progress_message">Une partie est en cours (%1$d coups, %2$s). Elle sera perdue.</string>
+
     <!-- Records personnels -->
     <string name="scores_title">Records personnels</string>
     <string name="scores_movestitle">Moins de coups</string>

@@ -26,7 +26,7 @@ import net.chardons.netscramble2.ui.EdgeToEdge
  * lifecycle-aware : l'affichage se met en pause tout seul quand l'app
  * passe en arrière-plan (plus de timers à gérer à la main).
  *
- * TODO (phase bonus) : seed partageable, undo, tailles custom,
+ * TODO (phase bonus) : seed partageable, tailles custom,
  * thèmes daltoniens.
  */
 class MainActivity : AppCompatActivity() {
@@ -154,6 +154,39 @@ class MainActivity : AppCompatActivity() {
             .boardSize(skill, landscape)
     }
 
+    /**
+     * Lance [action] directement s'il n'y a rien à perdre (plateau
+     * vierge ou déjà gagné), sinon demande confirmation d'abord : un
+     * clic malheureux sur « Nouvelle partie » ou un changement de
+     * niveau ne doit plus effacer une partie en cours (roadmap du
+     * 10 nov. 2026). Le dialogue rappelle l'avancement (coups, temps),
+     * le bouton de confirmation porte le libellé [confirmRes], Annuler
+     * referme sans rien toucher.
+     */
+    private fun confirmIfInProgress(
+        titleRes: Int,
+        confirmRes: Int,
+        action: () -> Unit
+    ) {
+        val state = viewModel.uiState.value
+        if (state.solved || state.moves == 0) {
+            action()
+            return
+        }
+        MaterialAlertDialogBuilder(this)
+            .setTitle(titleRes)
+            .setMessage(
+                getString(
+                    R.string.confirm_progress_message,
+                    state.moves,
+                    formatTime(state.elapsedMs)
+                )
+            )
+            .setPositiveButton(confirmRes) { _, _ -> action() }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.menu_main, menu)
         // Coche le niveau courant.
@@ -201,9 +234,18 @@ class MainActivity : AppCompatActivity() {
         }
         return when {
             item.itemId == R.id.menu_new -> {
-                val current = viewModel.uiState.value.skill
-                val (width, height) = boardSize(current)
-                viewModel.newGame(current, width, height)
+                // Confirmation si une partie est en jeu (roadmap du
+                // 10 nov. 2026) : un clic malheureux sur le bouton
+                // « Nouvelle partie » ne doit plus perdre un plateau
+                // en cours. Plateau vierge ou gagné : rien à perdre.
+                confirmIfInProgress(
+                    R.string.confirm_new_title,
+                    R.string.win_new
+                ) {
+                    val current = viewModel.uiState.value.skill
+                    val (width, height) = boardSize(current)
+                    viewModel.newGame(current, width, height)
+                }
                 true
             }
             item.itemId == R.id.sounds_off || item.itemId == R.id.sounds_quiet ||
@@ -239,11 +281,21 @@ class MainActivity : AppCompatActivity() {
                 true
             }
             skill != null -> {
-                item.isChecked = true
+                // Même protection que « Nouvelle partie » : changer de
+                // niveau écrase aussi la partie en cours, avec un
+                // libellé adapté (« Changer de niveau »).
                 val previous = viewModel.uiState.value.skill
                 val (width, height) = boardSize(skill)
-                viewModel.newGame(skill, width, height)
-                showSkillHelpIfNeeded(skill, previous)
+                confirmIfInProgress(
+                    R.string.confirm_change_title,
+                    R.string.confirm_change_ok
+                ) {
+                    // La coche du sous-menu ne bouge qu'à la confirmation :
+                    // Annuler doit laisser le niveau inchangé.
+                    item.isChecked = true
+                    viewModel.newGame(skill, width, height)
+                    showSkillHelpIfNeeded(skill, previous)
+                }
                 true
             }
             item.itemId == R.id.menu_scores -> {
