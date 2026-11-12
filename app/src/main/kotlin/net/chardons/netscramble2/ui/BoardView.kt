@@ -17,10 +17,12 @@ import net.chardons.netscramble2.R
 import net.chardons.netscramble2.game.BlipField
 import net.chardons.netscramble2.game.Board
 import net.chardons.netscramble2.game.Dir
+import net.chardons.netscramble2.game.Generator
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.withTranslation
 import androidx.core.graphics.withSave
 import kotlin.math.ceil
+import kotlin.math.cos
 import kotlin.math.floor
 import kotlin.random.Random
 
@@ -68,12 +70,13 @@ import kotlin.random.Random
  *      reste fixe, exactement comme Cell.doDraw de l'original ;
  *    . des « blips » de données parcourent les câbles alignés
  *      (portage de Cell.advanceBlips / transferBlips : le serveur émet
- *      une génération sur six, le flux tourne aux embranchements, meurt
- *      aux terminaux et disparaît quand on tourne une cellule ; les
- *      écrans des terminaux affichent des lignes de « données », comme
- *      Cell.drawTermData). La boucle de trame (postInvalidateOnAnimation)
- *      ne tourne que tant que la vue est affichée : hors écran, rien
- *      n'est redessiné.
+ *      à son rythme — métronome pour TREE, à-coups pour ORIGINAL,
+ *      effet « électricité » — le flux tourne aux embranchements,
+ *      meurt aux terminaux et disparaît quand on tourne une
+ *      cellule ; les écrans des terminaux affichent des lignes de
+ *      « données », comme Cell.drawTermData). La boucle de trame
+ *      (postInvalidateOnAnimation) ne tourne que tant que la vue
+ *      est affichée : hors écran, rien n'est redessiné.
  *
  * TODO (roadmap) : accessibilité TalkBack.
  */
@@ -622,7 +625,19 @@ class BoardView @JvmOverloads constructor(
                         else -> null
                     }
                     if (equip != null) {
-                        equip.alpha = 255
+                        // Effet « électricité » : le serveur respire au
+                        // rythme de son générateur (TREE métronome,
+                        // ORIGINAL scintillement) tant que les
+                        // animations vivent ; coupées, ou pendant le
+                        // gel d'apparence d'une rotation, il redevient
+                        // statique.
+                        equip.alpha =
+                            if (index == b.serverIndex &&
+                                blipsEnabled && !appearanceFrozen) {
+                                serverBreathAlpha(b, now)
+                            } else {
+                                255
+                            }
                         equip.setBounds(
                             left.toInt(), top.toInt(),
                             (left + cellPx).toInt(), (top + cellPx).toInt()
@@ -738,6 +753,56 @@ class BoardView @JvmOverloads constructor(
         drawCircle(cx + dir.dx * d, cy + dir.dy * d, radius, blipPaint)
     }
 
+    /**
+     * Effet « électricité » (décision d'eric du 12 nov. 2026) : le
+     * serveur RESPIRE, et son rythme identifie le moteur qui a créé
+     * le plateau — TREE : pulsation chorale, métronomique (l'arbre
+     * couvrant ordonné) ; ORIGINAL : scintillement irrégulier (les
+     * essais de createNet). Seule la LUMINANCE est modulée, jamais
+     * la teinte : rouge et vert gardent leur sens (éteint / câblé),
+     * et la signature survit aux thèmes daltoniens comme au gris.
+     */
+    private fun serverBreathAlpha(b: Board, now: Long): Int {
+        val span = (255 - SERVER_BREATH_MIN_ALPHA).toFloat()
+        val value = when (b.generator) {
+            Generator.TREE -> {
+                val phase = (now % SERVER_BREATH_PERIOD_MS).toFloat() /
+                    SERVER_BREATH_PERIOD_MS
+                val pulsation = (2.0 * Math.PI * phase).toFloat()
+                0.5f - 0.5f * cos(pulsation)
+            }
+
+            Generator.ORIGINAL -> {
+                val step = now / SERVER_FLICKER_STEP_MS
+                val frac = (now % SERVER_FLICKER_STEP_MS).toFloat() /
+                    SERVER_FLICKER_STEP_MS
+                val from = flickerValue(b.seed, step)
+                val to = flickerValue(b.seed, step + 1L)
+                from + (to - from) * frac
+            }
+        }
+        return (SERVER_BREATH_MIN_ALPHA + span * value).toInt()
+    }
+
+    /**
+     * Valeur pseudo-aléatoire dans [0, 1[ du pas de scintillement
+     * [step] du serveur ORIGINAL : hachage SplitMix64 de
+     * (graine, pas) — déterministe, sans état à entretenir.
+     *
+     * Les deux constantes du mélange (nombre d'or 64 bits et
+     * finisseur de SplitMix64) ont leur bit de poids fort à 1 :
+     * écrites en complément à deux NÉGATIF — la forme que Kotlin
+     * accepte, les littéraux hexadécimaux étant signés (c'est le
+     * même motif de bits que 0x9E3779B97F4A7C15 et
+     * 0xBF58476D1CE4E5B9).
+     */
+    private fun flickerValue(seed: Long, step: Long): Float {
+        var z = seed xor (step * -0x61C8864680B583EBL)
+        z = (z xor (z ushr 30)) * -0x40A7B892E31B1A47L
+        z = z xor (z ushr 31)
+        return (z ushr 40) / (1L shl 24).toFloat()
+    }
+
     companion object {
         private const val MIN_CELL_DP = 26f   // jamais de case plus petite que ceci
         private const val MAX_CELL_DP = 96f
@@ -767,5 +832,16 @@ class BoardView @JvmOverloads constructor(
 
         /** Écart vertical des lignes de « données » des terminaux. */
         private const val TERM_LINE_STEP_DP = 2f
+
+        // --- Effet « électricité » : signature du serveur ---
+
+        /** Période de respiration du serveur TREE (métronome strict). */
+        private const val SERVER_BREATH_PERIOD_MS = 1600L
+
+        /** Durée d'un pas de scintillement du serveur ORIGINAL. */
+        private const val SERVER_FLICKER_STEP_MS = 140L
+
+        /** Basse de la respiration : le serveur ne paraît jamais éteint. */
+        private const val SERVER_BREATH_MIN_ALPHA = 170
     }
 }

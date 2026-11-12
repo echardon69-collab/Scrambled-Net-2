@@ -62,7 +62,14 @@ class Board(
      * repris de l'enum Skill de l'original.
      */
     val branches: Int,
-    seed: Long,
+    /**
+     * Graine du flux pseudo-aléatoire : la partie entière est
+     * reproductible depuis (dimensions, générateur, graine, racine).
+     * Exposée (effet « électricité » du 12 nov. 2026) : les rythmes
+     * de signature du serveur en dérivent sans consommer le flux
+     * du générateur.
+     */
+    val seed: Long,
     /**
      * Racine imposée du réseau, ou -1 pour la tirer du générateur. Une
      * racine imposée ne consomme AUCUN tirage : c'est ce que fait la

@@ -1,5 +1,7 @@
 package net.chardons.netscramble2.game
 
+import kotlin.random.Random
+
 /**
  * Champ de « blips » de données qui parcourent les câbles du plateau.
  * Portage fidèle de Cell.java de l'original (advanceBlips /
@@ -12,8 +14,12 @@ package net.chardons.netscramble2.game
  *    jambes câblées : le flux « tourne » aux embranchements ;
  *  - un blip sortant traversant le bord rejoint la cellule voisine si son
  *    câble est aligné, sinon il disparaît ;
- *  - le serveur émet de nouveaux blips sur toutes ses jambes une
- *    génération sur [SERVER_EVERY_GENERATIONS] ;
+ *  - le serveur émet de nouveaux blips sur toutes ses jambes câblées :
+ *    une génération sur [SERVER_EVERY_GENERATIONS] strictement avec le
+ *    générateur TREE (métronome), par à-coups irréguliers avec
+ *    ORIGINAL (effet « électricité », décision d'eric du 12 nov.
+ *    2026 : le rythme d'émission signe le moteur qui a créé le
+ *    plateau) ;
  *  - tourner une cellule efface ses blips ([clear], appelé par la vue) ;
  *  - un terminal (une seule jambe) absorbe : le blip entrant y meurt.
  *
@@ -33,9 +39,34 @@ class BlipField(private val board: Board) {
     /** Blips à transférer aux voisins pendant la génération courante. */
     private val transfer = IntArray(board.size)
 
-    /** Numéro de génération : le serveur émet quand generation % 6 == 0. */
+    /** Numéro de génération, incrémenté à chaque [advance]. */
     var generation = 0
         private set
+
+    /**
+     * Génération de la prochaine émission du serveur (générateur
+     * ORIGINAL uniquement) : chaque émission tire l'écart suivant
+     * dans [ORIGINAL_EMISSION_MIN_GENERATIONS]..
+     * [ORIGINAL_EMISSION_MAX_GENERATIONS] sur [jitter].
+     */
+    private var nextServerEmission = 0
+
+    /**
+     * Source des écarts d'émission du serveur ORIGINAL : instance
+     * DISTINCTE, enracinée sur la graine de la partie, qui ne
+     * consomme jamais le flux du générateur de plateau — la partie
+     * reste reproductible au tirage près.
+     */
+    private val jitter = Random(board.seed xor JITTER_SEED)
+
+    init {
+        if (board.generator == Generator.ORIGINAL) {
+            nextServerEmission = jitter.nextInt(
+                ORIGINAL_EMISSION_MIN_GENERATIONS,
+                ORIGINAL_EMISSION_MAX_GENERATIONS + 1
+            )
+        }
+    }
 
     /** Efface les blips d'une cellule (elle vient d'être tournée). */
     fun clear(index: Int) {
@@ -53,6 +84,23 @@ class BlipField(private val board: Board) {
      * jamais deux cellules en une génération.
      */
     fun advance() {
+        // Signature « électricité » : le rythme d'émission du serveur
+        // identifie le générateur. TREE reste un métronome strict
+        // (une génération sur six, comme l'original) ; ORIGINAL émet
+        // par à-coups irréguliers — la croissance par essais de
+        // createNet — d'écarts tirés de la graine (reproductibles).
+        val serverEmitsThisGeneration =
+            if (board.generator == Generator.TREE) {
+                generation % SERVER_EVERY_GENERATIONS == 0
+            } else if (generation >= nextServerEmission) {
+                nextServerEmission = generation + jitter.nextInt(
+                    ORIGINAL_EMISSION_MIN_GENERATIONS,
+                    ORIGINAL_EMISSION_MAX_GENERATIONS + 1
+                )
+                true
+            } else {
+                false
+            }
         // Phase 1 : chaque cellule consomme ses blips entrants, marque
         // ses blips sortants pour le transfert, et le serveur émet.
         for (index in 0 until board.size) {
@@ -78,8 +126,9 @@ class BlipField(private val board: Board) {
             }
             incoming[index] = 0
 
-            // Le serveur émet, une génération sur six, sur toutes ses jambes.
-            if (index == board.serverIndex && generation % SERVER_EVERY_GENERATIONS == 0) {
+            // Le serveur émet sur toutes ses jambes câblées, au rythme
+            // signé par son générateur (voir ci-dessus).
+            if (index == board.serverIndex && serverEmitsThisGeneration) {
                 for (dir in Dir.entries) {
                     if (Dir.contains(dirs, dir)) {
                         outgoing[index] = outgoing[index] or dir.bit
@@ -113,7 +162,19 @@ class BlipField(private val board: Board) {
     fun outgoingAt(index: Int): Int = outgoing[index]
 
     companion object {
-        /** Le serveur émet une génération sur six (Cell.advanceBlips). */
+        /** Le serveur TREE émet une génération sur six (Cell.advanceBlips). */
         const val SERVER_EVERY_GENERATIONS = 6
+
+        /** Écart d'émission minimal du serveur ORIGINAL (générations). */
+        const val ORIGINAL_EMISSION_MIN_GENERATIONS = 2
+
+        /** Écart d'émission maximal du serveur ORIGINAL (générations). */
+        const val ORIGINAL_EMISSION_MAX_GENERATIONS = 10
+
+        /**
+         * Sel décoratif de la graine : le flux des écarts d'émission
+         * ne partage aucune valeur avec le flux du générateur.
+         */
+        private const val JITTER_SEED = 0x5EED01L
     }
 }

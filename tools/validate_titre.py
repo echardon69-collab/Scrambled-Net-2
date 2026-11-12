@@ -173,8 +173,9 @@ check("Updater : PendingIntent mutable seulement là où le système l'exige",
 check("Updater : session fsync + commit + fermeture garantie",
       "session.fsync(out)" in updater_src
       and "session.commit(pending.intentSender)" in updater_src
-      and "finally {" in updater_src
-      and "session.close()" in updater_src)
+      and ("session.use { session ->" in updater_src
+           or ("finally {" in updater_src
+               and "session.close()" in updater_src)))
 check("Updater : progression déterminée, -1 si taille inconnue",
       "contentLengthLong" in updater_src
       and "onProgress(-1)" in updater_src)
