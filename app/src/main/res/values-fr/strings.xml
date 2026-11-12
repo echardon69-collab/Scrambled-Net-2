@@ -49,6 +49,19 @@
     <string name="win_new">Nouvelle partie</string>
     <string name="win_continue">Continuer</string>
 
+    <!-- Page titre (TitleActivity) -->
+    <string name="title_version">Version %1$s</string>
+    <string name="title_license">Dérivé de Scrambled Net (© 2007–2010 Ian Cameron Smith,\n© 2014 Michael Mueller), portage du jeu KDE KNetWalk.\nCette version : © 2026 Eric Chardon — GPL-2.0.</string>
+    <string name="title_loading">Chargement de la partie sauvegardée…</string>
+    <string name="title_checking">Vérification des mises à jour…</string>
+    <string name="title_update_available">La version %1$s est disponible.</string>
+    <string name="title_update_button">Mettre à jour</string>
+    <string name="title_play_button">Jouer</string>
+    <string name="title_download_status">Téléchargement de la version %1$s…</string>
+    <string name="title_install_status">Installation…</string>
+    <string name="title_install_permission">Autorisez l\'installation d\'applications inconnues dans les réglages Android, puis appuyez à nouveau sur Mettre à jour.</string>
+    <string name="title_install_failed">Échec de la mise à jour (%1$s). Vous pouvez continuer à jouer.</string>
+
     <!-- Confirmation avant d'effacer une partie en cours -->
     <string name="confirm_new_title">Nouvelle partie ?</string>
     <string name="confirm_change_title">Changer de niveau ?</string>

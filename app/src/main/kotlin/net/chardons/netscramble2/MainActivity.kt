@@ -61,7 +61,8 @@ class MainActivity : AppCompatActivity() {
         // toute collecte ; sans effet sur un ViewModel déjà vivant
         // (rotation d'écran), qui est forcément plus à jour. Sinon,
         // première visite : une partie Normal aux dimensions de l'écran.
-        val savedSpec = getPreferences(MODE_PRIVATE).getString(GAME_SPEC_KEY, null)
+        val savedSpec = getSharedPreferences(Persistence.FILE, MODE_PRIVATE)
+            .getString(Persistence.GAME_SPEC_KEY, null)
         if (!viewModel.restoreIfPending(GameSpec.decode(savedSpec))) {
             val (width, height) = boardSize(Skill.NORMAL)
             viewModel.newGame(Skill.NORMAL, width, height)
@@ -109,8 +110,10 @@ class MainActivity : AppCompatActivity() {
         // Parité avec l'état PAUSED de l'original : le jeu gèle, et la
         // partie est photographiée pour survivre à une mort du processus.
         viewModel.setClockPaused(true)
-        getPreferences(MODE_PRIVATE).edit {
-            putString(GAME_SPEC_KEY, viewModel.currentSpec().encode())
+        // Même fichier et même clé que la page titre (Persistence) :
+        // les sauvegardes antérieures restent lisibles à l'identique.
+        getSharedPreferences(Persistence.FILE, MODE_PRIVATE).edit {
+            putString(Persistence.GAME_SPEC_KEY, viewModel.currentSpec().encode())
         }
         super.onStop()
     }
@@ -394,9 +397,6 @@ class MainActivity : AppCompatActivity() {
     companion object {
         /** Clé SharedPreferences du mode sonore, reprise de l'original. */
         private const val SOUND_MODE_KEY = "soundMode"
-
-        /** Clé de la partie en cours photographiée pour persistance. */
-        private const val GAME_SPEC_KEY = "gameSpec"
 
         /** Clé du réglage d'animation, reprise de l'original. */
         private const val ANIM_ENABLED_KEY = "animEnable"

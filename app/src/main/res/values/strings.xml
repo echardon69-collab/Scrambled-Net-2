@@ -51,6 +51,19 @@
     <string name="win_new">New game</string>
     <string name="win_continue">Continue</string>
 
+    <!-- Page titre (TitleActivity) -->
+    <string name="title_version">Version %1$s</string>
+    <string name="title_license">Based on Scrambled Net (© 2007–2010 Ian Cameron Smith,\n© 2014 Michael Mueller), a port of the KDE game KNetWalk.\nThis version: © 2026 Eric Chardon — GPL-2.0.</string>
+    <string name="title_loading">Loading saved game…</string>
+    <string name="title_checking">Checking for updates…</string>
+    <string name="title_update_available">Version %1$s is available.</string>
+    <string name="title_update_button">Update</string>
+    <string name="title_play_button">Play</string>
+    <string name="title_download_status">Downloading version %1$s…</string>
+    <string name="title_install_status">Installing…</string>
+    <string name="title_install_permission">Allow this app to install unknown apps in Android settings, then tap Update again.</string>
+    <string name="title_install_failed">Update failed (%1$s). You can keep playing.</string>
+
     <!-- Confirmation avant d'ecraser une partie en cours -->
     <string name="confirm_new_title">New game?</string>
     <string name="confirm_change_title">Change level?</string>
