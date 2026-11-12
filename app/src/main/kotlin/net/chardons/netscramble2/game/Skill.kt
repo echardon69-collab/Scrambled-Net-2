@@ -6,13 +6,18 @@ package net.chardons.netscramble2.game
  *  - Novice / Normal / Expert : deux branches par cellule, pas de tore ;
  *  - Maître : trois branches et tore (le réseau boucle sur lui-même,
  *    les carrefours à trois voies apparaissent) ;
- *  - Dément (Insane) : comme Maître, plus les cellules câblées masquées.
+ *  - Dément (Insane) : comme Maître, plus les cellules câblées masquées ;
+ *  - Infini (Endless) : comme Maître, sur un plateau géant FIXE de
+ *    40 x 40 (voir [ENDLESS_SIZE]) qui ignore la matrice Screen — le
+ *    réseau y est toujours généré par le générateur ORIGINAL du jeu
+ *    d'origine (victoire par terminaux, comme à l'origine).
  *
  * La taille du plateau ne dépend plus du niveau depuis le chantier
  * « tailles fidèles » : elle vient de l'écran, via [Screen.find] puis
  * [Screen.boardSize], exactement comme le système Screen de l'original.
  * Ce que le niveau règle, c'est la complexité du réseau et ses règles
- * (tore, masquage).
+ * (tore, masquage). Seule exception : Infini, dont la taille est
+ * fixe et carrée quelle que soit la matrice de l'écran.
  */
 enum class Skill(
     /**
@@ -38,5 +43,17 @@ enum class Skill(
     NORMAL(branches = 2, wrap = false, hiddenThreshold = 9),
     EXPERT(branches = 2, wrap = false, hiddenThreshold = 9),
     MASTER(branches = 3, wrap = true, hiddenThreshold = 9),
-    INSANE(branches = 3, wrap = true, hiddenThreshold = 3);
+    INSANE(branches = 3, wrap = true, hiddenThreshold = 3),
+    ENDLESS(branches = 3, wrap = true, hiddenThreshold = 9);
+
+    companion object {
+        /**
+         * Côté du plateau du niveau Infini, FIXE et carré (40 x 40) :
+         * contrairement aux autres niveaux, la taille ne vient pas de
+         * la matrice Screen de l'écran. La caméra modulo (phase B du
+         * chantier Infini) bouclera sur ce plateau géant pour donner
+         * l'illusion d'un réseau sans bornes.
+         */
+        const val ENDLESS_SIZE = 40
+    }
 }

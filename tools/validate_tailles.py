@@ -88,10 +88,17 @@ sk_entries = re.findall(
     r"^\s{4}(\w+)\(branches = (\d+), wrap = (true|false), hiddenThreshold = (\d+)\)[,;]",
     skill_src, re.M)
 skills = {name: (int(br), wrap == "true", int(bl)) for name, br, wrap, bl in sk_entries}
-check("Skill.kt : 5 niveaux présents", len(skills) == 5, str(list(skills)))
+check("Skill.kt : 6 niveaux présents (5 originaux + Infini)",
+      len(skills) == 6, str(list(skills)))
 for name, expected in ORIGINAL_SKILL.items():
     check(f"Skill.kt : {name} = (branches, wrap, seuil) de l'original",
           skills.get(name) == expected, f"lu={skills.get(name)}")
+# Infini (chantier du 12 nov. 2026, spec validée par eric) : hors
+# original — comme Maître (3 branches, tore) mais sans masquage.
+check("Skill.kt : ENDLESS = 3 branches, tore, aucun masquage",
+      skills.get("ENDLESS") == (3, True, 9), f"lu={skills.get('ENDLESS')}")
+check("Skill.kt : taille fixe du niveau Infini (bypass Screen)",
+      re.search(r"const val ENDLESS_SIZE = 40", skill_src) is not None)
 check("Skill.kt : plus aucune dimension width/height",
       "width" not in skill_src and "height" not in skill_src)
 
@@ -177,7 +184,12 @@ vm_src = read("GameViewModel.kt")
 check("GameViewModel : la photographie transporte la consigne de racine",
       "root = board.forcedRoot" in vm_src)
 check("GameViewModel : tirage générateur déterministe depuis la graine",
-      "if ((seed and 1L) == 0L) Generator.TREE else Generator.ORIGINAL" in vm_src)
+      "(seed and 1L) == 0L" in vm_src and "Generator.TREE" in vm_src)
+check("GameViewModel : Infini force le générateur ORIGINAL (avant le tirage)",
+      vm_src.index("skill == Skill.ENDLESS")
+      < vm_src.index("(seed and 1L) == 0L")
+      and re.search(r"skill == Skill\.ENDLESS\)\s*\{\s*Generator\.ORIGINAL",
+                    vm_src) is not None)
 check("GameViewModel : le niveau est porté par le ViewModel",
       re.search(r"private var skill: Skill", vm_src) is not None and
       "board.skillOf" not in vm_src)

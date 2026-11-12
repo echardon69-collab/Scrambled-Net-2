@@ -248,6 +248,26 @@ class BoardTest {
     }
 
     @Test
+    fun `endless board is fixed 40 by 40 on every screen matrix`() {
+        // Infini : la matrice Screen est bypassée — la taille est fixe
+        // et carrée, quelle que soit la matrice de l'écran (et son
+        // orientation, d'où le tore bien réel du niveau).
+        for (screen in Screen.entries) {
+            for (landscape in listOf(true, false)) {
+                assertEquals(
+                    Skill.ENDLESS_SIZE to Skill.ENDLESS_SIZE,
+                    screen.boardSize(Skill.ENDLESS, landscape)
+                )
+            }
+        }
+        // Les règles du niveau : trois branches et tore, aucun masquage
+        // (le masquage à la Dément reste le propre de Dément).
+        assertEquals(3, Skill.ENDLESS.branches)
+        assertTrue(Skill.ENDLESS.wrap)
+        assertEquals(9, Skill.ENDLESS.hiddenThreshold)
+    }
+
+    @Test
     fun `screen sizes follow the original matrix`() {
         // Grand côté horizontal en paysage, vertical en portrait ;
         // Maître et Dément partagent la taille (valeurs de

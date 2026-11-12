@@ -173,15 +173,25 @@ class GameViewModel : ViewModel() {
      * Nouvelle partie au niveau [skill], sur un plateau de [width] x
      * [height] — dimensions choisies par l'activité d'après l'écran
      * (Screen.find, comme findMatrix de l'original) et figées pour
-     * toute la partie. Le générateur du réseau est tiré à pile ou face
+     * toute la partie, sauf pour Infini dont la taille est fixe
+     * (40 x 40). Le générateur du réseau est tiré à pile ou face
      * depuis la graine (donc reproductible à la restauration) : notre
-     * arbre couvrant, ou la croissance par branchements de l'original.
+     * arbre couvrant, ou la croissance par branchements de l'original —
+     * sauf pour Infini, qui FORCE le générateur ORIGINAL : victoire
+     * par terminaux comme à l'origine, et la signature « électricité »
+     * du serveur (scintillement) devient la carte d'identité constante
+     * du niveau.
      */
     fun newGame(skill: Skill, width: Int, height: Int) {
         seed = newSeed()
         this.skill = skill
-        val generator =
-            if ((seed and 1L) == 0L) Generator.TREE else Generator.ORIGINAL
+        val generator = if (skill == Skill.ENDLESS) {
+            Generator.ORIGINAL
+        } else if ((seed and 1L) == 0L) {
+            Generator.TREE
+        } else {
+            Generator.ORIGINAL
+        }
         board = Board.generate(skill, width, height, generator, seed)
         prevClicked = -1
         moves = 0

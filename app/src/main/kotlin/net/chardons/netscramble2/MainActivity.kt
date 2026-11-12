@@ -125,7 +125,7 @@ class MainActivity : AppCompatActivity() {
         binding.statusSkill.text = getString(
             listOf(
                 R.string.skill_novice, R.string.skill_normal, R.string.skill_expert,
-                R.string.skill_master, R.string.skill_insane
+                R.string.skill_master, R.string.skill_insane, R.string.skill_endless
             )[state.skill.ordinal]
         )
         binding.statusTime.text = getString(R.string.status_time, formatTime(state.elapsedMs))
@@ -201,6 +201,7 @@ class MainActivity : AppCompatActivity() {
             Skill.EXPERT -> skillMenu?.findItem(R.id.skill_expert)
             Skill.MASTER -> skillMenu?.findItem(R.id.skill_master)
             Skill.INSANE -> skillMenu?.findItem(R.id.skill_insane)
+            Skill.ENDLESS -> skillMenu?.findItem(R.id.skill_endless)
         }?.isChecked = true
         // Coche le mode sonore courant.
         val soundMenu = menu.findItem(R.id.menu_sounds).subMenu
@@ -233,6 +234,7 @@ class MainActivity : AppCompatActivity() {
             R.id.skill_expert -> Skill.EXPERT
             R.id.skill_master -> Skill.MASTER
             R.id.skill_insane -> Skill.INSANE
+            R.id.skill_endless -> Skill.ENDLESS
             else -> null
         }
         return when {

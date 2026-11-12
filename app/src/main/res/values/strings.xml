@@ -36,6 +36,7 @@
     <string name="skill_expert">Expert</string>
     <string name="skill_master">Master</string>
     <string name="skill_insane">Insane</string>
+    <string name="skill_endless">Endless</string>
 
     <!-- Barre d'état -->
     <string name="status_moves">Moves: %1$d</string>

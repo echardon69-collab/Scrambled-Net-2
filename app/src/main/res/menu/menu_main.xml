@@ -48,6 +48,9 @@
                         <item
                             android:id="@+id/skill_insane"
                             android:title="@string/skill_insane" />
+                        <item
+                            android:id="@+id/skill_endless"
+                            android:title="@string/skill_endless" />
                     </group>
                 </menu>
             </item>

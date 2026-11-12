@@ -35,6 +35,7 @@
     <string name="skill_expert">Expert</string>
     <string name="skill_master">Maître</string>
     <string name="skill_insane">Dément</string>
+    <string name="skill_endless">Infini</string>
 
     <string name="status_moves">Coups : %1$d</string>
     <string name="status_time">Temps : %1$s</string>

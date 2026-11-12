@@ -29,7 +29,7 @@ class ScoresActivity : AppCompatActivity() {
     /** Libellés des niveaux, dans l'ordre de l'énumération. */
     private val labels = listOf(
         R.string.skill_novice, R.string.skill_normal, R.string.skill_expert,
-        R.string.skill_master, R.string.skill_insane
+        R.string.skill_master, R.string.skill_insane, R.string.skill_endless
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
