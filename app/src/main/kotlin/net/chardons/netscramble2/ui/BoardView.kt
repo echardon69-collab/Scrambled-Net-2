@@ -59,7 +59,8 @@ import kotlin.random.Random
  *    et le dézoom est borné pour ne jamais découvrir plus d'une tuile
  *    grise horizontalement ;
  *  - viewport « caméra » : le plateau est un monde virtuel, potentiellement
- *    plus grand que l'écran ; on le déplace (pan) et on le zoome au pinçage,
+ *    plus grand que l'écran ; on le déplace (pan) et on le zoome au pinçage
+ *    — ancré sur le point de pincement : la tuile sous les doigts y reste —
  *    avec une taille de case minimale garantie. Niveau Infini (ENDLESS) :
  *    caméra « modulo » — le pan n'y est pas borné, dessin et taps passent
  *    par le reste euclidien (floorMod) sur l'étendue du plateau, qui se
@@ -289,8 +290,24 @@ class BoardView @JvmOverloads constructor(
             val b = board ?: return false
             // Plancher de dézoom : plateau + anneau gris = largeur de la
             // vue, jamais au-dessous (on ne découvrirait que du gris).
-            cellPx = (cellPx * detector.scaleFactor)
+            // Le zoom est ANCRÉ sur le point de pincement (milieu des
+            // deux doigts) : la tuile qui se trouve sous les doigts y
+            // reste. Sans la compensation du pan ci-dessous, le monde
+            // grandirait autour de son origine et l'affichage glisserait
+            // sous les doigts à chaque pincement (défaut relevé par
+            // eric le 13 nov. 2026). Le pan est recalculé avec l'ANCIEN
+            // cellPx (growth = nouveau / ancien) AVANT de l'écraser.
+            // clampPan() peut ensuite reprendre la main pour ne pas
+            // découvrir de gris sur les niveaux encadrés ; sur Infini
+            // (pan non borné), l'ancrage est exact à la tuile près.
+            val focusX = detector.focusX
+            val focusY = detector.focusY
+            val newCellPx = (cellPx * detector.scaleFactor)
                 .coerceIn(floorCellPx(b), maxCellPx)
+            val growth = if (cellPx > 0f) newCellPx / cellPx else 1f
+            panX = focusX - (focusX - panX) * growth
+            panY = focusY - (focusY - panY) * growth
+            cellPx = newCellPx
             clampPan()
             invalidate()
             return true

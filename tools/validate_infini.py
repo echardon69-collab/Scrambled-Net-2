@@ -538,6 +538,11 @@ check("Board.kt : la fabrique generate endosse le niveau réel",
 vw = strip_comments(view_src)
 check("BoardView : le drapeau Infini est dérivé du niveau du plateau",
       "val endless = b.skill == Skill.ENDLESS" in vw)
+check("BoardView : Skill est IMPORTÉ (la phase B livrée le 12 nov. "
+      "l'oubliait — écran rouge « Unresolved reference » corrigé par "
+      "eric le 13 nov., régression désormais bloquée ici)",
+      re.search(r"(?m)^import net\.chardons\.netscramble2\.game\.Skill$",
+                view_src) is not None)
 check("BoardView : plancher de dézoom propre à Infini (marge de cases)",
       re.search(r"if \(b\.skill == Skill\.ENDLESS\) \{\s*"
                 r"val span = minOf\(b\.width, b\.height\)\.toFloat\(\)\s*"
@@ -709,4 +714,4 @@ if failures:
     for name in failures:
         print(f"  - {name}")
     sys.exit(1)
-print(f"TOUT PASSE : {checks}/{checks} vérifications (phase A du niveau Infini).")
+print(f"TOUT PASSE : {checks}/{checks} vérifications (chantier niveau Infini).")
