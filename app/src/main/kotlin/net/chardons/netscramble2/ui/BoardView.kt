@@ -140,6 +140,52 @@ class BoardView @JvmOverloads constructor(
     private var blips: BlipField? = null
     private var blipsLastAdvanceMs = 0L
 
+    // --- Mise en évidence de la tuile manipulée (décision d'eric du
+    //     13 nov. 2026 : « les deux ») : reprise des deux mécanismes de
+    //     l'original (Cell.java de Ian Cameron Smith). Le BLINK est la
+    //     bande diagonale contrastée (blanche la nuit, ardoise le
+    //     jour — l'original la dessinait blanche sur son plateau
+    //     sombre) qui balaie la tuile en 200 ms —
+    //     feedback visuel d'une action refusée (tuile verrouillée ou
+    //     libre), et clignement de la dernière tuile manipulée à la
+    //     victoire. Le CURSEUR DE FOCUS est le cadre rouge translucide
+    //     de l'original, réservé chez nous à l'auto-solveur : il suit
+    //     les coups programmés, un coup par tick. Pas de focus au doigt
+    //     ni de navigation clavier : le tap agit immédiatement, un
+    //     curseur persistant serait du bruit visuel. ---
+    private var blinkIndex = -1
+    private var blinkStartMs = 0L
+    private var lastTurnedCell = -1
+    private val blinkPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    // Couleur de la bande selon le thème : l'original la dessinait
+    // blanche sur son plateau sombre ; notre thème jour est clair
+    // (cellules vides #E6E6E6 -> #CFCFCF) où le blanc serait
+    // invisible (retour UAT du 13 nov.) — ardoise le jour (R.color
+    // .blink_band), blanc la nuit. Résolue une fois : le changement
+    // de thème du système recrée l'activité (pas de configChanges
+    // uiMode au manifest).
+    private val blinkBandColor = ContextCompat.getColor(context, R.color.blink_band)
+    private val focusPaint = Paint()
+
+    /**
+     * Tuile du coup EN COURS de l'auto-solveur (index), -1 si aucun :
+     * posé par l'activité à chaque état, dessiné en cadre rouge
+     * translucide par-dessus la tuile. Transitoire, jamais sérialisé.
+     */
+    var solverFocus = -1
+
+    /**
+     * Démarre le clignement d'une tuile : la bande diagonale
+     * (blinkBandColor, contrastée dans les deux thèmes) la balaie en
+     * [BLINK_MS] (feedback négatif ou clignement de victoire). La
+     * boucle de trame reste active tant qu'il vit.
+     */
+    private fun startBlink(index: Int) {
+        blinkIndex = index
+        blinkStartMs = SystemClock.elapsedRealtime()
+        postInvalidateOnAnimation()
+    }
+
     /**
      * Réglage « Animation » (M5, parité avec setAnimEnable de
      * l'original) : coupe les blips de données et le bruit des écrans
@@ -341,12 +387,25 @@ class BoardView @JvmOverloads constructor(
     private val tapDetector = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
         override fun onSingleTapUp(e: MotionEvent): Boolean {
             val index = hitCell(e.x, e.y) ?: return false
+            // Blink : feedback VISUEL du refus (tuile verrouillée ou
+            // libre du générateur ORIGINAL), en plus du clic sec du
+            // ViewModel. Le prédicat est le MÊME que celui du
+            // ViewModel (garde-fou validate_focus : les deux doivent
+            // rester identiques).
+            val b = board
+            if (b != null && (b.locked[index] || b.isEmpty(index))) {
+                startBlink(index)
+            }
             onCellTapped?.invoke(index)
             return true
         }
 
         override fun onLongPress(e: MotionEvent) {
             val index = hitCell(e.x, e.y) ?: return
+            // Blink : appui long sur une tuile libre, comme
+            // l'original — feedback négatif (le ViewModel reste
+            // silencieux sur ce cas, aucun POP).
+            if (board?.isEmpty(index) == true) startBlink(index)
             onCellLongPressed?.invoke(index)
         }
 
@@ -391,6 +450,10 @@ class BoardView @JvmOverloads constructor(
     fun update(board: Board, connected: BooleanArray, solved: Boolean) {
         this.board = board
         this.connected = connected
+        // Clignement de victoire : il porte sur la DERNIÈRE tuile
+        // manipulée (joueur ou solveur) — capturée avant que la
+        // transition ci-dessous ne la consomme.
+        val wasSolved = this.solved
         this.solved = solved
         var freshBoard = false
         // Une taille de case héritée d'un plateau précédent ne doit jamais
@@ -424,6 +487,8 @@ class BoardView @JvmOverloads constructor(
             lastDrawnServerWired = false
             blips = BlipField(board)
             blipsLastAdvanceMs = now
+            // Plateau neuf : aucune tuile manipulée à cligner.
+            lastTurnedCell = -1
             freshBoard = true
         } else {
             // Détection des rotations survenues depuis le dernier rendu :
@@ -440,6 +505,9 @@ class BoardView @JvmOverloads constructor(
                     animStartMs[i] = now
                     animDurationMs[i] = ROTATE_MS_PER_QUARTER * delta
                     field?.clear(i)
+                    // Dernière tuile manipulée (joueur ou solveur) :
+                    // c'est elle que clignera la victoire.
+                    lastTurnedCell = i
                     rotating = true
                 }
             }
@@ -454,6 +522,14 @@ class BoardView @JvmOverloads constructor(
                 animFromServerWired = lastDrawnServerWired
             }
             lastRotations = board.rotations.copyOf()
+        }
+        // Clignement de victoire : la DERNIÈRE tuile manipulée (joueur
+        // ou solveur) cligne quand le plateau bascule résolu — comme
+        // le blink(changedCell) de l'original à chaque victoire. Une
+        // partie restaurée déjà résolue ne cligne pas : aucune tuile
+        // n'a été manipulée depuis la mise en place du plateau.
+        if (solved && !wasSolved && lastTurnedCell >= 0) {
+            startBlink(lastTurnedCell)
         }
         if (!viewportInitialized) {
             fitBoard()
@@ -939,7 +1015,8 @@ class BoardView @JvmOverloads constructor(
         // permanente de l'original (setDelay(30)), mais arrêté
         // automatiquement dès que la vue quitte l'écran — ou dès que
         // plus rien ne s'anime (M5 : animation coupée, rotations finies).
-        if (blipsEnabled || animDurationMs.any { it > 0L }) {
+        // Le blink vit 200 ms : la trame reste active jusqu'à sa fin.
+        if (blipsEnabled || animDurationMs.any { it > 0L } || blinkIndex >= 0) {
             postInvalidateOnAnimation()
         }
     }
@@ -1074,6 +1151,36 @@ class BoardView @JvmOverloads constructor(
                 (left + cellPx).toInt(), (top + cellPx).toInt()
             )
             equip.draw(this)
+        }
+
+        // --- Mise en évidence, par-dessus tout (câbles et équipement).
+        // Curseur de focus de l'auto-solveur : cadre rouge translucide,
+        // trait épais d'un huitième de la largeur de case, rectangle
+        // amputé d'un pixel — exactement le focus de l'original.
+        if (index == solverFocus) {
+            focusPaint.style = Paint.Style.STROKE
+            focusPaint.color = FOCUS_RED
+            focusPaint.strokeWidth = cellPx / 8f
+            drawRect(left, top, left + cellPx - 1f, top + cellPx - 1f, focusPaint)
+        }
+        // Blink : bande diagonale contrastée qui balaie la tuile en
+        // BLINK_MS — les deux phases de l'original (le trait part du
+        // bord bas, achève la diagonale, sort au coin opposé).
+        if (index == blinkIndex) {
+            val pos = ((now - blinkStartMs).toFloat() / BLINK_MS) * (cellPx * 2f)
+            if (pos < cellPx * 2f) {
+                blinkPaint.style = Paint.Style.STROKE
+                blinkPaint.strokeWidth = BLINK_STROKE_DP * screenDensity
+                blinkPaint.color = blinkBandColor
+                if (pos < cellPx) {
+                    drawLine(left, top + pos, left + pos, top, blinkPaint)
+                } else {
+                    val hp = pos - cellPx
+                    drawLine(left + hp, top + cellPx, left + cellPx, top + hp, blinkPaint)
+                }
+            } else {
+                blinkIndex = -1
+            }
         }
     }
 
@@ -1214,6 +1321,18 @@ class BoardView @JvmOverloads constructor(
     companion object {
         private const val MIN_CELL_DP = 26f   // jamais de case plus petite que ceci
         private const val MAX_CELL_DP = 96f
+
+        // --- Mise en évidence de la tuile manipulée (13 nov. 2026) :
+        //     constantes de l'original (Cell.java de Ian Cameron Smith),
+        //     reprises telles quelles. ---
+        /** Durée du blink : la bande balaie la tuile en 200 ms. */
+        private const val BLINK_MS = 200L
+
+        /** Épaisseur du trait du blink : 5 dp, comme l'original. */
+        private const val BLINK_STROKE_DP = 5f
+
+        /** Rouge translucide du curseur de focus : 38 pour cent d'opacité. */
+        private const val FOCUS_RED = 0x60FF0000
 
         /** Tuiles grises encadrant le plateau (au moins une, et le pan
          *  s'arrête dessus : la limite du plateau est toujours visible). */

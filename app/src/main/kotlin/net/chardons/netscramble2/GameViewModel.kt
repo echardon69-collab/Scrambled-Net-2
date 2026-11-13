@@ -50,7 +50,14 @@ data class GameUiState(
     /** L'auto-solveur a-t-il été utilisé ? (les scores ne comptent plus). */
     val solverUsed: Boolean = false,
     /** L'auto-solveur travaille-t-il en ce moment ? */
-    val solving: Boolean = false
+    val solving: Boolean = false,
+    /**
+     * Tuile du coup EN COURS de l'auto-solveur (index), -1 si aucun :
+     * le curseur rouge de la vue suit les coups programmés, un coup par
+     * tick, comme le focus de l'original. Transitoire : jamais sérialisé
+     * dans GameSpec, remis à -1 à la fin ou à l'arrêt du solveur.
+     */
+    val solverFocus: Int = -1
 ) {
     // Tableau dans une data class : on compare les contenus, pas les références.
     override fun equals(other: Any?): Boolean {
@@ -63,7 +70,8 @@ data class GameUiState(
                 elapsedMs == other.elapsedMs &&
                 solved == other.solved &&
                 solverUsed == other.solverUsed &&
-                solving == other.solving
+                solving == other.solving &&
+                solverFocus == other.solverFocus
     }
 
     override fun hashCode(): Int {
@@ -75,6 +83,7 @@ data class GameUiState(
         result = 31 * result + solved.hashCode()
         result = 31 * result + solverUsed.hashCode()
         result = 31 * result + solving.hashCode()
+        result = 31 * result + solverFocus
         return result
     }
 }
@@ -113,6 +122,13 @@ class GameViewModel : ViewModel() {
 
     /** File des coups restant à jouer par l'auto-solveur (null = inactif). */
     private var solveQueue: ArrayDeque<Int>? = null
+
+    /**
+     * Tuile du dernier coup JOUÉ par l'auto-solveur (déverrouillage ou
+     * rotation) : le curseur rouge de la vue reste dessus pendant
+     * l'animation du coup, puis saute au suivant. Transitoire.
+     */
+    private var solverFocusIndex = -1
 
     /** Jeu gelé quand l'app n'est plus visible (chrono et solveur). */
     private var clockPaused = false
@@ -161,9 +177,17 @@ class GameViewModel : ViewModel() {
                 // En arrière-plan (ou une fois résolu), tout gèle : le chrono
                 // et le solveur n'avancent que pendant que l'app est visible,
                 // comme l'état PAUSED de l'original.
-                if (!clockPaused && !solvedNow) {
+                if (!clockPaused && (!solvedNow || solveQueue != null)) {
+                    // Une fois résolu, le chrono gèle, mais le solveur
+                    // achève SA file : le coup qui résout le plateau
+                    // laisse la file vide non close — sans ce passage,
+                    // le curseur rouge resterait sur la dernière tuile
+                    // pour toujours (retour UAT du 13 nov.).
+                    val wasSolved = solvedNow
                     playOneSolveMoveIfNeeded()
-                    elapsedMs += TICK_MS.inWholeMilliseconds
+                    if (!wasSolved) {
+                        elapsedMs += TICK_MS.inWholeMilliseconds
+                    }
                     publish()
                 }
             }
@@ -204,6 +228,7 @@ class GameViewModel : ViewModel() {
         elapsedMs = 0
         solverUsed = false
         solveQueue = null
+        solverFocusIndex = -1 // partie neuve : aucun curseur de solveur
         // Plateau neuf : pas de son de connexion, juste le son de départ.
         lastConnectedCount = -1
         emit(Sound.START)
@@ -256,6 +281,7 @@ class GameViewModel : ViewModel() {
         val queue = solveQueue
         if (queue != null) {
             solveQueue = null
+            solverFocusIndex = -1 // arrêt manuel : le curseur disparaît
             publish()
             return
         }
@@ -279,17 +305,25 @@ class GameViewModel : ViewModel() {
             when {
                 board.locked[index] -> {
                     board.toggleLock(index)
+                    // Déverrouillée, mais pas encore tournée : la cellule
+                    // repasse EN TÊTE de la file (chaque cellule n'y figure
+                    // qu'une fois — sans ça, le solveur s'arrêterait avant
+                    // la fin sur un plateau qui compte des verrous).
+                    queue.addFirst(index)
+                    solverFocusIndex = index
                     return
                 }
                 steps != 0 -> {
                     board.rotateCell(index, steps)
                     board.reveal(index)
+                    solverFocusIndex = index
                     return
                 }
                 // Déjà en place : le joueur l'a tournée lui-même, au suivant.
             }
         }
         solveQueue = null // file épuisée : le plateau est résolu
+        solverFocusIndex = -1 // le curseur rouge disparaît avec le solveur
     }
 
     /**
@@ -345,6 +379,10 @@ class GameViewModel : ViewModel() {
         solverUsed = spec.solverUsed
         solveQueue = spec.solveQueue.takeIf { it.isNotEmpty() }
             ?.let { ArrayDeque(it) }
+        // Le curseur repart de rien : le premier tick de la file
+        // restaurée posera la tuile de son coup (les coups déjà joués
+        // ne se rejouent pas, le curseur n'a pas d'historique).
+        solverFocusIndex = -1
         lastConnectedCount = board.connectedCells().count { it }
         _uiState.value = refresh()
         return true
@@ -398,7 +436,8 @@ class GameViewModel : ViewModel() {
             elapsedMs = elapsedMs,
             solved = board.isSolved(),
             solverUsed = solverUsed,
-            solving = solveQueue != null
+            solving = solveQueue != null,
+            solverFocus = solverFocusIndex
         )
     }
 

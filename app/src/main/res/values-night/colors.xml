@@ -10,4 +10,8 @@
 
     <!-- Brouillard d'Infini (palette sombre) : plus noir que le fond. -->
     <color name="fog_cell">#0B0E12</color>
+
+    <!-- Blink : blanc la nuit, comme l'original sur son plateau
+         sombre (le jour, la bande est ardoise, cf. values/colors.xml). -->
+    <color name="blink_band">#FFFFFFFF</color>
 </resources>

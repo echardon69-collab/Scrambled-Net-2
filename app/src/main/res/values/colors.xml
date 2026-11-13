@@ -18,6 +18,14 @@
          pleine, plus foncée que le fond du plateau, sans interaction. -->
     <color name="fog_cell">#39424D</color>
 
+    <!-- Blink : bande diagonale qui balaie une tuile refusée ou la
+         tuile gagnante. L'original la dessinait BLANCHE — sur son
+         plateau sombre. Notre thème jour est clair (cellules vides
+         #E6E6E6 -> #CFCFCF) : le blanc y serait invisible (retour
+         UAT du 13 nov.) — la bande prend la couleur contrastée du
+         thème : ardoise le jour, blanc la nuit. -->
+    <color name="blink_band">#FF39424D</color>
+
     <!-- Icône de lancement : fond de l'icône adaptative (API 26+) et du
          repli API 24-25. Blanc opaque — les lanceurs ne laissent pas passer
          la transparence (un fond transparent s'affiche en noir sur

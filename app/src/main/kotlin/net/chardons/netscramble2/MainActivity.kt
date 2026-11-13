@@ -131,6 +131,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun render(state: GameUiState) {
         val board = state.board ?: return
+        // Curseur de focus de l'auto-solveur : la tuile du coup en
+        // cours, avant le rendu (cadre rouge de la vue).
+        binding.boardView.solverFocus = state.solverFocus
         binding.boardView.update(board, state.connected ?: return, state.solved)
         binding.statusMoves.text = getString(R.string.status_moves, state.moves)
         binding.statusSkill.text = getString(
