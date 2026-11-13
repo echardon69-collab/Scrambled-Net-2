@@ -153,6 +153,27 @@ class BoardView @JvmOverloads constructor(
             if (value) postInvalidateOnAnimation()
         }
 
+    /**
+     * Réglage « Brouillard » (phase C du chantier Infini, 13 nov.
+     * 2026) : limite la visibilité du niveau Infini aux abords des
+     * tuiles connectées au serveur (Chebyshev <= FOG_RADIUS_CELLS,
+     * sur le tore). NOUVELLES PARTIES SEULEMENT : l'activité pose la
+     * valeur au lancement d'une partie et n'y retouche plus jamais —
+     * basculer le réglage en cours de partie ne change rien à chaud
+     * (spec validée le 12 nov. 2026). OFF par défaut.
+     */
+    var fogEnabled: Boolean = false
+
+    /**
+     * Visibilité courante du brouillard, DÉRIVÉE de [connected] à
+     * chaque update (zéro état sérialisé : rien ne survit à une
+     * sauvegarde, la zone se referme d'elle-même au débranchement).
+     * Non null uniquement quand le brouillard s'applique : réglage
+     * actif, niveau Infini, partie non encore gagnée (la victoire
+     * révèle tout).
+     */
+    private var fogVisible: BooleanArray? = null
+
     // Bruit visuel des « données » sur les écrans de terminaux.
     private val rng = Random.Default
 
@@ -167,6 +188,7 @@ class BoardView @JvmOverloads constructor(
 
     // --- Peintures (allouées une seule fois, jamais dans onDraw) ---
     private val boardPaint = Paint()
+    private val fogPaint = Paint()
     private val blipPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val termPaint = Paint(Paint.ANTI_ALIAS_FLAG)
 
@@ -236,6 +258,7 @@ class BoardView @JvmOverloads constructor(
 
     init {
         boardPaint.style = Paint.Style.FILL
+        fogPaint.style = Paint.Style.FILL
         // Les drawables de formes (normales et grises) sont déjà
         // chargés au moment de leur déclaration ; ils ne portent plus
         // de filtre de couleur, la variante grise est un drawable
@@ -322,6 +345,16 @@ class BoardView @JvmOverloads constructor(
         // Une taille de case héritée d'un plateau précédent ne doit jamais
         // rester sous le plancher du plateau courant.
         cellPx = cellPx.coerceAtLeast(floorCellPx(board))
+        // Brouillard d'Infini (phase C) : visibilité DÉRIVÉE, recalculée
+        // à chaque coup — s'ouvre quand on connecte, se referme quand
+        // on débranche ; la victoire révèle tout. Le serveur étant
+        // toujours connecté, il y a toujours une zone visible.
+        fogVisible =
+            if (fogEnabled && board.skill == Skill.ENDLESS && !solved) {
+                board.fogVisibility(connected)
+            } else {
+                null
+            }
         val now = SystemClock.elapsedRealtime()
         if (board !== shownBoard || visualTarget.size != board.size) {
             // Nouveau plateau : tout est posé d'emblée, aucun angle résiduel.
@@ -497,12 +530,18 @@ class BoardView @JvmOverloads constructor(
         val b = board ?: return null
         val cx = floor((x - panX) / cellPx).toInt()
         val cy = floor((y - panY) / cellPx).toInt()
-        if (b.skill == Skill.ENDLESS) {
-            return Math.floorMod(cy, b.height) * b.width +
+        val index = if (b.skill == Skill.ENDLESS) {
+            Math.floorMod(cy, b.height) * b.width +
                 Math.floorMod(cx, b.width)
+        } else {
+            if (cx < 0 || cx >= b.width || cy < 0 || cy >= b.height) return null
+            cy * b.width + cx
         }
-        if (cx < 0 || cx >= b.width || cy < 0 || cy >= b.height) return null
-        return cy * b.width + cx
+        // Brouillard : une tuile cachée est SANS interaction — ni
+        // rotation au tap, ni verrouillage au long-press.
+        val fog = fogVisible
+        if (fog != null && !fog[index]) return null
+        return index
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -628,15 +667,25 @@ class BoardView @JvmOverloads constructor(
             //     sont des multiples exacts de la taille de case dans
             //     un repère continu, aucun raccord ne se voit).
             if (endless) {
+                // Brouillard (phase C) : sur Infini seul, une tuile
+                // cachée se dessine en case sombre pleine — ni câble,
+                // ni équipement, ni blip. Le brouillard est dérivé par
+                // INDEX (floorMod) : toutes les copies visibles d'une
+                // même tuile partagent sa visibilité, sans couture.
+                val fog = fogVisible
                 for (wy in minY until maxY) {
                     for (wx in minX until maxX) {
-                        drawBoardCell(
-                            b, connected, appearanceFrozen, serverWired,
-                            solved, now,
+                        val index =
                             Math.floorMod(wy, b.height) * b.width +
-                                Math.floorMod(wx, b.width),
-                            wx * cellPx, wy * cellPx
-                        )
+                                Math.floorMod(wx, b.width)
+                        if (fog != null && !fog[index]) {
+                            drawFogCell(wx * cellPx, wy * cellPx)
+                        } else {
+                            drawBoardCell(
+                                b, connected, appearanceFrozen, serverWired,
+                                solved, now, index, wx * cellPx, wy * cellPx
+                            )
+                        }
                     }
                 }
             } else {
@@ -686,12 +735,19 @@ class BoardView @JvmOverloads constructor(
                 // du tore (le modèle boucle déjà) apparaît au bord opposé
                 // de la copie voisine : aucune couture fonctionnelle.
                 if (endless) {
+                    // Brouillard : pas de blips sur les tuiles cachées
+                    // (les connectées, elles, sont visibles par
+                    // définition — le flux anime toujours le réseau).
+                    val fog = fogVisible
                     for (wy in minY until maxY) {
                         for (wx in minX until maxX) {
+                            val index =
+                                Math.floorMod(wy, b.height) * b.width +
+                                    Math.floorMod(wx, b.width)
+                            if (fog != null && !fog[index]) continue
                             drawCellBlips(
                                 field, b, connected, solved,
-                                Math.floorMod(wy, b.height) * b.width +
-                                    Math.floorMod(wx, b.width),
+                                index,
                                 wx * cellPx, wy * cellPx,
                                 frac, activeColor, idleColor, half, radius
                             )
@@ -718,6 +774,19 @@ class BoardView @JvmOverloads constructor(
         if (blipsEnabled || animDurationMs.any { it > 0L }) {
             postInvalidateOnAnimation()
         }
+    }
+
+    /**
+     * Dessine une tuile CACHÉE par le brouillard d'Infini : case
+     * pleine sombre, ressource couleur fog_cell déclinée en jour et
+     * nuit (values-night), comme le fond du plateau. Aucun câble,
+     * aucun équipement, aucun blip — et hitCell refuse l'interaction
+     * dessus : la tuile cachée est purement décorative, la zone
+     * visible se découvre en construisant le réseau.
+     */
+    private fun Canvas.drawFogCell(left: Float, top: Float) {
+        fogPaint.color = ContextCompat.getColor(context, R.color.fog_cell)
+        drawRect(left, top, left + cellPx, top + cellPx, fogPaint)
     }
 
     /**

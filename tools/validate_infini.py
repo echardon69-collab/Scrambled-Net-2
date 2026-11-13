@@ -705,6 +705,206 @@ check("Miroir négatif : hors ENDLESS, clampPan borne toujours le pan "
                 r"        val ring = GREY_RING_CELLS \* cellPx", vw) is not None)
 
 # ---------------------------------------------------------------------------
+# Phase C — brouillard d'Infini (dérivé de connected, rayon de Chebyshev,
+# tuile cachée sombre sans interaction, OFF par défaut, nouvelles parties
+# seulement, révélation totale à la victoire).
+# ---------------------------------------------------------------------------
+
+fog_radius_m = re.search(r"const val FOG_RADIUS_CELLS = (\d+)", bd)
+
+check("Board : la dérivation du brouillard existe (fogVisibility, "
+      "dérivée PURE de connected — zéro état sérialisé)",
+      "fun fogVisibility(connected: BooleanArray): BooleanArray" in bd)
+
+check("Board : le rayon de Chebyshev du brouillard est une constante "
+      "parsée (spec validée : 2)",
+      fog_radius_m is not None,
+      f"rayon = {fog_radius_m.group(1) if fog_radius_m else '?'}")
+
+check("Board : le voisinage s'enroule sur le tore (floorMod, comme les "
+      "câbles du niveau)",
+      "Math.floorMod(cy + dy, height) * width" in bd and
+      "Math.floorMod(cx + dx, width)" in bd and
+      "for (dy in -r..r)" in bd and "for (dx in -r..r)" in bd)
+
+check("BoardView : réglage « Brouillard » OFF par défaut, endossé par "
+      "l'activité au lancement des parties",
+      "var fogEnabled: Boolean = false" in vw)
+
+check("BoardView : visibilité DÉRIVÉE à chaque update — active seulement "
+      "si réglage ON + niveau Infini + partie NON résolue (la victoire "
+      "révèle tout), null sinon",
+      re.search(r"fogVisible =\s*\n\s*if \(fogEnabled && board\.skill == "
+                r"Skill\.ENDLESS && !solved\) \{\s*\n\s*"
+                r"board\.fogVisibility\(connected\)", vw) is not None)
+
+check("BoardView : hitCell refuse les tuiles cachées (ni rotation au "
+      "tap, ni verrouillage au long-press — sans interaction)",
+      "if (fog != null && !fog[index]) return null" in vw)
+
+check("BoardView : la passe des cellules d'Infini dessine les cachées en "
+      "case sombre (drawFogCell, couleur fog_cell)",
+      vw.count("drawFogCell(") >= 2 and "R.color.fog_cell" in vw)
+
+check("BoardView : la passe des blips ignore les tuiles cachées "
+      "(les connectées restent visibles par définition)",
+      "if (fog != null && !fog[index]) continue" in vw)
+
+ma = strip_comments(ma_src)
+check("MainActivity : réglage chargé des préférences OFF par défaut, "
+      "persisté au changement, clé fogEnabled",
+      "getBoolean(FOG_ENABLED_KEY, false)" in ma and
+      "putBoolean(FOG_ENABLED_KEY, fogEnabled)" in ma and
+      'const val FOG_ENABLED_KEY = "fogEnabled"' in ma)
+
+fog_handler = re.search(
+    r"item\.itemId == R\.id\.fog_off \|\| item\.itemId == R\.id\.fog_on "
+    r"-> \{(.*?)\n            \}", ma_src, re.S)
+check("MainActivity : basculer « Brouillard » ne touche PAS la partie en "
+      "cours — rien à chaud (« nouvelles parties seulement »)",
+      fog_handler is not None and
+      "binding.boardView" not in fog_handler.group(1))
+
+check("MainActivity : le plateau endosse le brouillard à chaque "
+      "lancement de partie (onCreate, nouvelle partie, changement de "
+      "niveau)",
+      ma.count("binding.boardView.fogEnabled = fogEnabled") == 3)
+
+check("Menu : sous-menu « Brouillard » dans Réglages, groupe à choix "
+      "exclusif, items fog_off/fog_on",
+      "@+id/menu_fog" in menu_src and "@+id/fog_off" in menu_src and
+      "@+id/fog_on" in menu_src and
+      re.search(r'"@\+id/menu_fog".*?checkableBehavior="single"',
+                menu_src, re.S) is not None)
+
+fr_fog_vals = re.findall(
+    r'<string name="(?:menu_fog|fog_off|fog_on)">([^<]*)</string>', fr_src)
+check("Strings : brouillard en EN et FR, aucune apostrophe non échappée "
+      "en FR",
+      'name="menu_fog"' in en_src and 'name="fog_on"' in en_src and
+      len(fr_fog_vals) == 3 and
+      all("'" not in v for v in fr_fog_vals))
+
+def lum(hexcode):
+    r = int(hexcode[1:3], 16)
+    g = int(hexcode[3:5], 16)
+    b = int(hexcode[5:7], 16)
+    return 0.299 * r + 0.587 * g + 0.114 * b
+
+
+def color_of(src, name):
+    m = re.search(rf'<color name="{name}">(#[0-9A-Fa-f]{{6}})</color>', src)
+    return m.group(1) if m else None
+
+
+day_colors = read(RES / "values/colors.xml")
+night_colors = read(RES / "values-night/colors.xml")
+check("Couleurs : tuile cachée fog_cell en jour ET nuit, PLUS SOMBRE que "
+      "le fond du plateau dans les deux thèmes",
+      all(color_of(s, c) for s in (day_colors, night_colors)
+          for c in ("fog_cell", "board_background")) and
+      lum(color_of(day_colors, "fog_cell")) <
+      lum(color_of(day_colors, "board_background")) and
+      lum(color_of(night_colors, "fog_cell")) <
+      lum(color_of(night_colors, "board_background")))
+
+check("BoardTest : la dérivation est verrouillée par un test JVM "
+      "(équivalence exhaustive sur le tore, rayon, pureté)",
+      "endless fog visibility follows connected cells" in tests_src)
+
+# --- Miroirs Python du brouillard (rayon PARSÉ depuis Board.kt) ---
+
+FOG_RADIUS = int(fog_radius_m.group(1)) if fog_radius_m else 2
+FW = FH = 40
+
+
+def fog_derive(connected, w, h, r):
+    """Miroir EXACT de Board.fogVisibility : balayage -r..r, floorMod."""
+    visible = [False] * (w * h)
+    for i, c in enumerate(connected):
+        if not c:
+            continue
+        cx, cy = i % w, i // w
+        for dy in range(-r, r + 1):
+            row = (cy + dy) % h * w
+            for dx in range(-r, r + 1):
+                visible[row + (cx + dx) % w] = True
+    return visible
+
+
+def fog_definition(connected, w, h, r):
+    """Définition brute INDÉPENDANTE : distance de Chebyshev sur le tore,
+    minimum sur les cellules connectées (formulation différente de la
+    dérivation : une vraie contre-épreuve)."""
+    on = [i for i, c in enumerate(connected) if c]
+    visible = []
+    for i in range(w * h):
+        x, y = i % w, i // w
+        ok = False
+        for j in on:
+            dx = abs(x - (j % w))
+            dx = min(dx, w - dx)
+            dy = abs(y - (j // w))
+            dy = min(dy, h - dy)
+            if max(dx, dy) <= r:
+                ok = True
+                break
+        visible.append(ok)
+    return visible
+
+
+fail_fog = []
+for i in range(8):
+    # Réseaux clairsemés déterministes (le serveur + quelques cellules
+    # éparses, proches et loin des bords : l'enroulement compte) —
+    # beaucoup de tuiles cachées : l'équivalence discrimine vraiment.
+    connected = [False] * (FW * FH)
+    for k in range(1 + (i % 6)):
+        sx = (k * 11 + i * 3) % FW
+        sy = (k * 17 + i * 5) % FH
+        connected[sy * FW + sx] = True
+    if fog_derive(connected, FW, FH, FOG_RADIUS) != \
+            fog_definition(connected, FW, FH, FOG_RADIUS):
+        fail_fog.append(f"réseau {i}")
+check("Miroir brouillard : la dérivation parsée égale la définition "
+      "Chebyshev-tore, exhaustivement (8 réseaux clairsemés)",
+      not fail_fog, "; ".join(fail_fog[:3]))
+
+counts_ok = True
+for edge_case in [(0, 0), (FW - 1, FH - 1), (0, FH - 1),
+                  (FW // 2, FH // 2), (FW - 1, 0)]:
+    connected = [False] * (FW * FH)
+    connected[edge_case[1] * FW + edge_case[0]] = True
+    n = sum(fog_derive(connected, FW, FH, FOG_RADIUS))
+    if n != (2 * FOG_RADIUS + 1) ** 2:
+        counts_ok = False
+check("Miroir brouillard : une connectée révèle exactement son carré "
+      "(2r+1)², même aux quatre coins du tore (enroulement, aucune case "
+      "perdue)",
+      counts_ok, f"rayon {FOG_RADIUS} -> {(2 * FOG_RADIUS + 1) ** 2} cases")
+
+monotone_ok = True
+for i in range(6):
+    connected = [False] * (FW * FH)
+    for k in range(2 + i):
+        connected[((k * 13 + i * 7) % FH) * FW +
+                   (k * 19 + i * 3) % FW] = True
+    full = fog_derive(connected, FW, FH, FOG_RADIUS)
+    # On retire UNE connexion : la zone ne peut que rétrécir (le
+    # brouillard dérivé ne retient rien d'un état passé).
+    removed = list(connected)
+    for k in range(FW * FH - 1, -1, -1):
+        if removed[k]:
+            removed[k] = False
+            break
+    part = fog_derive(removed, FW, FH, FOG_RADIUS)
+    if any(p and not f for p, f in zip(part, full)):
+        monotone_ok = False
+check("Miroir brouillard : débrancher referme — la zone dérivée ne "
+      "retient rien (monotonie stricte, 6 réseaux)",
+      monotone_ok)
+
+# ---------------------------------------------------------------------------
 # Bilan.
 # ---------------------------------------------------------------------------
 

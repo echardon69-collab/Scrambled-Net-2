@@ -37,6 +37,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var scoresStore: ScoresStore
     private var soundMode = SoundMode.FULL
     private var animEnabled = true
+    private var fogEnabled = false
     private var lastSolving = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -76,6 +77,15 @@ class MainActivity : AppCompatActivity() {
         // Réglage « Animation » (même clé que l'original, activé par défaut).
         animEnabled = getPreferences(MODE_PRIVATE).getBoolean(ANIM_ENABLED_KEY, true)
         binding.boardView.blipsEnabled = animEnabled
+
+        // Réglage « Brouillard » (phase C du chantier Infini, OFF par
+        // défaut) : le plateau l'endosse au lancement d'une partie —
+        // nouvelle OU restaurée — et n'y retouche plus ensuite (le
+        // brouillard est dérivé à chaque coup, zéro état sérialisé ;
+        // changer le réglage en cours de partie ne fait rien à chaud,
+        // il prendra effet à la partie suivante).
+        fogEnabled = getPreferences(MODE_PRIVATE).getBoolean(FOG_ENABLED_KEY, false)
+        binding.boardView.fogEnabled = fogEnabled
 
         binding.boardView.onCellTapped = { viewModel.onCellTapped(it) }
         binding.boardView.onCellLongPressed = { viewModel.onCellLongPressed(it) }
@@ -215,6 +225,10 @@ class MainActivity : AppCompatActivity() {
         val animMenu = menu.findItem(R.id.menu_anim).subMenu
         val animItem = if (animEnabled) R.id.anim_on else R.id.anim_off
         animMenu?.findItem(animItem)?.isChecked = true
+        // Coche le réglage « Brouillard » (Infini) courant.
+        val fogMenu = menu.findItem(R.id.menu_fog).subMenu
+        val fogItem = if (fogEnabled) R.id.fog_on else R.id.fog_off
+        fogMenu?.findItem(fogItem)?.isChecked = true
         return true
     }
 
@@ -249,6 +263,9 @@ class MainActivity : AppCompatActivity() {
                 ) {
                     val current = viewModel.uiState.value.skill
                     val (width, height) = boardSize(current)
+                    // La partie endosse le réglage « Brouillard » au
+                    // lancement (nouvelles parties seulement).
+                    binding.boardView.fogEnabled = fogEnabled
                     viewModel.newGame(current, width, height)
                 }
                 true
@@ -285,6 +302,17 @@ class MainActivity : AppCompatActivity() {
                 }
                 true
             }
+            item.itemId == R.id.fog_off || item.itemId == R.id.fog_on -> {
+                item.isChecked = true
+                fogEnabled = item.itemId == R.id.fog_on
+                getPreferences(MODE_PRIVATE).edit {
+                    putBoolean(FOG_ENABLED_KEY, fogEnabled)
+                }
+                // Rien à chaud : le réglage ne touche pas la partie en
+                // cours (« nouvelles parties seulement ») — il sera
+                // endossé au prochain lancement de partie (ci-dessous).
+                true
+            }
             skill != null -> {
                 // Même protection que « Nouvelle partie » : changer de
                 // niveau écrase aussi la partie en cours, avec un
@@ -298,6 +326,9 @@ class MainActivity : AppCompatActivity() {
                     // La coche du sous-menu ne bouge qu'à la confirmation :
                     // Annuler doit laisser le niveau inchangé.
                     item.isChecked = true
+                    // La partie endosse le réglage « Brouillard » au
+                    // lancement (nouvelles parties seulement).
+                    binding.boardView.fogEnabled = fogEnabled
                     viewModel.newGame(skill, width, height)
                     showSkillHelpIfNeeded(skill, previous)
                 }
@@ -402,5 +433,8 @@ class MainActivity : AppCompatActivity() {
 
         /** Clé du réglage d'animation, reprise de l'original. */
         private const val ANIM_ENABLED_KEY = "animEnable"
+
+        /** Clé du réglage « Brouillard » d'Infini (phase C), OFF par défaut. */
+        private const val FOG_ENABLED_KEY = "fogEnabled"
     }
 }

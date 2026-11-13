@@ -387,6 +387,36 @@ class Board(
     }
 
     /**
+     * Visibilité du brouillard d'Infini (phase C du chantier, 13 nov.
+     * 2026) : une cellule est visible ssi elle est à distance de
+     * Chebyshev <= [FOG_RADIUS_CELLS] d'une cellule [connected] au
+     * serveur. Dérivation PURE depuis [connected] — aucun état
+     * propre, rien à sérialiser : la zone visible s'ouvre quand on
+     * connecte et se referme toute seule quand on débranche. Le tore
+     * du plateau compte : la distance s'enroule par floorMod, comme
+     * les câbles du niveau. La vue ne l'appelle que pour le niveau
+     * Infini avec le réglage « Brouillard » actif ; la victoire
+     * révèle tout (la vue retire alors le brouillard, la visibilité
+     * dérivée n'est jamais gelée ni sauvegardée).
+     */
+    fun fogVisibility(connected: BooleanArray): BooleanArray {
+        val visible = BooleanArray(size)
+        val r = FOG_RADIUS_CELLS
+        for (i in visible.indices) {
+            if (!connected[i]) continue
+            val cx = i % width
+            val cy = i / width
+            for (dy in -r..r) {
+                val row = Math.floorMod(cy + dy, height) * width
+                for (dx in -r..r) {
+                    visible[row + Math.floorMod(cx + dx, width)] = true
+                }
+            }
+        }
+        return visible
+    }
+
+    /**
      * Partie gagnée, selon le générateur :
      *  - ORIGINAL : tous les terminaux (une seule connexion) sont reliés
      *    au serveur, comme isSolved de l'original — des sections de
@@ -430,6 +460,13 @@ class Board(
 
         /** Essais maximum du générateur ORIGINAL (l'original : 10). */
         private const val MAX_TRIES = 10
+
+        /**
+         * Rayon de Chebyshev du brouillard d'Infini (phase C) : une
+         * cellule est visible ssi à cette distance au plus d'une
+         * cellule connectée au serveur (spec validée le 12 nov. 2026).
+         */
+        const val FOG_RADIUS_CELLS = 2
 
         /**
          * Fabrique un plateau mélangé : niveau [skill] (règles, branches),

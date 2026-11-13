@@ -16,6 +16,12 @@
     <string name="anim_off">Sans animation</string>
     <string name="anim_on">Animation</string>
 
+    <!-- Brouillard du niveau Infini (phase C) : visibilité limitée aux
+         abords des tuiles connectées au serveur. -->
+    <string name="menu_fog">Brouillard</string>
+    <string name="fog_off">Sans brouillard</string>
+    <string name="fog_on">Brouillard</string>
+
     <!-- Aide (niveaux Maître et Dément) -->
     <string name="help_master">Au niveau Maître, les bords du plateau se
         referment sur eux-mêmes : les cellules du bord droit se connectent à

@@ -7,4 +7,7 @@
     <color name="blip_active">#FFD600</color>
     <color name="blip_idle">#78909C</color>
     <color name="term_data">#69F0AE</color>
+
+    <!-- Brouillard d'Infini (palette sombre) : plus noir que le fond. -->
+    <color name="fog_cell">#0B0E12</color>
 </resources>

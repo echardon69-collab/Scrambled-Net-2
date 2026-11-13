@@ -288,6 +288,58 @@ class BoardTest {
     }
 
     @Test
+    fun `endless fog visibility follows connected cells on the torus`() {
+        // Phase C du chantier Infini : la visibilité est DÉRIVÉE de
+        // l'état connecté — une cellule est visible ssi elle est à
+        // distance de Chebyshev <= FOG_RADIUS_CELLS d'une cellule
+        // connectée, le tore comptant (la distance s'enroule comme
+        // les câbles du niveau).
+        val board = Board.generate(
+            Skill.ENDLESS, Skill.ENDLESS_SIZE, Skill.ENDLESS_SIZE,
+            Generator.ORIGINAL, seed = 42L
+        )
+        val connected = board.connectedCells()
+        val fog = board.fogVisibility(connected)
+        // Définition brute et exhaustive : distance de Chebyshev sur
+        // le tore entre chaque cellule et chaque cellule connectée.
+        for (i in 0 until board.size) {
+            var expected = false
+            val x = i % board.width
+            val y = i / board.width
+            outer@ for (j in 0 until board.size) {
+                if (!connected[j]) continue
+                val dx = Math.floorMod(x - (j % board.width), board.width)
+                val dy = Math.floorMod(y - (j / board.width), board.height)
+                val d = maxOf(
+                    minOf(dx, board.width - dx),
+                    minOf(dy, board.height - dy)
+                )
+                if (d <= Board.FOG_RADIUS_CELLS) {
+                    expected = true
+                    break@outer
+                }
+            }
+            assertEquals("cellule $i", expected, fog[i])
+        }
+        // Le serveur est toujours connecté : il y a toujours une zone
+        // visible autour de lui.
+        assertTrue(fog[board.serverIndex])
+        // Une seule cellule connectée révèle exactement son carré de
+        // Chebyshev — (2 r + 1) au carré — y compris près d'un bord :
+        // le tore s'enroule, aucune case n'est perdue.
+        val onlyServer = BooleanArray(board.size)
+        onlyServer[board.serverIndex] = true
+        val fogServer = board.fogVisibility(onlyServer)
+        val side = 2 * Board.FOG_RADIUS_CELLS + 1
+        assertEquals(side * side, fogServer.count { it })
+        // Dérivation PURE, zéro état : le même état connecté redonne
+        // la même visibilité à l'identique (elle se referme toute
+        // seule quand on débranche, sans rien retenir d'un appel à
+        // l'autre).
+        assertTrue(fog.contentEquals(board.fogVisibility(connected)))
+    }
+
+    @Test
     fun `screen sizes follow the original matrix`() {
         // Grand côté horizontal en paysage, vertical en portrait ;
         // Maître et Dément partagent la taille (valeurs de

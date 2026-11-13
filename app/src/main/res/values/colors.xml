@@ -14,6 +14,10 @@
     <color name="blip_idle">#90A4AE</color>
     <color name="term_data">#00C853</color>
 
+    <!-- Brouillard d'Infini (phase C) : tuile cachée — case sombre
+         pleine, plus foncée que le fond du plateau, sans interaction. -->
+    <color name="fog_cell">#39424D</color>
+
     <!-- Icône de lancement : fond de l'icône adaptative (API 26+) et du
          repli API 24-25. Blanc opaque — les lanceurs ne laissent pas passer
          la transparence (un fond transparent s'affiche en noir sur

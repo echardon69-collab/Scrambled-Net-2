@@ -18,6 +18,12 @@
     <string name="anim_off">No animation</string>
     <string name="anim_on">Animation</string>
 
+    <!-- Fog of the Endless level (phase C): visibility limited to the
+         surroundings of the cells connected to the server. -->
+    <string name="menu_fog">Fog</string>
+    <string name="fog_off">No fog</string>
+    <string name="fog_on">Fog</string>
+
     <!-- Aide (niveaux Master et Insane) -->
     <string name="help_master">At Master level, the board edges wrap around;
         cells on the right edge connect to those on the left edge, and vice
