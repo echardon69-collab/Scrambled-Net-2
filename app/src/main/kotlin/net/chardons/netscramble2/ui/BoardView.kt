@@ -182,6 +182,18 @@ class BoardView @JvmOverloads constructor(
     }
 
     /**
+     * Caméra d'arrivée DÉFÉRÉE : le premier rendu d'un plateau frais
+     * précède souvent la première passe de mesure (le collect de
+     * l'activité démarre à onStart, le layout n'a pas encore eu lieu).
+     * Une vue de taille nulle ne sait poser ni pan ni zoom : sans ce
+     * drapeau, la caméra d'arrivée serait calculée contre 0x0 puis
+     * ÉCRASÉE par le fitBoard du premier onSizeChanged — zoom ET
+     * position perdus. Le drapeau la garde en réserve jusqu'à ce
+     * premier layout.
+     */
+    private var arrivalCameraPending = false
+
+    /**
      * Photographie de la caméra COURANTE (position du centre de la
      * vue en cellules + zoom), pour la persistance : la partie
      * reprendra là où le joueur regardait, au zoom qu'il avait
@@ -450,7 +462,15 @@ class BoardView @JvmOverloads constructor(
             clampPan()
         }
         if (freshBoard) {
-            applyArrivalCamera(solved)
+            if (width > 0 && height > 0) {
+                applyArrivalCamera(solved)
+            } else {
+                // Premier rendu AVANT le layout : poser la caméra ici
+                // la calculerait contre une vue de taille nulle, et le
+                // fitBoard du premier onSizeChanged l'écraserait juste
+                // après (zoom ET pan perdus). Elle attend le layout.
+                arrivalCameraPending = true
+            }
         }
         invalidate()
     }
@@ -477,6 +497,14 @@ class BoardView @JvmOverloads constructor(
             cellPx = zoomPx.coerceIn(floorCellPx(b), maxCellPx)
             panX = width / 2f - (cx + 0.5f) * cellPx
             panY = height / 2f - (cy + 0.5f) * cellPx
+        }
+        if (arrivalCameraPending) {
+            // Premier layout terminé : la caméra d'arrivée du plateau
+            // posé avant mesure (partie restaurée ou Néant qui démarre)
+            // se pose MAINTENANT, avec une vue qui a enfin sa taille.
+            // Après le fitBoard : elle prend le pas sur son centrage.
+            arrivalCameraPending = false
+            applyArrivalCamera(solved)
         }
     }
 

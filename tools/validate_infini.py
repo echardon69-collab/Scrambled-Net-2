@@ -1103,11 +1103,28 @@ check("BoardView : zoom confort = carré révélé (2r+1 cases) sur la MOITIÉ "
 check("BoardView : centerOnVisibleZone centre la bbox du réseau connecté",
       "private fun centerOnVisibleZone()" in vw)
 check("BoardView : update appelle la caméra d'arrivée sur plateau frais "
-      "uniquement (jamais de téléport en cours de partie)",
+      "uniquement, vue MESURÉE (à froid le premier rendu précède le "
+      "layout — poser la caméra à 0x0 puis la voir écraser par le "
+      "fitBoard du premier onSizeChanged perdait zoom ET pan, bug vu "
+      "chez eric le 13 nov.)",
       re.search(r"var freshBoard = false", vw) is not None
-      and re.search(r"if \(freshBoard\) \{\s*"
-                    r"applyArrivalCamera\(solved\)", vw) is not None)
+      and re.search(r"if \(freshBoard\) \{[^{}]*?"
+                    r"if \(width > 0 && height > 0\) \{[^{}]*?"
+                    r"applyArrivalCamera\(solved\)[^{}]*?\} else \{[^{}]*?"
+                    r"arrivalCameraPending = true",
+                    vw, re.S) is not None)
+check("BoardView : drapeau arrivalCameraPending (caméra d'arrivée "
+      "différée jusqu'au premier layout)",
+      "private var arrivalCameraPending = false" in vw)
 size_m = re.search(r"override fun onSizeChanged\((.*?)\n    \}", vw, re.S)
+check("BoardView : le premier onSizeChanged consomme la caméra différée "
+      "APRÈS fitBoard — elle prend le pas sur son centrage, avec une "
+      "vue enfin mesurée",
+      size_m is not None
+      and re.search(r"if \(arrivalCameraPending\) \{[^{}]*?"
+                    r"arrivalCameraPending = false[^{}]*?"
+                    r"applyArrivalCamera\(solved\)",
+                    size_m.group(1), re.S) is not None)
 check("BoardView : la rotation d'écran conserve le regard de la famille "
       "Infini (centre + zoom capturés sur l'ancienne taille, reposés "
       "après fitBoard — pas de retour au centre du plateau)",
@@ -1223,6 +1240,50 @@ for trial in range(60):
 check("Miroir caméra : aller-retour snapshot-restauration-snapshot stable "
       "au milli près (60 configurations)",
       not rt_fail, "; ".join(sorted(set(rt_fail))[:3]))
+
+# Démarrage à froid : le collect de l'activité démarre à onStart, AVANT
+# la passe de mesure — update() voit une vue 0x0. Le drapeau
+# arrivalCameraPending diffère la pose de la caméra d'arrivée jusqu'au
+# premier onSizeChanged, qui fait fitBoard PUIS l'applique (elle prend
+# le pas sur son centrage). Sans lui (comportement d'avant le correctif
+# du 13 nov.), la caméra consommée à 0x0 était ensuite écrasée : zoom au
+# plancher, pan au centre du plateau — tout était perdu.
+cold_fail = []
+for i in range(12):
+    view_w, view_h, density = DEVICES[i % len(DEVICES)]
+    floor = floor_cell_px(view_w, view_h, density)
+    zoom_centis = rnd.randrange(3000, 9001, 100)
+    while zoom_centis / 100.0 * density < floor:
+        zoom_centis += 500
+    cell = min(max(zoom_centis / 100.0 * density, floor),
+               MAX_CELL_DP * density)
+    if cell == floor:
+        continue  # zoom sous le plancher : coercé, pas un cas préservé
+    mx = rnd.randrange(SPAN * 1000)
+    my = rnd.randrange(SPAN * 1000)
+    # Comportement corrigé : pose APRÈS layout, contre la taille réelle.
+    pan_x = view_w / 2.0 - (mx / 1000.0 + 0.5) * cell
+    pan_y = view_h / 2.0 - (my / 1000.0 + 0.5) * cell
+    if camera_snapshot(view_w, view_h, pan_x, pan_y, cell, SPAN, SPAN) \
+            != (mx, my):
+        cold_fail.append(f"position perdue {view_w}x{view_h}")
+    if abs(cell / density * 100.0 - zoom_centis) > 0.5:
+        cold_fail.append(f"zoom perdu {view_w}x{view_h}")
+    # Ancien séquencement (régression bloquée par les checks statiques) :
+    # caméra consommée à 0x0, fitBoard du premier onSizeChanged — le pan
+    # retombe au centre du plateau, le zoom au plancher.
+    old_cell = floor
+    old_pan_x = (view_w - SPAN * old_cell) / 2.0
+    old_pan_y = (view_h - SPAN * old_cell) / 2.0
+    if old_cell == cell and camera_snapshot(view_w, view_h, old_pan_x,
+                                            old_pan_y, old_cell, SPAN,
+                                            SPAN) == (mx, my):
+        cold_fail.append(f"ancien aurait préservé {view_w}x{view_h}")
+check("Miroir démarrage à froid : caméra différée jusqu'au premier "
+      "layout — position ET zoom de la sauvegarde préservés ; "
+      "l'ancien séquencement (consommée à 0x0 puis écrasée par le "
+      "fitBoard du premier onSizeChanged) les perdait (12 écrans)",
+      not cold_fail, "; ".join(sorted(set(cold_fail))[:3]))
 
 # Zone visible : centerOnVisibleZone vise la bbox du RÉSEAU CONNECTÉ (au
 # lancement : le serveur seul) ; grâce au plateau répété (caméra modulo),
