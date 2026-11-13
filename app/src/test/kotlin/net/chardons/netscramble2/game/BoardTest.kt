@@ -3,6 +3,7 @@ package net.chardons.netscramble2.game
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -265,6 +266,25 @@ class BoardTest {
         assertEquals(3, Skill.ENDLESS.branches)
         assertTrue(Skill.ENDLESS.wrap)
         assertEquals(9, Skill.ENDLESS.hiddenThreshold)
+    }
+
+    @Test
+    fun `board carries its skill`() {
+        // La fabrique endosse toujours le niveau réel : la vue s'en
+        // sert pour ses modes de rendu (caméra modulo d'Infini).
+        for (skill in Skill.entries) {
+            val board = Board.generate(
+                skill, 9, 7, Generator.TREE, seed = 5L
+            )
+            assertSame(skill, board.skill)
+        }
+        // Le constructeur direct (assemblage à la main dans les tests)
+        // garde le niveau par défaut.
+        val direct = Board(
+            3, 3, wrap = true, hiddenThreshold = 9,
+            generator = Generator.TREE, branches = 2, seed = 1L
+        )
+        assertSame(Skill.NOVICE, direct.skill)
     }
 
     @Test

@@ -21,6 +21,7 @@ import net.chardons.netscramble2.game.Generator
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.withTranslation
 import androidx.core.graphics.withSave
+import net.chardons.netscramble2.game.Skill
 import kotlin.math.ceil
 import kotlin.math.cos
 import kotlin.math.floor
@@ -59,7 +60,12 @@ import kotlin.random.Random
  *    grise horizontalement ;
  *  - viewport « caméra » : le plateau est un monde virtuel, potentiellement
  *    plus grand que l'écran ; on le déplace (pan) et on le zoome au pinçage,
- *    avec une taille de case minimale garantie.
+ *    avec une taille de case minimale garantie. Niveau Infini (ENDLESS) :
+ *    caméra « modulo » — le pan n'y est pas borné, dessin et taps passent
+ *    par le reste euclidien (floorMod) sur l'étendue du plateau, qui se
+ *    répète pour remplir l'écran : aucune extrémité n'est jamais visible,
+ *    et le dézoom est borné pour que le plateau entier ne tienne JAMAIS
+ *    dans la vue (phase B du chantier Infini, 12 nov. 2026).
  *  - appui long : verrouille une cellule (fond de tuile dédié, comme
  *    background_locked.png), qui ne tourne plus ;
  *  - cellules cachées (Insane) : câbles masqués jusqu'à ce que le
@@ -362,26 +368,51 @@ class BoardView @JvmOverloads constructor(
     }
 
     /**
-     * Plancher de dézoom (tuiles grises autour du plateau) : le plateau
-     * plus une tuile grise de chaque côté couvre exactement la largeur
-     * de la vue. En dessous, on découvrirait d'autres tuiles grises
-     * horizontalement, ce qui est exclu ; la hauteur n'entre pas dans le
-     * plancher — le gris remplit la zone visible, le pan vertical reste
-     * libre. Borné par les tailles min/max de case : si le plancher
-     * dépasse la taille max (plateau très étroit), le repli recentre
-     * et le gris remplit aussi horizontalement.
+     * Plancher de dézoom. Deux régimes :
+     *  - niveaux encadrés (tous sauf Infini) : le plateau plus une tuile
+     *    grise de chaque côté couvre exactement la largeur de la vue.
+     *    En dessous, on découvrirait d'autres tuiles grises
+     *    horizontalement, ce qui est exclu ; la hauteur n'entre pas dans
+     *    le plancher — le gris remplit la zone visible, le pan vertical
+     *    reste libre. Borné par les tailles min/max de case : si le
+     *    plancher dépasse la taille max (plateau très étroit), le repli
+     *    recentre et le gris remplit aussi horizontalement.
+     *  - Infini (ENDLESS) : le plateau ENTIER ne doit jamais tenir dans
+     *    la vue — l'illusion d'un réseau sans bornes sauterait. Le
+     *    dézoom est borné pour que l'étendue du plateau dépasse la plus
+     *    grande dimension de la vue d'au moins
+     *    [ENDLESS_EDGE_MARGIN_CELLS] cases de chaque côté ; la fenêtre
+     *    visible couvre alors toujours MOINS de cases que le plateau
+     *    (chaque tuile n'y apparaît qu'une fois). Recalculé à chaque
+     *    redimensionnement (onSizeChanged repasse par fitBoard).
      */
     private fun floorCellPx(b: Board): Float =
-        (width / (b.width + 2f * GREY_RING_CELLS)).coerceIn(minCellPx, maxCellPx)
+        if (b.skill == Skill.ENDLESS) {
+            val span = minOf(b.width, b.height).toFloat()
+            val largest = maxOf(width, height).toFloat()
+            (largest / (span - 2f * ENDLESS_EDGE_MARGIN_CELLS))
+                .coerceIn(minCellPx, maxCellPx)
+        } else {
+            (width / (b.width + 2f * GREY_RING_CELLS))
+                .coerceIn(minCellPx, maxCellPx)
+        }
 
     /**
-     * Taille de case par défaut : le plancher. Le plateau apparaît
-     * centré, encadré d'au moins une tuile grise horizontalement, le
-     * gris remplissant le reste de la zone visible.
+     * Taille de case par défaut : le plancher. Les niveaux encadrés
+     * apparaissent centrés, entourés d'au moins une tuile grise
+     * horizontalement, le gris remplissant le reste de la zone
+     * visible. Infini : le plateau déborde forcément de la vue, on le
+     * pose centré — il se répète de part et d'autre pour donner un plan
+     * sans bornes.
      */
     private fun fitBoard() {
         val b = board ?: return
         cellPx = floorCellPx(b)
+        if (b.skill == Skill.ENDLESS) {
+            panX = (width - b.width * cellPx) / 2f
+            panY = (height - b.height * cellPx) / 2f
+            return
+        }
         clampPan()
     }
 
@@ -391,9 +422,14 @@ class BoardView @JvmOverloads constructor(
      * toujours visible, jamais contournée). Si le plateau et son anneau
      * tiennent entièrement dans la vue, il est centré et le gris remplit
      * la zone visible.
+     *
+     * Infini (ENDLESS) : RIEN à borner — le plateau se répète (caméra
+     * modulo), il n'existe aucune limite à atteindre ; le pan reste
+     * libre dans les deux sens, indéfiniment.
      */
     private fun clampPan() {
         val b = board ?: return
+        if (b.skill == Skill.ENDLESS) return
         val ring = GREY_RING_CELLS * cellPx
         val boardW = b.width * cellPx
         val boardH = b.height * cellPx
@@ -430,11 +466,24 @@ class BoardView @JvmOverloads constructor(
         return cache
     }
 
-    /** Traduit des coordonnées écran en index de cellule, ou null. */
+    /**
+     * Traduit des coordonnées écran en index de cellule, ou null hors
+     * plateau. Infini (ENDLESS) : caméra modulo — la tuile sous le
+     * doigt est la tuile « reste euclidien » (floorMod) de la colonne
+     * et de la ligne monde ; le plateau se répète, une copie vaut
+     * l'autre (le mapping est invariant par translation d'un plateau
+     * entier). Le floor (et non la troncature) compte pour les
+     * coordonnées négatives : à gauche ou au-dessus de l'origine du
+     * pan, la tuile est celle d'avant, pas celle d'après.
+     */
     private fun hitCell(x: Float, y: Float): Int? {
         val b = board ?: return null
-        val cx = ((x - panX) / cellPx).toInt()
-        val cy = ((y - panY) / cellPx).toInt()
+        val cx = floor((x - panX) / cellPx).toInt()
+        val cy = floor((y - panY) / cellPx).toInt()
+        if (b.skill == Skill.ENDLESS) {
+            return Math.floorMod(cy, b.height) * b.width +
+                Math.floorMod(cx, b.width)
+        }
         if (cx < 0 || cx >= b.width || cy < 0 || cy >= b.height) return null
         return cy * b.width + cx
     }
@@ -495,6 +544,19 @@ class BoardView @JvmOverloads constructor(
         // toutes les tuiles concernées par le coup basculent ensemble
         // quand la dernière rotation s'achève.
         val appearanceFrozen = animDurationMs.any { it > 0L }
+        val endless = b.skill == Skill.ENDLESS
+
+        // --- Fenêtre visible, en cases « monde » (repère du pan),
+        //     arrondis vers l'extérieur : la vue n'affiche jamais
+        //     moins que ce qu'elle montre. Infini n'itère QUE cette
+        //     fenêtre (le plateau en compte 1 600 — on n'en dessine
+        //     que ce qui est à l'écran, et le plancher de dézoom la
+        //     garantit toujours plus étroite que le plateau : chaque
+        //     tuile n'y apparaît qu'une seule fois).
+        val minX = floor(-panX / cellPx).toInt()
+        val maxX = ceil((width - panX) / cellPx).toInt()
+        val minY = floor(-panY / cellPx).toInt()
+        val maxY = ceil((height - panY) / cellPx).toInt()
 
         canvas.withTranslation(panX, panY) {
             // --- Décor : tuiles grises partout dans la zone visible hors
@@ -503,14 +565,12 @@ class BoardView @JvmOverloads constructor(
             //     Le plancher de dézoom et le clamp de pan garantissent
             //     qu'on ne voit jamais plus d'une tuile grise
             //     horizontalement au-delà du plateau ; verticalement le
-            //     gris remplit la zone visible. ---
+            //     gris remplit la zone visible.
+            //     Infini : PAS de décor — le plateau se répète pour
+            //     remplir la zone visible, aucun « hors plateau »
+            //     n'existe (c'est l'illusion d'un plan sans bornes).
             boardPaint.color = ContextCompat.getColor(context, R.color.board_background)
             if (cellPx > 0f) {
-                val minX = floor(-panX / cellPx).toInt()
-                val maxX = ceil((width - panX) / cellPx).toInt()
-                val minY = floor(-panY / cellPx).toInt()
-                val maxY = ceil((height - panY) / cellPx).toInt()
-
                 // Filet de sécurité sur toute la zone visible : normalement
                 // recouvert par les tuiles, il masque tout interstice
                 // sub-pixel (zoom fractionnaire) entre tuiles voisines.
@@ -519,14 +579,16 @@ class BoardView @JvmOverloads constructor(
                     maxX * cellPx, maxY * cellPx, boardPaint
                 )
 
-                val decor = emptyTileBitmap()
-                if (decor != null) {
-                    for (y in minY until maxY) {
-                        val top = y * cellPx
-                        val inBoardRow = y in 0 until b.height
-                        for (x in minX until maxX) {
-                            if (inBoardRow && x in 0 until b.width) continue
-                            drawBitmap(decor, x * cellPx, top, null)
+                if (!endless) {
+                    val decor = emptyTileBitmap()
+                    if (decor != null) {
+                        for (y in minY until maxY) {
+                            val top = y * cellPx
+                            val inBoardRow = y in 0 until b.height
+                            for (x in minX until maxX) {
+                                if (inBoardRow && x in 0 until b.width) continue
+                                drawBitmap(decor, x * cellPx, top, null)
+                            }
                         }
                     }
                 }
@@ -541,108 +603,33 @@ class BoardView @JvmOverloads constructor(
                 else serverWiredNow
             lastDrawnServerWired = serverWired
 
-            for (y in 0 until b.height) {
-                for (x in 0 until b.width) {
-                    val index = y * b.width + x
-                    val left = x * cellPx
-                    val top = y * cellPx
-                    // Apparence effective : pendant une rotation, chaque
-                    // cellule garde son état d'avant le coup. Le câble
-                    // bascule gris ou énergisé, et le terminal s'allume
-                    // ou s'éteint, seulement une fois la rotation finie.
-                    val isConnected =
-                        if (appearanceFrozen) animFromConnected[index]
-                        else connected[index]
-                    lastDrawnConnected[index] = isConnected
-
-                    // Cellule cachée (Insane) : câbles masqués tant que la
-                    // partie n'est pas gagnée et que le solveur ne les a pas
-                    // révélés — l'équipement, lui, reste toujours visible.
-                    val hideCables =
-                        b.isHidden(index) && !solved && !b.revealed[index]
-
-                    // Câble : drawable du masque courant, version grise si
-                    // déconnecté. En animation, on dessine le masque final
-                    // tourné de l'écart résiduel : la tuile tourne sous le
-                    // doigt. Seul le câble tourne — l'équipement reste
-                    // fixe (Cell.doDraw).
-                    val dirs = b.currentDirs(index)
-
-                    // Fond de tuile biseauté, parité background /
-                    // background_locked / empty de l'original. Priorité
-                    // comme Cell.doDraw : libre avant verrouillée avant
-                    // normale (une cellule libre verrouillée reste grise).
-                    // Une cellule libre DU plateau (générateur ORIGINAL)
-                    // reçoit le fond empty, exactement comme Cell.doDraw
-                    // de l'original (Dir.FREE -> Image.EMPTY) : elle se
-                    // fond dans le décor hors plateau.
-                    val bg = when {
-                        dirs == Dir.NO_DIRS -> tileBgEmpty
-                        b.locked[index] -> tileBgLocked
-                        else -> tileBg
-                    }
-                    bg.setBounds(
-                        left.toInt(), top.toInt(),
-                        (left + cellPx).toInt(), (top + cellPx).toInt()
-                    )
-                    bg.draw(this)
-
-                    if (dirs != Dir.NO_DIRS && !hideCables) {
-                        // Parité greyOut de l'original : variante grise
-                        // (chaque canal RGB à 0,6 × valeur + 100,
-                        // générée par le pipeline tools/tiles/) quand
-                        // la cellule n'est pas reliée au serveur,
-                        // dessin sombre normal sinon. La forme de base
-                        // est tournée au dessin vers l'orientation du
-                        // masque (rotOf), composée avec l'écart résiduel
-                        // d'animation : la tuile tourne sous le doigt.
-                        val shape = if (isConnected) tileShapes[shapeOf[dirs]]
-                                     else tileShapesGrey[shapeOf[dirs]]
-                        shape.setBounds(
-                            left.toInt(), top.toInt(),
-                            (left + cellPx).toInt(), (top + cellPx).toInt()
+            // --- Passe des cellules. Deux régimes d'itération, un seul
+            //     corps (drawBoardCell) : les niveaux encadrés parcourent
+            //     tout le plateau (petit) ; Infini ne parcourt que la
+            //     fenêtre visible et en dérive chaque index par floorMod
+            //     — le plateau se répète sans couture (les positions
+            //     sont des multiples exacts de la taille de case dans
+            //     un repère continu, aucun raccord ne se voit).
+            if (endless) {
+                for (wy in minY until maxY) {
+                    for (wx in minX until maxX) {
+                        drawBoardCell(
+                            b, connected, appearanceFrozen, serverWired,
+                            solved, now,
+                            Math.floorMod(wy, b.height) * b.width +
+                                Math.floorMod(wx, b.width),
+                            wx * cellPx, wy * cellPx
                         )
-                        val angle = rotOf[dirs] +
-                            (visualCurrent[index] - visualTarget[index])
-                        if (angle != 0f) {
-                            withSave {
-                                rotate(angle, left + cellPx / 2f, top + cellPx / 2f)
-                                shape.draw(this)
-                            }
-                        } else {
-                            shape.draw(this)
-                        }
                     }
-
-                    // Équipement : serveur / terminal, par-dessus le câble.
-                    val equip: Drawable? = when {
-                        index == b.serverIndex ->
-                            if (serverWired) serverFull else serverPartial
-
-                        b.isTerminal(index) ->
-                            if (isConnected) computerOn else computerOff
-
-                        else -> null
-                    }
-                    if (equip != null) {
-                        // Effet « électricité » : le serveur respire au
-                        // rythme de son générateur (TREE métronome,
-                        // ORIGINAL scintillement) tant que les
-                        // animations vivent ; coupées, ou pendant le
-                        // gel d'apparence d'une rotation, il redevient
-                        // statique.
-                        equip.alpha =
-                            if (index == b.serverIndex &&
-                                blipsEnabled && !appearanceFrozen) {
-                                serverBreathAlpha(b, now)
-                            } else {
-                                255
-                            }
-                        equip.setBounds(
-                            left.toInt(), top.toInt(),
-                            (left + cellPx).toInt(), (top + cellPx).toInt()
+                }
+            } else {
+                for (y in 0 until b.height) {
+                    for (x in 0 until b.width) {
+                        drawBoardCell(
+                            b, connected, appearanceFrozen, serverWired,
+                            solved, now,
+                            y * b.width + x, x * cellPx, y * cellPx
                         )
-                        equip.draw(this)
                     }
                 }
             }
@@ -675,56 +662,32 @@ class BoardView @JvmOverloads constructor(
                 val half = cellPx / 2f
                 val radius = (cellPx * BLIP_RADIUS_FRACTION).coerceAtLeast(2f)
 
-                for (index in 0 until b.size) {
-                    val inc = field.incomingAt(index)
-                    val out = field.outgoingAt(index)
-                    if (inc == 0 && out == 0) continue
-                    // Cellule cachée : pas de câble, pas de blip
-                    // (l'équipement reste visible mais ne trahit rien).
-                    if (b.isHidden(index) && !solved && !b.revealed[index]) continue
-
-                    val x = (index % b.width) * cellPx
-                    val y = (index / b.width) * cellPx
-                    val cx = x + half
-                    val cy = y + half
-
-                    if (index != b.serverIndex && b.isTerminal(index)) {
-                        // Terminaux : le blip approche de l'écran, puis
-                        // celui-ci « affiche des données » — lignes
-                        // vertes aléatoires, comme Cell.drawTermData.
-                        if (inc != 0 && frac < TERM_DATA_SWITCH_FRAC) {
-                            blipPaint.color =
-                                if (connected[index]) activeColor else idleColor
-                            for (dir in Dir.entries) {
-                                if (Dir.contains(inc, dir)) {
-                                    drawBlip(cx, cy, dir, 1f - frac, half, radius)
-                                }
-                            }
-                        } else if (connected[index] && inc != 0) {
-                            var ly = y + cellPx / 3f
-                            val bottom = y + cellPx * 0.55f
-                            while (ly < bottom) {
-                                val l = x + cellPx / 3f
-                                val r = x + cellPx / 3f * (1f + rng.nextFloat())
-                                drawLine(l, ly, r, ly, termPaint)
-                                ly += TERM_LINE_STEP_DP * screenDensity
-                            }
+                // Deux régimes d'itération, un seul corps (drawCellBlips) :
+                // tout le plateau pour les niveaux encadrés ; la fenêtre
+                // visible modulo pour Infini — chaque COPIE visible d'une
+                // cellule porte ses blips, et un blip qui traverse un bord
+                // du tore (le modèle boucle déjà) apparaît au bord opposé
+                // de la copie voisine : aucune couture fonctionnelle.
+                if (endless) {
+                    for (wy in minY until maxY) {
+                        for (wx in minX until maxX) {
+                            drawCellBlips(
+                                field, b, connected, solved,
+                                Math.floorMod(wy, b.height) * b.width +
+                                    Math.floorMod(wx, b.width),
+                                wx * cellPx, wy * cellPx,
+                                frac, activeColor, idleColor, half, radius
+                            )
                         }
-                        continue
                     }
-
-                    // Câbles normaux et serveur : disques. Le serveur
-                    // (source des données) émet un blip plus large,
-                    // l'équivalent des images « glow » de l'original.
-                    blipPaint.color = if (connected[index]) activeColor else idleColor
-                    val scale = if (index == b.serverIndex) SERVER_HALO_SCALE else 1f
-                    for (dir in Dir.entries) {
-                        if (Dir.contains(inc, dir)) {
-                            drawBlip(cx, cy, dir, 1f - frac, half, radius * scale)
-                        }
-                        if (Dir.contains(out, dir)) {
-                            drawBlip(cx, cy, dir, frac, half, radius * scale)
-                        }
+                } else {
+                    for (index in 0 until b.size) {
+                        drawCellBlips(
+                            field, b, connected, solved, index,
+                            (index % b.width) * cellPx,
+                            (index / b.width) * cellPx,
+                            frac, activeColor, idleColor, half, radius
+                        )
                     }
                 }
             }
@@ -737,6 +700,197 @@ class BoardView @JvmOverloads constructor(
         // plus rien ne s'anime (M5 : animation coupée, rotations finies).
         if (blipsEnabled || animDurationMs.any { it > 0L }) {
             postInvalidateOnAnimation()
+        }
+    }
+
+    /**
+     * Dessine une cellule du plateau — fond biseauté, câble puis
+     * équipement — à la position monde ([left], [top]), dans le repère
+     * du pan. Le corps est COMMUN à tous les niveaux ; seule la boucle
+     * appelante change : itération entière du plateau pour les niveaux
+     * encadrés, fenêtre visible modulo pour Infini (la même cellule du
+     * plateau peut être dessinée plusieurs fois, une par « copie »
+     * visible — elles sont identiques, le plateau se répète).
+     */
+    private fun Canvas.drawBoardCell(
+        b: Board,
+        connected: BooleanArray,
+        appearanceFrozen: Boolean,
+        serverWired: Boolean,
+        solved: Boolean,
+        now: Long,
+        index: Int,
+        left: Float,
+        top: Float
+    ) {
+        // Apparence effective : pendant une rotation, chaque
+        // cellule garde son état d'avant le coup. Le câble
+        // bascule gris ou énergisé, et le terminal s'allume
+        // ou s'éteint, seulement une fois la rotation finie.
+        val isConnected =
+            if (appearanceFrozen) animFromConnected[index]
+            else connected[index]
+        lastDrawnConnected[index] = isConnected
+
+        // Cellule cachée (Insane) : câbles masqués tant que la
+        // partie n'est pas gagnée et que le solveur ne les a pas
+        // révélés — l'équipement, lui, reste toujours visible.
+        val hideCables =
+            b.isHidden(index) && !solved && !b.revealed[index]
+
+        // Câble : drawable du masque courant, version grise si
+        // déconnecté. En animation, on dessine le masque final
+        // tourné de l'écart résiduel : la tuile tourne sous le
+        // doigt. Seul le câble tourne — l'équipement reste
+        // fixe (Cell.doDraw).
+        val dirs = b.currentDirs(index)
+
+        // Fond de tuile biseauté, parité background /
+        // background_locked / empty de l'original. Priorité
+        // comme Cell.doDraw : libre avant verrouillée avant
+        // normale (une cellule libre verrouillée reste grise).
+        // Une cellule libre DU plateau (générateur ORIGINAL)
+        // reçoit le fond empty, exactement comme Cell.doDraw
+        // de l'original (Dir.FREE -> Image.EMPTY) : elle se
+        // fond dans le décor hors plateau.
+        val bg = when {
+            dirs == Dir.NO_DIRS -> tileBgEmpty
+            b.locked[index] -> tileBgLocked
+            else -> tileBg
+        }
+        bg.setBounds(
+            left.toInt(), top.toInt(),
+            (left + cellPx).toInt(), (top + cellPx).toInt()
+        )
+        bg.draw(this)
+
+        if (dirs != Dir.NO_DIRS && !hideCables) {
+            // Parité greyOut de l'original : variante grise
+            // (chaque canal RGB à 0,6 × valeur + 100,
+            // générée par le pipeline tools/tiles/) quand
+            // la cellule n'est pas reliée au serveur,
+            // dessin sombre normal sinon. La forme de base
+            // est tournée au dessin vers l'orientation du
+            // masque (rotOf), composée avec l'écart résiduel
+            // d'animation : la tuile tourne sous le doigt.
+            val shape = if (isConnected) tileShapes[shapeOf[dirs]]
+                        else tileShapesGrey[shapeOf[dirs]]
+            shape.setBounds(
+                left.toInt(), top.toInt(),
+                (left + cellPx).toInt(), (top + cellPx).toInt()
+            )
+            val angle = rotOf[dirs] +
+                (visualCurrent[index] - visualTarget[index])
+            if (angle != 0f) {
+                withSave {
+                    rotate(angle, left + cellPx / 2f, top + cellPx / 2f)
+                    shape.draw(this)
+                }
+            } else {
+                shape.draw(this)
+            }
+        }
+
+        // Équipement : serveur / terminal, par-dessus le câble.
+        val equip: Drawable? = when {
+            index == b.serverIndex ->
+                if (serverWired) serverFull else serverPartial
+
+            b.isTerminal(index) ->
+                if (isConnected) computerOn else computerOff
+
+            else -> null
+        }
+        if (equip != null) {
+            // Effet « électricité » : le serveur respire au
+            // rythme de son générateur (TREE métronome,
+            // ORIGINAL scintillement) tant que les
+            // animations vivent ; coupées, ou pendant le
+            // gel d'apparence d'une rotation, il redevient
+            // statique.
+            equip.alpha =
+                if (index == b.serverIndex &&
+                    blipsEnabled && !appearanceFrozen) {
+                    serverBreathAlpha(b, now)
+                } else {
+                    255
+                }
+            equip.setBounds(
+                left.toInt(), top.toInt(),
+                (left + cellPx).toInt(), (top + cellPx).toInt()
+            )
+            equip.draw(this)
+        }
+    }
+
+    /**
+     * Dessine les blips de la cellule [index] à la position monde
+     * ([x], [y]), dans le repère du pan. Corps commun aux deux régimes
+     * d'itération de la passe des blips (plateau entier, ou fenêtre
+     * visible modulo pour Infini — chaque copie visible d'une cellule
+     * est dessinée avec ses propres blips).
+     */
+    private fun Canvas.drawCellBlips(
+        field: BlipField,
+        b: Board,
+        connected: BooleanArray,
+        solved: Boolean,
+        index: Int,
+        x: Float,
+        y: Float,
+        frac: Float,
+        activeColor: Int,
+        idleColor: Int,
+        half: Float,
+        radius: Float
+    ) {
+        val inc = field.incomingAt(index)
+        val out = field.outgoingAt(index)
+        if (inc == 0 && out == 0) return
+        // Cellule cachée : pas de câble, pas de blip
+        // (l'équipement reste visible mais ne trahit rien).
+        if (b.isHidden(index) && !solved && !b.revealed[index]) return
+
+        val cx = x + half
+        val cy = y + half
+
+        if (index != b.serverIndex && b.isTerminal(index)) {
+            // Terminaux : le blip approche de l'écran, puis
+            // celui-ci « affiche des données » — lignes
+            // vertes aléatoires, comme Cell.drawTermData.
+            if (inc != 0 && frac < TERM_DATA_SWITCH_FRAC) {
+                blipPaint.color =
+                    if (connected[index]) activeColor else idleColor
+                for (dir in Dir.entries) {
+                    if (Dir.contains(inc, dir)) {
+                        drawBlip(cx, cy, dir, 1f - frac, half, radius)
+                    }
+                }
+            } else if (connected[index] && inc != 0) {
+                var ly = y + cellPx / 3f
+                val bottom = y + cellPx * 0.55f
+                while (ly < bottom) {
+                    val l = x + cellPx / 3f
+                    val r = x + cellPx / 3f * (1f + rng.nextFloat())
+                    drawLine(l, ly, r, ly, termPaint)
+                    ly += TERM_LINE_STEP_DP * screenDensity
+                }
+            }
+            return
+        }
+
+        // Câbles normaux et serveur : disques. Le serveur
+        // (source des données) émet un blip plus large,
+        // l'équivalent des images « glow » de l'original.
+        blipPaint.color = if (connected[index]) activeColor else idleColor
+        val scale = if (index == b.serverIndex) SERVER_HALO_SCALE else 1f
+        for (dir in Dir.entries) {
+            if (Dir.contains(inc, dir)) {
+                drawBlip(cx, cy, dir, 1f - frac, half, radius * scale)
+            }
+            if (Dir.contains(out, dir)) {
+                drawBlip(cx, cy, dir, frac, half, radius * scale)
+            }
         }
     }
 
@@ -810,6 +964,12 @@ class BoardView @JvmOverloads constructor(
         /** Tuiles grises encadrant le plateau (au moins une, et le pan
          *  s'arrête dessus : la limite du plateau est toujours visible). */
         private const val GREY_RING_CELLS = 1f
+
+        /** Infini : marge garantie, en cases, de part et d'autre de la
+         *  plus grande dimension de la vue — le plateau entier ne tient
+         *  JAMAIS à l'écran (c'est l'illusion d'un plan sans bornes).
+         *  Le plancher de dézoom d'Infini découle de cette marge. */
+        private const val ENDLESS_EDGE_MARGIN_CELLS = 2f
 
         // --- M2 : parité des animations de l'original ---
 

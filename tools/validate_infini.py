@@ -24,6 +24,7 @@ visibilité, etc.
 Usage : python3 tools/validate_infini.py
 """
 
+import math
 import random
 import re
 import sys
@@ -520,6 +521,183 @@ check("GameSpec : dimensions hors bornes (65) rejetées",
       decode_mirror("v3|ENDLESS|1|ORIGINAL|65|40|-1|0|0|false|-1|"
                     + "0" * (65 * 40) + "|" + "0" * (65 * 40)
                     + "|" + "0" * (65 * 40)) is None)
+
+# ---------------------------------------------------------------------------
+# 11. Phase B : la caméra modulo (illusion d'infini) — statique.
+# ---------------------------------------------------------------------------
+
+board_src = read(KOTLIN / "game/Board.kt")
+view_src = read(KOTLIN / "ui/BoardView.kt")
+
+bd = strip_comments(board_src)
+check("Board.kt : le plateau endosse son niveau (vue : mode Infini)",
+      re.search(r"val skill: Skill = Skill\.NOVICE", bd) is not None)
+check("Board.kt : la fabrique generate endosse le niveau réel",
+      re.search(r"skill = skill,\s*\n\s*forcedRoot = forcedRoot", bd) is not None)
+
+vw = strip_comments(view_src)
+check("BoardView : le drapeau Infini est dérivé du niveau du plateau",
+      "val endless = b.skill == Skill.ENDLESS" in vw)
+check("BoardView : plancher de dézoom propre à Infini (marge de cases)",
+      re.search(r"if \(b\.skill == Skill\.ENDLESS\) \{\s*"
+                r"val span = minOf\(b\.width, b\.height\)\.toFloat\(\)\s*"
+                r"val largest = maxOf\(width, height\)\.toFloat\(\)\s*"
+                r"\(largest / \(span - 2f \* ENDLESS_EDGE_MARGIN_CELLS\)\)",
+                vw) is not None)
+check("BoardView : constante de marge Infini = 2 cases",
+      re.search(r"ENDLESS_EDGE_MARGIN_CELLS = 2f\b", vw) is not None)
+check("BoardView : fitBoard centre le plateau Infini (pas de clamp)",
+      re.search(r"if \(b\.skill == Skill\.ENDLESS\) \{\s*"
+                r"panX = \(width - b\.width \* cellPx\) / 2f", vw) is not None)
+check("BoardView : le pan d'Infini n'est PAS borné",
+      re.search(r"private fun clampPan\(\) \{\s*"
+                r"val b = board \?: return\s*"
+                r"if \(b\.skill == Skill\.ENDLESS\) return",
+                vw) is not None)
+check("BoardView : le tap passe par floorMod sur Infini (invariance)",
+      "Math.floorMod(cy, b.height) * b.width +" in vw
+      and "Math.floorMod(cx, b.width)" in vw)
+check("BoardView : le floor (négatifs) remplace la troncature au tap",
+      "floor((x - panX) / cellPx).toInt()" in vw
+      and re.search(r"val cx = \(\(x - panX\) / cellPx\)\.toInt\(\)", vw) is None
+      and re.search(r"val cy = \(\(y - panY\) / cellPx\)\.toInt\(\)", vw) is None)
+check("BoardView : PAS de décor gris sur Infini (le plateau se répète)",
+      re.search(r"if \(!endless\) \{\s*val decor = emptyTileBitmap\(\)",
+                vw) is not None)
+check("BoardView : fenêtre visible hissée, partagée par toutes les passes",
+      "val minX = floor(-panX / cellPx).toInt()" in vw
+      and "val maxX = ceil((width - panX) / cellPx).toInt()" in vw)
+check("BoardView : cellules d'Infini itérées par floorMod sur la fenêtre "
+      "(passes cellules ET blips)",
+      vw.count("Math.floorMod(wy, b.height) * b.width +") >= 2
+      and vw.count("Math.floorMod(wx, b.width)") >= 2)
+check("BoardView : le corps de cellule est COMMUN aux deux régimes",
+      "private fun Canvas.drawBoardCell(" in vw
+      and "private fun Canvas.drawCellBlips(" in vw)
+check("BoardView : le gel d'apparence vit dans le corps commun "
+      "(validateur apparence)",
+      "if (appearanceFrozen) animFromConnected[index]" in vw
+      and "lastDrawnConnected[index] = isConnected" in vw
+      and "blipsEnabled && !appearanceFrozen" in vw)
+
+# ---------------------------------------------------------------------------
+# 12. Phase B : miroirs de la caméra modulo.
+# ---------------------------------------------------------------------------
+
+# Constantes de BoardView, PARSÉES depuis la source (jamais retapées).
+MIN_CELL_DP = float(re.search(r"MIN_CELL_DP = ([\d.]+)f", view_src).group(1))
+MAX_CELL_DP = float(re.search(r"MAX_CELL_DP = ([\d.]+)f", view_src).group(1))
+MARGIN_CELLS = float(
+    re.search(r"ENDLESS_EDGE_MARGIN_CELLS = ([\d.]+)f", view_src).group(1))
+SPAN = 40  # Skill.ENDLESS_SIZE, vérifié en section 1
+
+
+def floor_cell_px(view_w, view_h, density):
+    """Miroir de floorCellPx pour ENDLESS."""
+    largest = max(view_w, view_h)
+    raw = largest / (SPAN - 2.0 * MARGIN_CELLS)
+    return min(max(raw, MIN_CELL_DP * density), MAX_CELL_DP * density)
+
+
+def hit_cell_endless(x, y, pan_x, pan_y, cell):
+    """Miroir de hitCell pour ENDLESS (floor, puis floorMod)."""
+    cx = math.floor((x - pan_x) / cell)
+    cy = math.floor((y - pan_y) / cell)
+    return (cy % SPAN) * SPAN + (cx % SPAN)
+
+
+# Écrans réalistes : (largeur px, hauteur px, densité).
+DEVICES = [
+    (1080, 2400, 2.625),   # téléphone haut de gamme portrait
+    (2400, 1080, 2.625),   # idem paysage
+    (1080, 2340, 3.0),
+    (1440, 3200, 3.5),
+    (1200, 2000, 2.0),     # tablette portrait
+    (1600, 2560, 2.0),     # grande tablette portrait
+    (720, 1600, 2.0),
+]
+
+floor_fail = []
+for view_w, view_h, density in DEVICES:
+    cell = floor_cell_px(view_w, view_h, density)
+    largest = max(view_w, view_h)
+    extent = SPAN * cell
+    # Le plateau entier ne tient JAMAIS : marge >= 2 cases de chaque côté.
+    if extent - largest < 2.0 * MARGIN_CELLS * cell - 1e-6:
+        floor_fail.append(f"{view_w}x{view_h}@{density} : plateau visible")
+    # La fenêtre visible reste plus ÉTROITE que le plateau : aucune
+    # cellule n'apparaît deux fois (chaque copie est une tuile différente).
+    window = math.ceil(largest / cell) + 1
+    if window >= SPAN:
+        floor_fail.append(f"{view_w}x{view_h}@{density} : fenêtre {window} >= 40")
+check("Miroir plancher : plateau entier jamais visible, fenêtre < plateau "
+      "(7 écrans réalistes, portrait et paysage)",
+      not floor_fail, "; ".join(floor_fail[:3]))
+
+# Invariance du tap par translation d'un plateau ENTIER (40 cases) : la
+# copie vaut l'original, dans les deux axes et les deux sens.
+rnd = random.Random(20261112)
+invariant_ok = True
+for trial in range(50):
+    view_w, view_h, density = rnd.choice(DEVICES)
+    cell = floor_cell_px(view_w, view_h, density)
+    span_px = SPAN * cell
+    pan_x = rnd.uniform(-span_px, 0)
+    pan_y = rnd.uniform(-span_px, 0)
+    x = rnd.uniform(0, view_w)
+    y = rnd.uniform(0, view_h)
+    base = hit_cell_endless(x, y, pan_x, pan_y, cell)
+    for k in (-2, -1, 0, 1, 2):
+        for j in (-2, -1, 0, 1, 2):
+            if hit_cell_endless(x + k * span_px, y + j * span_px,
+                                pan_x, pan_y, cell) != base:
+                invariant_ok = False
+check("Miroir tap : mapping invariant par translation de 40 cases "
+      "(50 configurations, 25 translations chacune)", invariant_ok)
+
+# Couture : les copies sont à des positions qui diffèrent d'exactement
+# l'étendue du plateau — le raccord est invisible (aucun écart).
+seam_ok = True
+for view_w, view_h, density in DEVICES:
+    cell = floor_cell_px(view_w, view_h, density)
+    for wx in range(-50, 50):
+        left_a = wx * cell
+        left_b = (wx + SPAN) * cell
+        if abs((left_b - left_a) - SPAN * cell) > 1e-6:
+            seam_ok = False
+        # Le contenu des deux copies est la même cellule du plateau.
+        if hit_cell_endless(left_a + cell / 2, 0, 0, 0, cell) != \
+           hit_cell_endless(left_b + cell / 2, 0, 0, 0, cell):
+            seam_ok = False
+check("Miroir couture : copies espacées d'exactement un plateau, "
+      "même cellule dessous", seam_ok)
+
+# La fenêtre couvre TOUJOURS la vue (arrondis outward), quel que soit le
+# pan — aucun pixel de vue sans tuile.
+cover_fail = []
+for trial in range(50):
+    view_w, view_h, density = rnd.choice(DEVICES)
+    cell = floor_cell_px(view_w, view_h, density)
+    span_px = SPAN * cell
+    pan_x = rnd.uniform(-span_px, 0)
+    pan_y = rnd.uniform(-span_px, 0)
+    min_x = math.floor(-pan_x / cell)
+    max_x = math.ceil((view_w - pan_x) / cell)
+    min_y = math.floor(-pan_y / cell)
+    max_y = math.ceil((view_h - pan_y) / cell)
+    if min_x * cell > -pan_x + 1e-6 or max_x * cell < view_w - pan_x - 1e-6:
+        cover_fail.append(f"horizontal {pan_x:.0f}")
+    if min_y * cell > -pan_y + 1e-6 or max_y * cell < view_h - pan_y - 1e-6:
+        cover_fail.append(f"vertical {pan_y:.0f}")
+check("Miroir fenêtre : la vue est toujours couverte, tout pan confondu "
+      "(50 configurations)", not cover_fail, "; ".join(cover_fail[:3]))
+
+# Négatif : les niveaux encadrés gardent le comportement actuel — le
+# pan clippé et l'anneau gris ne disparaissent QUE pour ENDLESS.
+check("Miroir négatif : hors ENDLESS, clampPan borne toujours le pan "
+      "(l'anneau reste contournable uniquement sur Infini)",
+      re.search(r"if \(b\.skill == Skill\.ENDLESS\) return\s*\n"
+                r"        val ring = GREY_RING_CELLS \* cellPx", vw) is not None)
 
 # ---------------------------------------------------------------------------
 # Bilan.

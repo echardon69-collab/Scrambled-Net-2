@@ -71,6 +71,17 @@ class Board(
      */
     val seed: Long,
     /**
+     * Niveau de la partie (endossé depuis le Skill de création). La
+     * vue s'en sert pour ses modes de rendu : Infini (ENDLESS)
+     * déclenche la caméra modulo du chantier du 12 nov. 2026 (le
+     * plateau géant se répète à l'infini, sans anneau gris), les
+     * autres niveaux gardent le plateau encadré et borné. Défaut
+     * NOVICE pour le constructeur direct (les tests assemblent des
+     * plateaux à la main) — la fabrique [generate] endosse toujours
+     * le niveau réel.
+     */
+    val skill: Skill = Skill.NOVICE,
+    /**
      * Racine imposée du réseau, ou -1 pour la tirer du générateur. Une
      * racine imposée ne consomme AUCUN tirage : c'est ce que fait la
      * reconstruction des anciennes parties v2, dont le code d'alors
@@ -441,6 +452,7 @@ class Board(
             generator = generator,
             branches = skill.branches,
             seed = seed,
+            skill = skill,
             forcedRoot = forcedRoot
         )
     }
