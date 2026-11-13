@@ -51,6 +51,12 @@
                         <item
                             android:id="@+id/skill_endless"
                             android:title="@string/skill_endless" />
+                        <item
+                            android:id="@+id/skill_abyss"
+                            android:title="@string/skill_abyss" />
+                        <item
+                            android:id="@+id/skill_void"
+                            android:title="@string/skill_void" />
                     </group>
                 </menu>
             </item>
@@ -84,24 +90,6 @@
                         <item
                             android:id="@+id/anim_on"
                             android:title="@string/anim_on" />
-                    </group>
-                </menu>
-            </item>
-
-            <!-- Brouillard d'Infini (phase C du chantier) : limite la
-                 visibilité aux abords des tuiles connectées au serveur.
-                 OFF par défaut, endossé aux NOUVELLES parties seulement. -->
-            <item
-                android:id="@+id/menu_fog"
-                android:title="@string/menu_fog">
-                <menu>
-                    <group android:checkableBehavior="single">
-                        <item
-                            android:id="@+id/fog_off"
-                            android:title="@string/fog_off" />
-                        <item
-                            android:id="@+id/fog_on"
-                            android:title="@string/fog_on" />
                     </group>
                 </menu>
             </item>

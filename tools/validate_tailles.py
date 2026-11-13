@@ -84,19 +84,30 @@ ORIGINAL_SKILL = {
 }
 
 skill_src = read("game/Skill.kt")
-sk_entries = re.findall(
-    r"^\s{4}(\w+)\(branches = (\d+), wrap = (true|false), hiddenThreshold = (\d+)\)[,;]",
-    skill_src, re.M)
-skills = {name: (int(br), wrap == "true", int(bl)) for name, br, wrap, bl in sk_entries}
-check("Skill.kt : 6 niveaux présents (5 originaux + Infini)",
-      len(skills) == 6, str(list(skills)))
+sk_entries = re.findall(r"^\s{4}(\w+)\((.*?)\)[,;]", skill_src, re.M | re.S)
+skills = {}
+for name, body in sk_entries:
+    br = re.search(r"branches = (\d+)", body)
+    wr = re.search(r"wrap = (true|false)", body)
+    ht = re.search(r"hiddenThreshold = (\d+)", body)
+    skills[name] = (int(br.group(1)), wr.group(1) == "true", int(ht.group(1)))
+check("Skill.kt : 8 niveaux présents (5 originaux + famille Infini)",
+      len(skills) == 8, str(list(skills)))
 for name, expected in ORIGINAL_SKILL.items():
     check(f"Skill.kt : {name} = (branches, wrap, seuil) de l'original",
           skills.get(name) == expected, f"lu={skills.get(name)}")
-# Infini (chantier du 12 nov. 2026, spec validée par eric) : hors
-# original — comme Maître (3 branches, tore) mais sans masquage.
+# Famille Infini (chantiers de nov. 2026, specs validées par eric) :
+# hors original — comme Maître (3 branches, tore) mais sans masquage
+# pour Endless ; Abîme et Néant y ajoutent le masquage à la Dément.
 check("Skill.kt : ENDLESS = 3 branches, tore, aucun masquage",
       skills.get("ENDLESS") == (3, True, 9), f"lu={skills.get('ENDLESS')}")
+check("Skill.kt : ABYSS et VOID = 3 branches, tore, masquage à la Dément",
+      skills.get("ABYSS") == (3, True, 3)
+      and skills.get("VOID") == (3, True, 3),
+      f"lu={skills.get('ABYSS')}/{skills.get('VOID')}")
+check("Skill.kt : l'ordre des niveaux (graduation)",
+      list(skills) == ["NOVICE", "NORMAL", "EXPERT", "MASTER", "INSANE",
+                       "ENDLESS", "ABYSS", "VOID"], str(list(skills)))
 check("Skill.kt : taille fixe du niveau Infini (bypass Screen)",
       re.search(r"const val ENDLESS_SIZE = 40", skill_src) is not None)
 check("Skill.kt : plus aucune dimension width/height",
@@ -185,10 +196,11 @@ check("GameViewModel : la photographie transporte la consigne de racine",
       "root = board.forcedRoot" in vm_src)
 check("GameViewModel : tirage générateur déterministe depuis la graine",
       "(seed and 1L) == 0L" in vm_src and "Generator.TREE" in vm_src)
-check("GameViewModel : Infini force le générateur ORIGINAL (avant le tirage)",
-      vm_src.index("skill == Skill.ENDLESS")
+check("GameViewModel : la famille Infini force le générateur ORIGINAL "
+      "(avant le tirage)",
+      vm_src.index("skill.endless")
       < vm_src.index("(seed and 1L) == 0L")
-      and re.search(r"skill == Skill\.ENDLESS\)\s*\{\s*Generator\.ORIGINAL",
+      and re.search(r"skill\.endless\)\s*\{\s*Generator\.ORIGINAL",
                     vm_src) is not None)
 check("GameViewModel : le niveau est porté par le ViewModel",
       re.search(r"private var skill: Skill", vm_src) is not None and

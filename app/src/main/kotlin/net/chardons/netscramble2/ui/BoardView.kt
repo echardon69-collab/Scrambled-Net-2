@@ -154,23 +154,14 @@ class BoardView @JvmOverloads constructor(
         }
 
     /**
-     * Réglage « Brouillard » (phase C du chantier Infini, 13 nov.
-     * 2026) : limite la visibilité du niveau Infini aux abords des
-     * tuiles connectées au serveur (Chebyshev <= FOG_RADIUS_CELLS,
-     * sur le tore). NOUVELLES PARTIES SEULEMENT : l'activité pose la
-     * valeur au lancement d'une partie et n'y retouche plus jamais —
-     * basculer le réglage en cours de partie ne change rien à chaud
-     * (spec validée le 12 nov. 2026). OFF par défaut.
-     */
-    var fogEnabled: Boolean = false
-
-    /**
-     * Visibilité courante du brouillard, DÉRIVÉE de [connected] à
-     * chaque update (zéro état sérialisé : rien ne survit à une
-     * sauvegarde, la zone se referme d'elle-même au débranchement).
-     * Non null uniquement quand le brouillard s'applique : réglage
-     * actif, niveau Infini, partie non encore gagnée (la victoire
-     * révèle tout).
+     * Visibilité courante du brouillard du NÉANT (VOID), DÉRIVÉE de
+     * [connected] à chaque update (zéro état sérialisé : rien ne
+     * survit à une sauvegarde, la zone se referme d'elle-même au
+     * débranchement). Non null uniquement quand le brouillard
+     * s'applique : niveau Néant, partie non encore gagnée (la victoire
+     * révèle tout). Abîme et Infini ne portent PAS de brouillard —
+     * depuis les niveaux dédiés (13 nov. 2026), le brouillard n'est
+     * plus un réglage : il est la marque du Néant.
      */
     private var fogVisible: BooleanArray? = null
 
@@ -345,12 +336,14 @@ class BoardView @JvmOverloads constructor(
         // Une taille de case héritée d'un plateau précédent ne doit jamais
         // rester sous le plancher du plateau courant.
         cellPx = cellPx.coerceAtLeast(floorCellPx(board))
-        // Brouillard d'Infini (phase C) : visibilité DÉRIVÉE, recalculée
+        // Brouillard du NÉANT (VOID) : visibilité DÉRIVÉE, recalculée
         // à chaque coup — s'ouvre quand on connecte, se referme quand
         // on débranche ; la victoire révèle tout. Le serveur étant
-        // toujours connecté, il y a toujours une zone visible.
+        // toujours connecté, il y a toujours une zone visible. Les
+        // autres niveaux de la famille Infini ne portent pas de
+        // brouillard : il est la marque du Néant, pas un réglage.
         fogVisible =
-            if (fogEnabled && board.skill == Skill.ENDLESS && !solved) {
+            if (board.skill == Skill.VOID && !solved) {
                 board.fogVisibility(connected)
             } else {
                 null
@@ -419,7 +412,8 @@ class BoardView @JvmOverloads constructor(
 
     /**
      * Plancher de dézoom. Deux régimes :
-     *  - niveaux encadrés (tous sauf Infini) : le plateau plus une tuile
+     *  - niveaux encadrés (tous sauf la famille Infini) : le plateau
+     *    plus une tuile
      *    grise de chaque côté couvre exactement la largeur de la vue.
      *    En dessous, on découvrirait d'autres tuiles grises
      *    horizontalement, ce qui est exclu ; la hauteur n'entre pas dans
@@ -427,7 +421,8 @@ class BoardView @JvmOverloads constructor(
      *    reste libre. Borné par les tailles min/max de case : si le
      *    plancher dépasse la taille max (plateau très étroit), le repli
      *    recentre et le gris remplit aussi horizontalement.
-     *  - Infini (ENDLESS) : le plateau ENTIER ne doit jamais tenir dans
+     *  - famille Infini (Endless, Abîme, Néant) : le plateau ENTIER ne
+     *    doit jamais tenir dans
      *    la vue — l'illusion d'un réseau sans bornes sauterait. Le
      *    dézoom est borné pour que l'étendue du plateau dépasse la plus
      *    grande dimension de la vue d'au moins
@@ -437,7 +432,7 @@ class BoardView @JvmOverloads constructor(
      *    redimensionnement (onSizeChanged repasse par fitBoard).
      */
     private fun floorCellPx(b: Board): Float =
-        if (b.skill == Skill.ENDLESS) {
+        if (b.skill.endless) {
             val span = minOf(b.width, b.height).toFloat()
             val largest = maxOf(width, height).toFloat()
             (largest / (span - 2f * ENDLESS_EDGE_MARGIN_CELLS))
@@ -458,7 +453,7 @@ class BoardView @JvmOverloads constructor(
     private fun fitBoard() {
         val b = board ?: return
         cellPx = floorCellPx(b)
-        if (b.skill == Skill.ENDLESS) {
+        if (b.skill.endless) {
             panX = (width - b.width * cellPx) / 2f
             panY = (height - b.height * cellPx) / 2f
             return
@@ -473,13 +468,13 @@ class BoardView @JvmOverloads constructor(
      * tiennent entièrement dans la vue, il est centré et le gris remplit
      * la zone visible.
      *
-     * Infini (ENDLESS) : RIEN à borner — le plateau se répète (caméra
-     * modulo), il n'existe aucune limite à atteindre ; le pan reste
-     * libre dans les deux sens, indéfiniment.
+     * Infini (famille ENDLESS, ABYSS, VOID) : RIEN à borner — le plateau
+     * se répète (caméra modulo), il n'existe aucune limite à atteindre ;
+     * le pan reste libre dans les deux sens, indéfiniment.
      */
     private fun clampPan() {
         val b = board ?: return
-        if (b.skill == Skill.ENDLESS) return
+        if (b.skill.endless) return
         val ring = GREY_RING_CELLS * cellPx
         val boardW = b.width * cellPx
         val boardH = b.height * cellPx
@@ -530,7 +525,7 @@ class BoardView @JvmOverloads constructor(
         val b = board ?: return null
         val cx = floor((x - panX) / cellPx).toInt()
         val cy = floor((y - panY) / cellPx).toInt()
-        val index = if (b.skill == Skill.ENDLESS) {
+        val index = if (b.skill.endless) {
             Math.floorMod(cy, b.height) * b.width +
                 Math.floorMod(cx, b.width)
         } else {
@@ -600,7 +595,7 @@ class BoardView @JvmOverloads constructor(
         // toutes les tuiles concernées par le coup basculent ensemble
         // quand la dernière rotation s'achève.
         val appearanceFrozen = animDurationMs.any { it > 0L }
-        val endless = b.skill == Skill.ENDLESS
+        val endless = b.skill.endless
 
         // --- Fenêtre visible, en cases « monde » (repère du pan),
         //     arrondis vers l'extérieur : la vue n'affiche jamais

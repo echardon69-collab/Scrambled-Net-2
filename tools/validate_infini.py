@@ -1,25 +1,33 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Validation du chantier « niveau Infini » (6e niveau, ENDLESS).
+Validation du chantier « famille Infini » (ENDLESS puis ABYSS, VOID).
 
-Phase A livrée ici — le socle jouable :
+Phase A — le socle jouable (ENDLESS 40 x 40) :
   - Skill.ENDLESS(branches = 3, wrap = true, hiddenThreshold = 9),
     taille FIXE 40 x 40 (bypass de la matrice Screen) ;
   - générateur ORIGINAL FORCÉ sur ce niveau (victoire par terminaux,
     le serveur scintille toujours : signature « électricité » constante) ;
   - menu Niveau, libellés EN/FR, barre d'état, écran des records.
 
+Phase B — la caméra modulo (pan non borné, plateau répété, fenêtre
+visible seule dessinée). Phase C — le brouillard DÉRIVÉ (Chebyshev <= 2
+d'une tuile connectée, zéro état sérialisé).
+
+Phase D (niveaux 7 et 8) — la famille se gradue :
+  - propriété d'enum `val endless: Boolean` (ENDLESS, ABYSS, VOID),
+    testée `.endless` partout au lieu de « == ENDLESS » ;
+  - Abîme (ABYSS) : Infini + masquage à la Dément (hiddenThreshold 3) ;
+  - Néant (VOID) : Abîme + brouillard PERMANENT (l'ancien réglage
+    « Brouillard » de la phase C est retiré : le brouillard est la
+    marque du niveau, plus une option).
+
 Deux parties, comme les validateurs précédents :
   1. Vérification statique : les fichiers Kotlin et XML sont PARSÉS
      (jamais de valeurs retapées à la main dans ce script).
   2. Simulation : génération 40x40 en tore (miroir Python de
      generateOriginal), victoire par terminaux, générateur forcé,
-     format GameSpec v3 avec ENDLESS (aller-retour, rejet v2).
-
-Les phases suivantes (B : caméra modulo ; C : brouillard) étendront
-ce validateur — mapping modulo invariant par translation, rayon de
-visibilité, etc.
+     format GameSpec v3 avec la famille (aller-retour, rejet v2).
 
 Usage : python3 tools/validate_infini.py
 """
@@ -74,17 +82,31 @@ tests_src = read(ROOT / "app/src/test/kotlin/net/chardons/netscramble2/game/Boar
 # ---------------------------------------------------------------------------
 
 sk = strip_comments(skill_src)
-sk_entries = re.findall(
-    r"^\s{4}(\w+)\(branches = (\d+), wrap = (true|false), "
-    r"hiddenThreshold = (\d+)\)[,;]", sk, re.M)
-skills = {name: (int(br), wrap == "true", int(bl))
-          for name, br, wrap, bl in sk_entries}
-skill_order = [name for name, *_ in sk_entries]
+sk_entries = re.findall(r"^    (\w+)\((.*?)\)[,;]", sk, re.M | re.S)
+skills = {}
+skill_order = []
+for name, body in sk_entries:
+    br = re.search(r"branches = (\d+)", body)
+    wr = re.search(r"wrap = (true|false)", body)
+    ht = re.search(r"hiddenThreshold = (\d+)", body)
+    en = re.search(r"\bendless = (true|false)", body)
+    skills[name] = (int(br.group(1)), wr.group(1) == "true",
+                    int(ht.group(1)), en is not None and en.group(1) == "true")
+    skill_order.append(name)
 check("Skill.kt : ENDLESS = 3 branches, tore, aucun masquage",
-      skills.get("ENDLESS") == (3, True, 9), f"lu={skills.get('ENDLESS')}")
-check("Skill.kt : ENDLESS arrive EN DERNIER (graduation des niveaux)",
+      skills.get("ENDLESS") == (3, True, 9, True),
+      f"lu={skills.get('ENDLESS')}")
+check("Skill.kt : ABYSS = 3 branches, tore, masquage à la Dément",
+      skills.get("ABYSS") == (3, True, 3, True), f"lu={skills.get('ABYSS')}")
+check("Skill.kt : VOID = 3 branches, tore, masquage à la Dément",
+      skills.get("VOID") == (3, True, 3, True), f"lu={skills.get('VOID')}")
+check("Skill.kt : la propriété endless est un paramètre d'enum "
+      "(famille déclarée, défaut false)",
+      re.search(r"val endless: Boolean = false\b", sk) is not None)
+check("Skill.kt : la famille Infini arrive EN DERNIER, dans l'ordre "
+      "Endless, Abîme, Néant (graduation des niveaux)",
       skill_order == ["NOVICE", "NORMAL", "EXPERT", "MASTER", "INSANE",
-                      "ENDLESS"], str(skill_order))
+                      "ENDLESS", "ABYSS", "VOID"], str(skill_order))
 check("Skill.kt : taille fixe ENDLESS_SIZE = 40",
       re.search(r"const val ENDLESS_SIZE = 40\b", sk) is not None)
 check("Skill.kt : toujours aucune dimension width/height dans l'enum",
@@ -97,14 +119,16 @@ check("Skill.kt : toujours aucune dimension width/height dans l'enum",
 sc = strip_comments(screen_src)
 major_of = re.search(r"private fun majorOf\(skill: Skill\): Int = when \(skill\) \{(.*?)\n    \}", sc, re.S)
 minor_of = re.search(r"private fun minorOf\(skill: Skill\): Int = when \(skill\) \{(.*?)\n    \}", sc, re.S)
-check("Screen.kt : majorOf route ENDLESS vers la taille fixe",
+check("Screen.kt : majorOf route la famille Infini vers la taille fixe",
       major_of is not None
-      and "Skill.ENDLESS -> Skill.ENDLESS_SIZE" in major_of.group(1))
-check("Screen.kt : minorOf route ENDLESS vers la taille fixe",
+      and "Skill.ENDLESS, Skill.ABYSS, Skill.VOID -> Skill.ENDLESS_SIZE"
+      in major_of.group(1))
+check("Screen.kt : minorOf route la famille Infini vers la taille fixe",
       minor_of is not None
-      and "Skill.ENDLESS -> Skill.ENDLESS_SIZE" in minor_of.group(1))
+      and "Skill.ENDLESS, Skill.ABYSS, Skill.VOID -> Skill.ENDLESS_SIZE"
+      in minor_of.group(1))
 
-# Miroir de boardSize : ENDLESS ignore la matrice ET l'orientation.
+# Miroir de boardSize : la famille ignore la matrice ET l'orientation.
 screen_entries = re.findall(
     r"^\s{4}(\w+)\((\d+,\s*\d+,\s*\d+,\s*\d+,\s*\d+,\s*\d+,\s*\d+,\s*\d+)\)[,;]",
     screen_src, re.M)
@@ -113,16 +137,17 @@ check("Screen.kt : les 5 matrices de l'original sont intactes",
       str([name for name, _ in screen_entries]))
 
 def board_size_endless(screen_name, landscape):
-    """Miroir : pour ENDLESS, major et minor valent la taille fixe."""
+    """Miroir : pour la famille, major et minor valent la taille fixe."""
     size = int(re.search(r"const val ENDLESS_SIZE = (\d+)", sk).group(1))
     return (size, size)
 
-for name, _ in screen_entries:
-    for landscape in (True, False):
-        w, h = board_size_endless(name, landscape)
-        check(f"boardSize(ENDLESS) = {w}x{h} sur {name} "
-              f"({'paysage' if landscape else 'portrait'})",
-              (w, h) == (40, 40))
+for skill_name in ("ENDLESS", "ABYSS", "VOID"):
+    for name, _ in screen_entries:
+        for landscape in (True, False):
+            w, h = board_size_endless(name, landscape)
+            check(f"boardSize({skill_name}) = {w}x{h} sur {name} "
+                  f"({'paysage' if landscape else 'portrait'})",
+                  (w, h) == (40, 40))
 
 # ---------------------------------------------------------------------------
 # 3. GameViewModel.kt — générateur ORIGINAL forcé sur ENDLESS.
@@ -130,11 +155,12 @@ for name, _ in screen_entries:
 
 vm = strip_comments(vm_src)
 endless_forced = re.search(
-    r"val generator = if \(skill == Skill\.ENDLESS\) \{\s*"
+    r"val generator = if \(skill\.endless\) \{\s*"
     r"Generator\.ORIGINAL\s*\} else if \(\(seed and 1L\) == 0L\) \{\s*"
     r"Generator\.TREE\s*\} else \{\s*Generator\.ORIGINAL\s*\}",
     vm)
-check("GameViewModel : ENDLESS force ORIGINAL, les autres tirent à la graine",
+check("GameViewModel : la famille Infini force ORIGINAL, les autres "
+      "tirent à la graine",
       endless_forced is not None)
 check("GameViewModel : la restauration reste gouvernée par la photographie "
       "(générateur sérialisé, pas retiré)",
@@ -142,8 +168,8 @@ check("GameViewModel : la restauration reste gouvernée par la photographie "
       and "board = spec.buildBoard()" in vm)
 
 # Miroir du choix de générateur (le if-chaîne de newGame), sur 50 graines.
-def choose_generator(skill, seed):
-    if skill == "ENDLESS":
+def choose_generator(endless, seed):
+    if endless:
         return "ORIGINAL"
     if (seed & 1) == 0:
         return "TREE"
@@ -153,11 +179,11 @@ forced_ok = True
 mixer = random.Random(2026)
 for i in range(50):
     seed = mixer.randrange(1 << 48)
-    forced_ok &= choose_generator("ENDLESS", seed) == "ORIGINAL"
-check("Miroir : ENDLESS = ORIGINAL sur 50 graines (paires et impaires)",
-      forced_ok)
-others_mixed = {choose_generator("MASTER", s) for s in (0, 1, 2, 3)}
-check("Miroir : hors ENDLESS le tirage parité persiste (TREE/ORIGINAL)",
+    forced_ok &= choose_generator(True, seed) == "ORIGINAL"
+check("Miroir : famille Infini = ORIGINAL sur 50 graines (paires et "
+      "impaires)", forced_ok)
+others_mixed = {choose_generator(False, s) for s in (0, 1, 2, 3)}
+check("Miroir : hors famille le tirage parité persiste (TREE/ORIGINAL)",
       others_mixed == {"TREE", "ORIGINAL"})
 
 # ---------------------------------------------------------------------------
@@ -174,7 +200,7 @@ status_list = re.search(
 status_ids = (re.findall(r"R\.string\.(skill_\w+)", status_list.group(1))
               if status_list else [])
 expected_labels = ["skill_" + name.lower() for name in skill_order]
-check("MainActivity : 6 libellés d'état alignés sur l'ordre de l'enum",
+check("MainActivity : 8 libellés d'état alignés sur l'ordre de l'enum",
       status_ids == expected_labels, f"lu={status_ids}")
 
 when_current = re.search(
@@ -182,6 +208,12 @@ when_current = re.search(
 check("MainActivity : la coche du menu suit ENDLESS",
       when_current is not None
       and re.search(r"Skill\.ENDLESS -> skillMenu\?\.findItem\(R\.id\.skill_endless\)",
+                    when_current.group(1)) is not None)
+check("MainActivity : la coche du menu suit ABYSS et VOID",
+      when_current is not None
+      and re.search(r"Skill\.ABYSS -> skillMenu\?\.findItem\(R\.id\.skill_abyss\)",
+                    when_current.group(1)) is not None
+      and re.search(r"Skill\.VOID -> skillMenu\?\.findItem\(R\.id\.skill_void\)",
                     when_current.group(1)) is not None)
 
 skill_ids_block = re.search(
@@ -192,7 +224,7 @@ mapping = (dict(re.findall(r"R\.id\.(\w+) -> (Skill\.\w+)",
            if skill_ids_block else {})
 check("MainActivity : l'entrée skill_endless lance Skill.ENDLESS",
       mapping.get("skill_endless") == "Skill.ENDLESS", f"lu={mapping.get('skill_endless')}")
-check("MainActivity : les 6 niveaux du menu mappent chacun vers son Skill",
+check("MainActivity : les 8 niveaux du menu mappent chacun vers son Skill",
       {k: v for k, v in mapping.items()} == {
           "skill_" + name.lower(): "Skill." + name for name in skill_order},
       str(mapping))
@@ -204,24 +236,33 @@ check("MainActivity : les 6 niveaux du menu mappent chacun vers son Skill",
 group = re.search(
     r'<group android:checkableBehavior="single">(.*?)</group>', menu_src, re.S)
 menu_ids = re.findall(r'@\+id/(skill_\w+)', group.group(1)) if group else []
-check("menu_main.xml : l'entrée skill_endless est dans le groupe du Niveau",
+check("menu_main.xml : les 8 niveaux sont dans le groupe du Niveau",
       menu_ids == expected_labels, f"lu={menu_ids}")
-check("menu_main.xml : Infini vient après Dément",
-      menu_ids.index("skill_endless") == menu_ids.index("skill_insane") + 1)
+check("menu_main.xml : Infini vient après Dément, Abîme et Néant "
+      "ferment la marche",
+      menu_ids.index("skill_endless") == menu_ids.index("skill_insane") + 1
+      and menu_ids.index("skill_void") == menu_ids.index("skill_abyss") + 1)
 
-en = dict(re.findall(r'<string name="(skill_endless)">([^<]*)</string>', en_src))
-fr = dict(re.findall(r'<string name="(skill_endless)">([^<]*)</string>', fr_src))
+en = dict(re.findall(r'<string name="(skill_\w+)">([^<]*)</string>', en_src))
+fr = dict(re.findall(r'<string name="(skill_\w+)">([^<]*)</string>', fr_src))
 check("Chaînes : skill_endless = Endless (EN)", en.get("skill_endless") == "Endless",
       f"lu={en.get('skill_endless')!r}")
 check("Chaînes : skill_endless = Infini (FR)", fr.get("skill_endless") == "Infini",
       f"lu={fr.get('skill_endless')!r}")
-check("Chaînes : aucune apostrophe non échappée dans le libellé FR",
-      re.search(r"(?<!\\)'", fr.get("skill_endless", "\\")) is None)
+check("Chaînes : skill_abyss = Abyss (EN), Abîme (FR)",
+      en.get("skill_abyss") == "Abyss" and fr.get("skill_abyss") == "Abîme",
+      f"lu={en.get('skill_abyss')!r}/{fr.get('skill_abyss')!r}")
+check("Chaînes : skill_void = Void (EN), Néant (FR)",
+      en.get("skill_void") == "Void" and fr.get("skill_void") == "Néant",
+      f"lu={en.get('skill_void')!r}/{fr.get('skill_void')!r}")
+check("Chaînes : aucune apostrophe non échappée dans les libellés FR",
+      all(re.search(r"(?<!\\)'", v) is None
+          for k, v in fr.items() if k.startswith("skill_")))
 
 sa = strip_comments(scores_src)
 labels = re.search(r"private val labels = listOf\(\s*((?:R\.string\.skill_\w+,?\s*)+?)\)", sa)
 scores_ids = re.findall(r"R\.string\.(skill_\w+)", labels.group(1)) if labels else []
-check("ScoresActivity : les tables affichent les 6 niveaux, dans l'ordre",
+check("ScoresActivity : les tables affichent les 8 niveaux, dans l'ordre",
       scores_ids == expected_labels, f"lu={scores_ids}")
 
 # ---------------------------------------------------------------------------
@@ -249,8 +290,22 @@ ts = strip_comments(tests_src)
 check("Tests JVM : la taille fixe 40 x 40 est verrouillée par un test",
       "endless board is fixed 40 by 40" in ts
       and "Skill.ENDLESS_SIZE to Skill.ENDLESS_SIZE" in ts)
-check("Tests JVM : les boucles sur Skill.entries couvriront ENDLESS",
+check("Tests JVM : le test de taille couvre la famille entière "
+      "(Endless, Abîme, Néant)",
+      re.search(r"listOf\(Skill\.ENDLESS, Skill\.ABYSS, Skill\.VOID\)", ts)
+      is not None)
+check("Tests JVM : les règles empilées d'Abîme et Néant sont verrouillées "
+      "par un test (endless, branches, tore, masquage)",
+      "abyss and void stack endless rules" in ts)
+check("Tests JVM : les boucles sur Skill.entries couvrirront la famille",
       ts.count("for (skill in Skill.entries)") >= 2)
+check("Tests JVM : messages d'échec en PREMIER argument (JUnit 4 — "
+      "piège du 13 nov. : le style JUnit 5 « message en dernier » ne "
+      "compile pas avec org.junit.Assert)",
+      'assertEquals("$skill garde trois branches", 3, skill.branches)' in ts
+      and 'assertTrue("$skill garde le tore", skill.wrap)' in ts
+      and '"La propriété endless doit être vraie' not in ts
+      and re.search(r'assert\w+\([^")]*,[^")]*,\s*"', ts) is None)
 
 # ---------------------------------------------------------------------------
 # 8. Pièges Kotlin : pas de « /* » dans les commentaires des fichiers touchés.
@@ -517,6 +572,24 @@ check("GameSpec v3 ENDLESS : taille sérialisée raisonnable (mesurée)",
 check("GameSpec : un v2 falsifié au niveau ENDLESS est rejeté",
       decode_mirror("v2|ENDLESS|1|17|42000|false|-1|5,9|"
                     + "0" * 25 + "|" + "0" * 25 + "|" + "0" * 25) is None)
+for fake in ("ABYSS", "VOID"):
+    check(f"GameSpec : un v2 falsifié au niveau {fake} est rejeté",
+          decode_mirror(f"v2|{fake}|1|17|42000|false|-1|5,9|"
+                        + "0" * 25 + "|" + "0" * 25 + "|" + "0" * 25)
+          is None)
+
+# Abîme et Néant voyagent en v3, comme Infini (par nom).
+for fam in ("ABYSS", "VOID"):
+    spec_fam = encode_v3(fam, 987654321012 + skill_order.index(fam),
+                         "ORIGINAL", SIZE, SIZE, -1,
+                         7, 21_000, False, 12, [],
+                         big_rotations, big_locked, big_revealed)
+    back_fam = decode_mirror(spec_fam)
+    check(f"GameSpec v3 {fam} : aller-retour intact (40x40, ORIGINAL)",
+          back_fam is not None and back_fam["skill"] == fam
+          and back_fam["gen"] == "ORIGINAL"
+          and (back_fam["width"], back_fam["height"]) == (40, 40))
+
 check("GameSpec : dimensions hors bornes (65) rejetées",
       decode_mirror("v3|ENDLESS|1|ORIGINAL|65|40|-1|0|0|false|-1|"
                     + "0" * (65 * 40) + "|" + "0" * (65 * 40)
@@ -536,28 +609,30 @@ check("Board.kt : la fabrique generate endosse le niveau réel",
       re.search(r"skill = skill,\s*\n\s*forcedRoot = forcedRoot", bd) is not None)
 
 vw = strip_comments(view_src)
-check("BoardView : le drapeau Infini est dérivé du niveau du plateau",
-      "val endless = b.skill == Skill.ENDLESS" in vw)
+check("BoardView : le drapeau Infini est dérivé du niveau du plateau "
+      "(propriété endless — phase D)",
+      "val endless = b.skill.endless" in vw)
 check("BoardView : Skill est IMPORTÉ (la phase B livrée le 12 nov. "
       "l'oubliait — écran rouge « Unresolved reference » corrigé par "
       "eric le 13 nov., régression désormais bloquée ici)",
       re.search(r"(?m)^import net\.chardons\.netscramble2\.game\.Skill$",
                 view_src) is not None)
-check("BoardView : plancher de dézoom propre à Infini (marge de cases)",
-      re.search(r"if \(b\.skill == Skill\.ENDLESS\) \{\s*"
+check("BoardView : plancher de dézoom propre à la famille Infini "
+      "(marge de cases)",
+      re.search(r"if \(b\.skill\.endless\) \{\s*"
                 r"val span = minOf\(b\.width, b\.height\)\.toFloat\(\)\s*"
                 r"val largest = maxOf\(width, height\)\.toFloat\(\)\s*"
                 r"\(largest / \(span - 2f \* ENDLESS_EDGE_MARGIN_CELLS\)\)",
                 vw) is not None)
 check("BoardView : constante de marge Infini = 2 cases",
       re.search(r"ENDLESS_EDGE_MARGIN_CELLS = 2f\b", vw) is not None)
-check("BoardView : fitBoard centre le plateau Infini (pas de clamp)",
-      re.search(r"if \(b\.skill == Skill\.ENDLESS\) \{\s*"
+check("BoardView : fitBoard centre le plateau de la famille (pas de clamp)",
+      re.search(r"if \(b\.skill\.endless\) \{\s*"
                 r"panX = \(width - b\.width \* cellPx\) / 2f", vw) is not None)
-check("BoardView : le pan d'Infini n'est PAS borné",
+check("BoardView : le pan de la famille n'est PAS borné",
       re.search(r"private fun clampPan\(\) \{\s*"
                 r"val b = board \?: return\s*"
-                r"if \(b\.skill == Skill\.ENDLESS\) return",
+                r"if \(b\.skill\.endless\) return",
                 vw) is not None)
 check("BoardView : le tap passe par floorMod sur Infini (invariance)",
       "Math.floorMod(cy, b.height) * b.width +" in vw
@@ -698,16 +773,18 @@ check("Miroir fenêtre : la vue est toujours couverte, tout pan confondu "
       "(50 configurations)", not cover_fail, "; ".join(cover_fail[:3]))
 
 # Négatif : les niveaux encadrés gardent le comportement actuel — le
-# pan clippé et l'anneau gris ne disparaissent QUE pour ENDLESS.
-check("Miroir négatif : hors ENDLESS, clampPan borne toujours le pan "
-      "(l'anneau reste contournable uniquement sur Infini)",
-      re.search(r"if \(b\.skill == Skill\.ENDLESS\) return\s*\n"
+# pan clippé et l'anneau gris ne disparaissent QUE pour la famille.
+check("Miroir négatif : hors famille, clampPan borne toujours le pan "
+      "(l'anneau reste contournable uniquement sur la famille Infini)",
+      re.search(r"if \(b\.skill\.endless\) return\s*\n"
                 r"        val ring = GREY_RING_CELLS \* cellPx", vw) is not None)
 
 # ---------------------------------------------------------------------------
-# Phase C — brouillard d'Infini (dérivé de connected, rayon de Chebyshev,
-# tuile cachée sombre sans interaction, OFF par défaut, nouvelles parties
-# seulement, révélation totale à la victoire).
+# Phase C/D — brouillard (dérivé de connected, rayon de Chebyshev, tuile
+# cachée sombre sans interaction, révélation totale à la victoire).
+# Phase D : le brouillard n'est PLUS un réglage — il est la marque
+# PERMANENTE du niveau Néant (VOID) ; le réglage de la phase C est
+# retiré de l'activité et du menu.
 # ---------------------------------------------------------------------------
 
 fog_radius_m = re.search(r"const val FOG_RADIUS_CELLS = (\d+)", bd)
@@ -727,16 +804,16 @@ check("Board : le voisinage s'enroule sur le tore (floorMod, comme les "
       "Math.floorMod(cx + dx, width)" in bd and
       "for (dy in -r..r)" in bd and "for (dx in -r..r)" in bd)
 
-check("BoardView : réglage « Brouillard » OFF par défaut, endossé par "
-      "l'activité au lancement des parties",
-      "var fogEnabled: Boolean = false" in vw)
-
-check("BoardView : visibilité DÉRIVÉE à chaque update — active seulement "
-      "si réglage ON + niveau Infini + partie NON résolue (la victoire "
-      "révèle tout), null sinon",
-      re.search(r"fogVisible =\s*\n\s*if \(fogEnabled && board\.skill == "
-                r"Skill\.ENDLESS && !solved\) \{\s*\n\s*"
+check("BoardView : le brouillard est la marque du Néant — actif "
+      "d'office sur VOID tant que la partie n'est PAS résolue "
+      "(la victoire révèle tout), null sinon",
+      re.search(r"fogVisible =\s*\n\s*if \(board\.skill == "
+                r"Skill\.VOID && !solved\) \{\s*\n\s*"
                 r"board\.fogVisibility\(connected\)", vw) is not None)
+
+check("BoardView : l'ancien réglage fogEnabled est RETIRÉ "
+      "(plus une option — phase D)",
+      "fogEnabled" not in vw and "FOG_ENABLED_KEY" not in vw)
 
 check("BoardView : hitCell refuse les tuiles cachées (ni rotation au "
       "tap, ni verrouillage au long-press — sans interaction)",
@@ -750,40 +827,20 @@ check("BoardView : la passe des blips ignore les tuiles cachées "
       "(les connectées restent visibles par définition)",
       "if (fog != null && !fog[index]) continue" in vw)
 
-ma = strip_comments(ma_src)
-check("MainActivity : réglage chargé des préférences OFF par défaut, "
-      "persisté au changement, clé fogEnabled",
-      "getBoolean(FOG_ENABLED_KEY, false)" in ma and
-      "putBoolean(FOG_ENABLED_KEY, fogEnabled)" in ma and
-      'const val FOG_ENABLED_KEY = "fogEnabled"' in ma)
+check("MainActivity : le réglage brouillard est intégralement retiré "
+      "(pas de var, pas de clé, pas de handler — phase D)",
+      "fogEnabled" not in ma and "FOG_ENABLED_KEY" not in ma)
 
-fog_handler = re.search(
-    r"item\.itemId == R\.id\.fog_off \|\| item\.itemId == R\.id\.fog_on "
-    r"-> \{(.*?)\n            \}", ma_src, re.S)
-check("MainActivity : basculer « Brouillard » ne touche PAS la partie en "
-      "cours — rien à chaud (« nouvelles parties seulement »)",
-      fog_handler is not None and
-      "binding.boardView" not in fog_handler.group(1))
+check("Menu : le sous-menu « Brouillard » est RETIRÉ des Réglages",
+      "menu_fog" not in menu_src and "fog_off" not in menu_src
+      and "fog_on" not in menu_src)
 
-check("MainActivity : le plateau endosse le brouillard à chaque "
-      "lancement de partie (onCreate, nouvelle partie, changement de "
-      "niveau)",
-      ma.count("binding.boardView.fogEnabled = fogEnabled") == 3)
-
-check("Menu : sous-menu « Brouillard » dans Réglages, groupe à choix "
-      "exclusif, items fog_off/fog_on",
-      "@+id/menu_fog" in menu_src and "@+id/fog_off" in menu_src and
-      "@+id/fog_on" in menu_src and
-      re.search(r'"@\+id/menu_fog".*?checkableBehavior="single"',
-                menu_src, re.S) is not None)
-
-fr_fog_vals = re.findall(
-    r'<string name="(?:menu_fog|fog_off|fog_on)">([^<]*)</string>', fr_src)
-check("Strings : brouillard en EN et FR, aucune apostrophe non échappée "
-      "en FR",
-      'name="menu_fog"' in en_src and 'name="fog_on"' in en_src and
-      len(fr_fog_vals) == 3 and
-      all("'" not in v for v in fr_fog_vals))
+check("Strings : les chaînes du réglage brouillard sont retirées "
+      "en EN et en FR",
+      'name="menu_fog"' not in en_src and 'name="fog_off"' not in en_src
+      and 'name="fog_on"' not in en_src
+      and 'name="menu_fog"' not in fr_src and 'name="fog_off"' not in fr_src
+      and 'name="fog_on"' not in fr_src)
 
 def lum(hexcode):
     r = int(hexcode[1:3], 16)
@@ -904,6 +961,72 @@ check("Miroir brouillard : débrancher referme — la zone dérivée ne "
       "retient rien (monotonie stricte, 6 réseaux)",
       monotone_ok)
 
+
+# ---------------------------------------------------------------------------
+# Phase D — niveaux Abîme (ABYSS) et Néant (VOID) : aide à la première
+# visite, miroirs de génération avec masquage.
+# ---------------------------------------------------------------------------
+
+help_when = re.search(
+    r"private fun showSkillHelpIfNeeded\(skill: Skill, previous: Skill\) \{(.*?)\n    \}",
+    ma, re.S)
+check("MainActivity : rappel des règles à la première visite d'Abîme "
+      "et de Néant (gardes sur showSkillHelpIfNeeded)",
+      help_when is not None
+      and re.search(r"Skill\.ABYSS if previous != Skill\.ABYSS",
+                    help_when.group(1)) is not None
+      and re.search(r"Skill\.VOID if previous != Skill\.VOID",
+                    help_when.group(1)) is not None)
+
+en_help = dict(re.findall(r'<string name="(help_\w+)">([^<]*)</string>', en_src))
+fr_help = dict(re.findall(r'<string name="(help_\w+)">([^<]*)</string>', fr_src))
+check("Strings : aide help_abyss en EN et FR (plateau infini + câbles "
+      "invisibles)",
+      "help_abyss" in en_help and "help_abyss" in fr_help
+      and "invisible" in en_help["help_abyss"]
+      and "invisibles" in fr_help["help_abyss"])
+check("Strings : aide help_void en EN et FR (Abîme + brouillard)",
+      "help_void" in en_help and "help_void" in fr_help
+      and "fog" in en_help["help_void"].lower()
+      and "brouillard" in fr_help["help_void"])
+check("Strings : aucune apostrophe non échappée dans les aides FR",
+      all(re.search(r"(?<!\\)'", v) is None
+          for k, v in fr_help.items() if k.startswith("help_")))
+
+# --- Miroir : le masquage à la Dément mord vraiment sur les plateaux
+# générés pour Abîme et Néant (le seuil parsé depuis Skill.kt) ---
+
+abyss_rule = skills.get("ABYSS")
+HIDDEN_T = abyss_rule[2] if abyss_rule else 3
+hidden_fail = []
+hidden_counts = []
+for i in range(10):
+    r_gen = random.Random(31_000 + i * 101)
+    conns_d, root_d = gen_original(r_gen, SIZE, SIZE, wrap=True, branches=3)
+    hidden = sum(1 for c in conns_d
+                 if bin(c).count("1") >= HIDDEN_T)
+    hidden_counts.append(hidden)
+    if hidden == 0:
+        hidden_fail.append(f"graine {i}")
+check(f"Miroir Abîme/Néant : des cellules cachées existent sur 10 "
+      f"plateaux 40x40 (seuil parsé {HIDDEN_T} connexions)",
+      not hidden_fail, f"min={min(hidden_counts)}, "
+      f"max={max(hidden_counts)}")
+
+# La solution reste saine avec masquage : la dérivation du brouillard du
+# Néant révèle au moins le carré du serveur (une partie jouable existe).
+void_reveal_ok = True
+for i in range(6):
+    r_gen = random.Random(41_000 + i * 97)
+    conns_v, root_v = gen_original(r_gen, SIZE, SIZE, wrap=True, branches=3)
+    connected = [False] * (SIZE * SIZE)
+    connected[root_v] = True
+    fog = fog_derive(connected, SIZE, SIZE, FOG_RADIUS)
+    if not fog[root_v] or sum(fog) < (2 * FOG_RADIUS + 1) ** 2:
+        void_reveal_ok = False
+check("Miroir Néant : au lancement, le brouillard révèle au moins le "
+      "carré du serveur (6 plateaux)", void_reveal_ok)
+
 # ---------------------------------------------------------------------------
 # Bilan.
 # ---------------------------------------------------------------------------
@@ -914,4 +1037,4 @@ if failures:
     for name in failures:
         print(f"  - {name}")
     sys.exit(1)
-print(f"TOUT PASSE : {checks}/{checks} vérifications (chantier niveau Infini).")
+print(f"TOUT PASSE : {checks}/{checks} vérifications (famille Infini, phases A à D).")

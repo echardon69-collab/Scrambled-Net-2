@@ -16,13 +16,11 @@
     <string name="anim_off">Sans animation</string>
     <string name="anim_on">Animation</string>
 
-    <!-- Brouillard du niveau Infini (phase C) : visibilité limitée aux
-         abords des tuiles connectées au serveur. -->
-    <string name="menu_fog">Brouillard</string>
-    <string name="fog_off">Sans brouillard</string>
-    <string name="fog_on">Brouillard</string>
+    <!-- Les niveaux de la famille Infini (Abîme, Néant) remplacent
+         l'ancien réglage brouillard : il est désormais la marque du
+         niveau Néant. -->
 
-    <!-- Aide (niveaux Maître et Dément) -->
+    <!-- Aide (niveaux spéciaux) -->
     <string name="help_master">Au niveau Maître, les bords du plateau se
         referment sur eux-mêmes : les cellules du bord droit se connectent à
         celles du bord gauche, et inversement. De même pour les bords haut et
@@ -32,6 +30,17 @@
         celles du bord gauche, et inversement. De même pour les bords haut et
         bas. Mais en plus, dans les cellules à 3 ou 4 connexions, les câbles
         sont invisibles. Bonne chance !</string>
+    <string name="help_abyss">Au niveau Abîme, le plateau est infini : il
+        couvre 40 par 40 cases et ses bords se referment sur eux-mêmes, si
+        bien que le déplacement ne montre jamais de bord. En plus, dans les
+        cases à 3 ou 4 connexions, les câbles sont invisibles. Bonne
+        chance !</string>
+    <string name="help_void">Au niveau Néant, le plateau est infini : il
+        couvre 40 par 40 cases et ses bords se referment sur eux-mêmes. Dans
+        les cases à 3 ou 4 connexions, les câbles sont invisibles. Et en
+        plus, un brouillard masque les cases éloignées du réseau connecté au
+        serveur : seuls les abords des cases connectées restent visibles.
+        Bonne chance !</string>
     <string name="menu_scores">Meilleurs scores</string>
     <string name="menu_help">Aide</string>
     <string name="menu_about">À propos</string>
@@ -42,6 +51,8 @@
     <string name="skill_master">Maître</string>
     <string name="skill_insane">Dément</string>
     <string name="skill_endless">Infini</string>
+    <string name="skill_abyss">Abîme</string>
+    <string name="skill_void">Néant</string>
 
     <string name="status_moves">Coups : %1$d</string>
     <string name="status_time">Temps : %1$s</string>

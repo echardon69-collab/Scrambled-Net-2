@@ -173,19 +173,24 @@ class GameViewModel : ViewModel() {
      * Nouvelle partie au niveau [skill], sur un plateau de [width] x
      * [height] — dimensions choisies par l'activité d'après l'écran
      * (Screen.find, comme findMatrix de l'original) et figées pour
-     * toute la partie, sauf pour Infini dont la taille est fixe
-     * (40 x 40). Le générateur du réseau est tiré à pile ou face
-     * depuis la graine (donc reproductible à la restauration) : notre
-     * arbre couvrant, ou la croissance par branchements de l'original —
-     * sauf pour Infini, qui FORCE le générateur ORIGINAL : victoire
+     * toute la partie, sauf pour la famille Infini (Endless, Abîme,
+     * Néant) dont la taille est fixe (40 x 40). Le générateur du
+     * réseau est tiré à pile ou face depuis la graine (donc
+     * reproductible à la restauration) : notre arbre couvrant, ou la
+     * croissance par branchements de l'original — sauf pour la
+     * famille Infini, qui FORCE le générateur ORIGINAL : victoire
      * par terminaux comme à l'origine, et la signature « électricité »
      * du serveur (scintillement) devient la carte d'identité constante
-     * du niveau.
+     * de la famille.
      */
     fun newGame(skill: Skill, width: Int, height: Int) {
         seed = newSeed()
         this.skill = skill
-        val generator = if (skill == Skill.ENDLESS) {
+        // Famille Infini (Endless, Abîme, Néant) : générateur ORIGINAL
+        // forcé — victoire par terminaux, scintillement constant du
+        // serveur (signature de la famille) ; le tirage à la graine
+        // reste intact pour les cinq autres niveaux.
+        val generator = if (skill.endless) {
             Generator.ORIGINAL
         } else if ((seed and 1L) == 0L) {
             Generator.TREE

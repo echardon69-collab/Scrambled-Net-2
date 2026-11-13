@@ -250,22 +250,50 @@ class BoardTest {
 
     @Test
     fun `endless board is fixed 40 by 40 on every screen matrix`() {
-        // Infini : la matrice Screen est bypassée — la taille est fixe
-        // et carrée, quelle que soit la matrice de l'écran (et son
-        // orientation, d'où le tore bien réel du niveau).
-        for (screen in Screen.entries) {
-            for (landscape in listOf(true, false)) {
-                assertEquals(
-                    Skill.ENDLESS_SIZE to Skill.ENDLESS_SIZE,
-                    screen.boardSize(Skill.ENDLESS, landscape)
-                )
+        // Famille Infini : la matrice Screen est bypassée — la taille
+        // est fixe et carrée, quelle que soit la matrice de l'écran
+        // (et son orientation, d'où le tore bien réel des niveaux).
+        for (skill in listOf(Skill.ENDLESS, Skill.ABYSS, Skill.VOID)) {
+            for (screen in Screen.entries) {
+                for (landscape in listOf(true, false)) {
+                    assertEquals(
+                        Skill.ENDLESS_SIZE to Skill.ENDLESS_SIZE,
+                        screen.boardSize(skill, landscape)
+                    )
+                }
             }
         }
-        // Les règles du niveau : trois branches et tore, aucun masquage
-        // (le masquage à la Dément reste le propre de Dément).
+        // Les règles du niveau Infini : trois branches et tore, aucun
+        // masquage (le masquage à la Dément reste le propre de Dément).
         assertEquals(3, Skill.ENDLESS.branches)
         assertTrue(Skill.ENDLESS.wrap)
         assertEquals(9, Skill.ENDLESS.hiddenThreshold)
+    }
+
+    @Test
+    fun `abyss and void stack endless rules`() {
+        // Abîme et Néant empilent les règles d'Infini (plateau 40x40
+        // en tore, trois branches, générateur ORIGINAL forcé par la
+        // fabrique via la propriété endless de l'énumération) et y
+        // ajoutent chacun leur épice : masquage à la Dément pour
+        // Abîme, brouillard dérivé pour Néant (testé par ailleurs).
+        for (skill in Skill.entries) {
+            val expected =
+                skill == Skill.ENDLESS || skill == Skill.ABYSS || skill == Skill.VOID
+            assertEquals(
+                "La propriété endless doit être vraie pour la famille " +
+                    "Infini et seulement elle ($skill)",
+                expected, skill.endless
+            )
+        }
+        for (skill in listOf(Skill.ABYSS, Skill.VOID)) {
+            assertEquals("$skill garde trois branches", 3, skill.branches)
+            assertTrue("$skill garde le tore", skill.wrap)
+            assertEquals(
+                "$skill masque les cellules à 3 ou 4 connexions",
+                3, skill.hiddenThreshold
+            )
+        }
     }
 
     @Test

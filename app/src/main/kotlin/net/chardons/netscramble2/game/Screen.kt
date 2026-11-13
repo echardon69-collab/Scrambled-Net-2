@@ -40,8 +40,9 @@ enum class Screen(
         Skill.EXPERT -> expertMajor
         Skill.NORMAL -> normalMajor
         Skill.NOVICE -> noviceMajor
-        // Infini : la matrice est bypassée, la taille est fixe.
-        Skill.ENDLESS -> Skill.ENDLESS_SIZE
+        // Famille Infini (Endless, Abîme, Néant) : la matrice est
+        // bypassée, la taille est fixe.
+        Skill.ENDLESS, Skill.ABYSS, Skill.VOID -> Skill.ENDLESS_SIZE
     }
 
     /** Petit côté du plateau du niveau [skill]. */
@@ -50,8 +51,9 @@ enum class Screen(
         Skill.EXPERT -> expertMinor
         Skill.NORMAL -> normalMinor
         Skill.NOVICE -> noviceMinor
-        // Infini : la matrice est bypassée, la taille est fixe.
-        Skill.ENDLESS -> Skill.ENDLESS_SIZE
+        // Famille Infini (Endless, Abîme, Néant) : la matrice est
+        // bypassée, la taille est fixe.
+        Skill.ENDLESS, Skill.ABYSS, Skill.VOID -> Skill.ENDLESS_SIZE
     }
 
     /**

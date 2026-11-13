@@ -37,7 +37,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var scoresStore: ScoresStore
     private var soundMode = SoundMode.FULL
     private var animEnabled = true
-    private var fogEnabled = false
     private var lastSolving = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -77,15 +76,6 @@ class MainActivity : AppCompatActivity() {
         // Réglage « Animation » (même clé que l'original, activé par défaut).
         animEnabled = getPreferences(MODE_PRIVATE).getBoolean(ANIM_ENABLED_KEY, true)
         binding.boardView.blipsEnabled = animEnabled
-
-        // Réglage « Brouillard » (phase C du chantier Infini, OFF par
-        // défaut) : le plateau l'endosse au lancement d'une partie —
-        // nouvelle OU restaurée — et n'y retouche plus ensuite (le
-        // brouillard est dérivé à chaque coup, zéro état sérialisé ;
-        // changer le réglage en cours de partie ne fait rien à chaud,
-        // il prendra effet à la partie suivante).
-        fogEnabled = getPreferences(MODE_PRIVATE).getBoolean(FOG_ENABLED_KEY, false)
-        binding.boardView.fogEnabled = fogEnabled
 
         binding.boardView.onCellTapped = { viewModel.onCellTapped(it) }
         binding.boardView.onCellLongPressed = { viewModel.onCellLongPressed(it) }
@@ -135,7 +125,8 @@ class MainActivity : AppCompatActivity() {
         binding.statusSkill.text = getString(
             listOf(
                 R.string.skill_novice, R.string.skill_normal, R.string.skill_expert,
-                R.string.skill_master, R.string.skill_insane, R.string.skill_endless
+                R.string.skill_master, R.string.skill_insane, R.string.skill_endless,
+                R.string.skill_abyss, R.string.skill_void
             )[state.skill.ordinal]
         )
         binding.statusTime.text = getString(R.string.status_time, formatTime(state.elapsedMs))
@@ -212,6 +203,8 @@ class MainActivity : AppCompatActivity() {
             Skill.MASTER -> skillMenu?.findItem(R.id.skill_master)
             Skill.INSANE -> skillMenu?.findItem(R.id.skill_insane)
             Skill.ENDLESS -> skillMenu?.findItem(R.id.skill_endless)
+            Skill.ABYSS -> skillMenu?.findItem(R.id.skill_abyss)
+            Skill.VOID -> skillMenu?.findItem(R.id.skill_void)
         }?.isChecked = true
         // Coche le mode sonore courant.
         val soundMenu = menu.findItem(R.id.menu_sounds).subMenu
@@ -225,10 +218,6 @@ class MainActivity : AppCompatActivity() {
         val animMenu = menu.findItem(R.id.menu_anim).subMenu
         val animItem = if (animEnabled) R.id.anim_on else R.id.anim_off
         animMenu?.findItem(animItem)?.isChecked = true
-        // Coche le réglage « Brouillard » (Infini) courant.
-        val fogMenu = menu.findItem(R.id.menu_fog).subMenu
-        val fogItem = if (fogEnabled) R.id.fog_on else R.id.fog_off
-        fogMenu?.findItem(fogItem)?.isChecked = true
         return true
     }
 
@@ -249,6 +238,8 @@ class MainActivity : AppCompatActivity() {
             R.id.skill_master -> Skill.MASTER
             R.id.skill_insane -> Skill.INSANE
             R.id.skill_endless -> Skill.ENDLESS
+            R.id.skill_abyss -> Skill.ABYSS
+            R.id.skill_void -> Skill.VOID
             else -> null
         }
         return when {
@@ -263,9 +254,6 @@ class MainActivity : AppCompatActivity() {
                 ) {
                     val current = viewModel.uiState.value.skill
                     val (width, height) = boardSize(current)
-                    // La partie endosse le réglage « Brouillard » au
-                    // lancement (nouvelles parties seulement).
-                    binding.boardView.fogEnabled = fogEnabled
                     viewModel.newGame(current, width, height)
                 }
                 true
@@ -302,17 +290,6 @@ class MainActivity : AppCompatActivity() {
                 }
                 true
             }
-            item.itemId == R.id.fog_off || item.itemId == R.id.fog_on -> {
-                item.isChecked = true
-                fogEnabled = item.itemId == R.id.fog_on
-                getPreferences(MODE_PRIVATE).edit {
-                    putBoolean(FOG_ENABLED_KEY, fogEnabled)
-                }
-                // Rien à chaud : le réglage ne touche pas la partie en
-                // cours (« nouvelles parties seulement ») — il sera
-                // endossé au prochain lancement de partie (ci-dessous).
-                true
-            }
             skill != null -> {
                 // Même protection que « Nouvelle partie » : changer de
                 // niveau écrase aussi la partie en cours, avec un
@@ -326,9 +303,6 @@ class MainActivity : AppCompatActivity() {
                     // La coche du sous-menu ne bouge qu'à la confirmation :
                     // Annuler doit laisser le niveau inchangé.
                     item.isChecked = true
-                    // La partie endosse le réglage « Brouillard » au
-                    // lancement (nouvelles parties seulement).
-                    binding.boardView.fogEnabled = fogEnabled
                     viewModel.newGame(skill, width, height)
                     showSkillHelpIfNeeded(skill, previous)
                 }
@@ -396,11 +370,16 @@ class MainActivity : AppCompatActivity() {
     /**
      * Comme dans l'original (startGame) : en arrivant au niveau Maître
      * ou Dément, un message rappelle les règles spéciales (bords qui
-     * se referment, câbles invisibles). Pas de rappel en descendant du
-     * niveau Dément — les règles sont connues.
+     * se referment, câbles invisibles). La famille Infini a ses
+     * propres rappels : Abîme ajoute les câbles invisibles au plateau
+     * infini, Néant y ajoute le brouillard. Pas de rappel en
+     * descendant d'un niveau dont les règles sont déjà connues.
      */
     private fun showSkillHelpIfNeeded(skill: Skill, previous: Skill) {
         val message = when (skill) {
+            Skill.VOID if previous != Skill.VOID -> R.string.help_void
+            Skill.ABYSS if previous != Skill.ABYSS && previous != Skill.VOID ->
+                R.string.help_abyss
             Skill.INSANE if previous != Skill.INSANE -> R.string.help_insane
             Skill.MASTER if previous != Skill.MASTER && previous != Skill.INSANE ->
                 R.string.help_master
@@ -433,8 +412,5 @@ class MainActivity : AppCompatActivity() {
 
         /** Clé du réglage d'animation, reprise de l'original. */
         private const val ANIM_ENABLED_KEY = "animEnable"
-
-        /** Clé du réglage « Brouillard » d'Infini (phase C), OFF par défaut. */
-        private const val FOG_ENABLED_KEY = "fogEnabled"
     }
 }

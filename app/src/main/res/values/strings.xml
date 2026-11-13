@@ -18,13 +18,10 @@
     <string name="anim_off">No animation</string>
     <string name="anim_on">Animation</string>
 
-    <!-- Fog of the Endless level (phase C): visibility limited to the
-         surroundings of the cells connected to the server. -->
-    <string name="menu_fog">Fog</string>
-    <string name="fog_off">No fog</string>
-    <string name="fog_on">Fog</string>
+    <!-- Endless family levels (Abyss, Void) replace the former fog
+         setting: the fog is now the mark of the Void level. -->
 
-    <!-- Aide (niveaux Master et Insane) -->
+    <!-- Aide (niveaux spéciaux) -->
     <string name="help_master">At Master level, the board edges wrap around;
         cells on the right edge connect to those on the left edge, and vice
         versa. Similarly for the top and bottom edges.</string>
@@ -32,6 +29,15 @@
         cells on the right edge connect to those on the left edge, and vice
         versa. Similarly for the top and bottom edges. But in addition, in
         cells with 3 or 4 connections, the wiring is invisible. Good luck!</string>
+    <string name="help_abyss">At Abyss level, the board is endless: it covers
+        40 by 40 cells and its edges wrap around, so panning never reveals
+        any end of the board. In addition, in cells with 3 or 4 connections,
+        the wiring is invisible. Good luck!</string>
+    <string name="help_void">At Void level, the board is endless: it covers
+        40 by 40 cells and its edges wrap around. In cells with 3 or 4
+        connections, the wiring is invisible. And in addition, a fog hides
+        the cells away from the network connected to the server: only the
+        surroundings of the connected cells stay visible. Good luck!</string>
     <string name="menu_scores">High scores</string>
     <string name="menu_help">Help</string>
     <string name="menu_about">About</string>
@@ -43,6 +49,8 @@
     <string name="skill_master">Master</string>
     <string name="skill_insane">Insane</string>
     <string name="skill_endless">Endless</string>
+    <string name="skill_abyss">Abyss</string>
+    <string name="skill_void">Void</string>
 
     <!-- Barre d'état -->
     <string name="status_moves">Moves: %1$d</string>
