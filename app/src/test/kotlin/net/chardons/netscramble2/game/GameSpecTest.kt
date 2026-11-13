@@ -9,9 +9,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Tests de la persistance de partie (GameSpec) : aller-retour v3,
- * régénération à l'identique pour les deux générateurs,
- * rétrocompatibilité du format v2, robustesse aux données corrompues.
+ * Tests de la persistance de partie (GameSpec) : aller-retour v4 et
+ * sa caméra, régénération à l'identique pour les deux générateurs,
+ * rétrocompatibilité des formats v3 (sans caméra) et v2, robustesse
+ * aux données corrompues.
  * La sérialisation est pure — tout tourne sur la JVM.
  */
 class GameSpecTest {
@@ -29,7 +30,8 @@ class GameSpecTest {
         elapsedMs: Long = 42_500L,
         solverUsed: Boolean = false,
         prevClicked: Int = -1,
-        solveQueue: List<Int> = emptyList()
+        solveQueue: List<Int> = emptyList(),
+        camera: CameraSpec? = null
     ): GameSpec = GameSpec(
         skill = skill,
         seed = seed,
@@ -44,7 +46,8 @@ class GameSpecTest {
         solveQueue = solveQueue,
         rotations = board.rotations.copyOf(),
         locked = board.locked.copyOf(),
-        revealed = board.revealed.copyOf()
+        revealed = board.revealed.copyOf(),
+        camera = camera
     )
 
     @Test
@@ -54,12 +57,21 @@ class GameSpecTest {
         board.rotateCell(17, 3)
         board.toggleLock(5)
         board.reveal(40)
+        // La caméra fait partie des champs : l'aller-retour doit en
+        // porter une. Sans caméra, l'égalité est IMPOSSIBLE — encode
+        // écrit le repli neutre (0|0|zoom minimal), decode renvoie
+        // TOUJOURS une caméra en v4 : null ne peut pas être préservé
+        // (piège du 13 nov., test KO chez eric la première fois).
+        val camera = CameraSpec(
+            centerMilliX = 2_500, centerMilliY = 6_250, zoomCentiDp = 4_200
+        )
         val spec = snapshotOf(
             board, Skill.EXPERT, seed = 1234L, prevClicked = 17,
-            solveQueue = listOf(3, 7, 42)
+            solveQueue = listOf(3, 7, 42), camera = camera
         )
         val decoded = GameSpec.decode(spec.encode())
         assertEquals(spec, decoded)
+        assertEquals(camera, decoded!!.camera)
     }
 
     @Test
@@ -130,6 +142,72 @@ class GameSpecTest {
     }
 
     @Test
+    fun `camera round trips through the v4 format`() {
+        val board = Board.generate(Skill.EXPERT, 7, 11, Generator.TREE, seed = 1234L)
+        val camera = CameraSpec(
+            centerMilliX = 3_500, centerMilliY = 8_250, zoomCentiDp = 4_200
+        )
+        val spec = snapshotOf(board, Skill.EXPERT, seed = 1234L, camera = camera)
+        val encoded = spec.encode()
+        assertTrue("Le format passe en v4 dès qu'une caméra existe", encoded.startsWith("v4|"))
+        assertEquals("La caméra ajoute exactement trois champs", 18, encoded.split('|').size)
+        val decoded = GameSpec.decode(encoded)
+        assertEquals(spec, decoded)
+        assertEquals(camera, decoded!!.camera)
+    }
+
+    @Test
+    fun `v3 snapshot decodes without camera then re-encodes as v4`() {
+        // Une sauvegarde d'avant la caméra : décodable à l'identique,
+        // caméra absente — la vue repose la sienne — puis réenregistrée
+        // en v4 avec la caméra neutre de repli.
+        val seed = 55L
+        val v3 = listOf(
+            "v3", "NORMAL", seed.toString(), "TREE", "7", "7", "24", "3", "42000",
+            "false", "-1", "", "0".repeat(49), "0".repeat(49), "0".repeat(49)
+        ).joinToString("|")
+        val decoded = GameSpec.decode(v3)
+        assertNotNull(decoded)
+        assertNull(decoded!!.camera)
+        assertEquals(Skill.NORMAL, decoded.skill)
+        assertEquals(seed, decoded.seed)
+
+        val reEncoded = decoded.encode()
+        assertTrue(
+            "Réenregistrée, la partie v3 passe en v4",
+            reEncoded.startsWith("v4|")
+        )
+        assertEquals("Le repli caméra est écrit : position neutre, zoom minimal",
+            "0|0|2600", reEncoded.split('|').takeLast(3).joinToString("|"))
+        val reDecoded = GameSpec.decode(reEncoded)
+        assertNotNull(reDecoded)
+        assertEquals(CameraSpec(0, 0, 2_600), reDecoded!!.camera)
+    }
+
+    @Test
+    fun `decode rejects an out-of-bounds camera`() {
+        val board = Board.generate(Skill.NOVICE, 5, 5, Generator.TREE, seed = 1L)
+        val camera = CameraSpec(
+            centerMilliX = 2_500, centerMilliY = 2_500, zoomCentiDp = 3_000
+        )
+        val good = snapshotOf(board, Skill.NOVICE, seed = 1L, camera = camera).encode()
+        assertNotNull(GameSpec.decode(good))
+        assertEquals(18, good.split('|').size)
+
+        fun withField(index: Int, value: String): String {
+            val parts = good.split('|').toMutableList()
+            parts[index] = value
+            return parts.joinToString("|")
+        }
+
+        assertNull(GameSpec.decode(withField(15, "5_000"))) // camX hors plateau 5 x 5
+        assertNull(GameSpec.decode(withField(16, "-1")))   // camY négative
+        assertNull(GameSpec.decode(withField(17, "2_599"))) // zoom sous le plancher
+        assertNull(GameSpec.decode(withField(17, "9_601"))) // zoom au-dessus du plafond
+        assertNull(GameSpec.decode(withField(15, "pas-un-nombre")))
+    }
+
+    @Test
     fun `legacy v2 game decodes and rebuilds exactly the old board`() {
         // Une sauvegarde d'avant le chantier tailles : grille carrée du
         // niveau, générateur TREE, serveur central — le code d'alors ne
@@ -171,8 +249,9 @@ class GameSpecTest {
         assertNull(GameSpec.decode(""))
         // v3 avec un corps de v2 (11 champs au lieu de 15) : rejet.
         assertNull(GameSpec.decode("v3|NOVICE|1|0|0|false|-1||00000|00000|00000"))
-        // Versions inconnues : rejet, silencieux.
+        // Version inconnue : rejet, silencieux.
         assertNull(GameSpec.decode("v1|NOVICE|1|0|0|false|-1||00000|00000|00000"))
+        // v4 avec un corps de v3 (15 champs au lieu de 18) : rejet.
         assertNull(
             GameSpec.decode(
                 "v4|NOVICE|1|TREE|5|5|12|0|0|false|-1||00000|00000|00000"

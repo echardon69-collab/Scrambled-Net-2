@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.milliseconds
 import net.chardons.netscramble2.game.Board
+import net.chardons.netscramble2.game.CameraSpec
 import net.chardons.netscramble2.game.GameSpec
 import net.chardons.netscramble2.game.Generator
 import net.chardons.netscramble2.game.Skill
@@ -300,8 +301,12 @@ class GameViewModel : ViewModel() {
         clockPaused = paused
     }
 
-    /** Photographie sérialisable de la partie en cours (persistance). */
-    fun currentSpec(): GameSpec = GameSpec(
+    /**
+     * Photographie sérialisable de la partie en cours (persistance).
+     * La caméra vient de la VUE (la seule à connaître pan et zoom) :
+     * l'activité la fournit à l'enregistrement, en onStop.
+     */
+    fun currentSpec(camera: CameraSpec? = null): GameSpec = GameSpec(
         skill = skill,
         seed = seed,
         width = board.width,
@@ -315,7 +320,8 @@ class GameViewModel : ViewModel() {
         solveQueue = solveQueue?.toList() ?: emptyList(),
         rotations = board.rotations.copyOf(),
         locked = board.locked.copyOf(),
-        revealed = board.revealed.copyOf()
+        revealed = board.revealed.copyOf(),
+        camera = camera
     )
 
     /**

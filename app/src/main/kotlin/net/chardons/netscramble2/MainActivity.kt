@@ -63,7 +63,13 @@ class MainActivity : AppCompatActivity() {
         // première visite : une partie Normal aux dimensions de l'écran.
         val savedSpec = getSharedPreferences(Persistence.FILE, MODE_PRIVATE)
             .getString(Persistence.GAME_SPEC_KEY, null)
-        if (!viewModel.restoreIfPending(GameSpec.decode(savedSpec))) {
+        val restoredSpec = GameSpec.decode(savedSpec)
+        if (viewModel.restoreIfPending(restoredSpec)) {
+            // Caméra de la sauvegarde : la vue la posera au premier
+            // rendu du plateau restauré (emplacement + zoom d'avant
+            // l'arrêt ; une v3 n'en a pas, la vue repose la sienne).
+            binding.boardView.restoreCamera(restoredSpec?.camera)
+        } else {
             val (width, height) = boardSize(Skill.NORMAL)
             viewModel.newGame(Skill.NORMAL, width, height)
         }
@@ -113,7 +119,12 @@ class MainActivity : AppCompatActivity() {
         // Même fichier et même clé que la page titre (Persistence) :
         // les sauvegardes antérieures restent lisibles à l'identique.
         getSharedPreferences(Persistence.FILE, MODE_PRIVATE).edit {
-            putString(Persistence.GAME_SPEC_KEY, viewModel.currentSpec().encode())
+            // La caméra voyage avec la partie (v4) : reprise à
+            // l'emplacement et au zoom de la sauvegarde.
+            putString(
+                Persistence.GAME_SPEC_KEY,
+                viewModel.currentSpec(binding.boardView.cameraSnapshot()).encode()
+            )
         }
         super.onStop()
     }

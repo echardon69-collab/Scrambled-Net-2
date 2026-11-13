@@ -16,6 +16,7 @@ import androidx.core.content.ContextCompat
 import net.chardons.netscramble2.R
 import net.chardons.netscramble2.game.BlipField
 import net.chardons.netscramble2.game.Board
+import net.chardons.netscramble2.game.CameraSpec
 import net.chardons.netscramble2.game.Dir
 import net.chardons.netscramble2.game.Generator
 import androidx.core.graphics.createBitmap
@@ -25,6 +26,7 @@ import net.chardons.netscramble2.game.Skill
 import kotlin.math.ceil
 import kotlin.math.cos
 import kotlin.math.floor
+import kotlin.math.roundToInt
 import kotlin.random.Random
 
 /**
@@ -164,6 +166,51 @@ class BoardView @JvmOverloads constructor(
      * plus un réglage : il est la marque du Néant.
      */
     private var fogVisible: BooleanArray? = null
+
+    /**
+     * Caméra d'une partie RESTAURÉE : posée par l'activité juste
+     * après la restauration, consommée au premier rendu du plateau
+     * restauré (voir [applyArrivalCamera]) — jamais après : les
+     * nouveaux coups ne « téléportent » jamais le regard, le pan
+     * libre de la famille Infini reste celui du joueur.
+     */
+    private var restoredCamera: CameraSpec? = null
+
+    /** Caméra de la sauvegarde, posée avant le premier rendu restauré. */
+    fun restoreCamera(camera: CameraSpec?) {
+        restoredCamera = camera
+    }
+
+    /**
+     * Photographie de la caméra COURANTE (position du centre de la
+     * vue en cellules + zoom), pour la persistance : la partie
+     * reprendra là où le joueur regardait, au zoom qu'il avait
+     * choisi.
+     */
+    fun cameraSnapshot(): CameraSpec {
+        val b = board
+            ?: return CameraSpec(0, 0, (MIN_CELL_DP * 100).toInt())
+        if (cellPx <= 0f || width == 0 || height == 0) {
+            return CameraSpec(0, 0, (MIN_CELL_DP * 100).toInt())
+        }
+        // Normalisation modulo les côtés : pour la famille Infini et
+        // sa caméra modulo, une infinité de pans équivalents ne
+        // s'écrit que d'une façon ; pour les niveaux encadrés, la
+        // position ne sert à rien au décodage mais reste ainsi dans
+        // les bornes du format. Les milli-cellules sont ARRONDIES au
+        // plus proche (pas tronquées) : la troncature fait dériver
+        // l'aller-retour sauvegarde-restauration d'un milli en Float
+        // (251 -> 250, etc.) ; l'arrondi, lui, est stable au milli
+        // (roundToInt de kotlin.math — contre-preuve exhaustive en
+        // float 32 bits, ex æquo vers le pair compris).
+        val cx = (width / 2f - panX) / cellPx - 0.5f
+        val cy = (height / 2f - panY) / cellPx - 0.5f
+        val mx = Math.floorMod((cx * 1_000f).roundToInt(), b.width * 1_000)
+        val my = Math.floorMod((cy * 1_000f).roundToInt(), b.height * 1_000)
+        val zoom = (cellPx / screenDensity * 100f).toInt()
+            .coerceIn((MIN_CELL_DP * 100).toInt(), (MAX_CELL_DP * 100).toInt())
+        return CameraSpec(centerMilliX = mx, centerMilliY = my, zoomCentiDp = zoom)
+    }
 
     // Bruit visuel des « données » sur les écrans de terminaux.
     private val rng = Random.Default
@@ -333,6 +380,7 @@ class BoardView @JvmOverloads constructor(
         this.board = board
         this.connected = connected
         this.solved = solved
+        var freshBoard = false
         // Une taille de case héritée d'un plateau précédent ne doit jamais
         // rester sous le plancher du plateau courant.
         cellPx = cellPx.coerceAtLeast(floorCellPx(board))
@@ -364,6 +412,7 @@ class BoardView @JvmOverloads constructor(
             lastDrawnServerWired = false
             blips = BlipField(board)
             blipsLastAdvanceMs = now
+            freshBoard = true
         } else {
             // Détection des rotations survenues depuis le dernier rendu :
             // chaque delta devient une animation de delta × 90°, et fait
@@ -400,14 +449,35 @@ class BoardView @JvmOverloads constructor(
         } else {
             clampPan()
         }
+        if (freshBoard) {
+            applyArrivalCamera(solved)
+        }
         invalidate()
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        // Avant tout, le regard de la famille Infini : le centre de la
+        // caméra en cellules et le zoom courant, calculés sur
+        // l'ancienne taille (panX/panY ne bougent pas ici). Une
+        // rotation d'écran ne « téléporte » plus le regard au centre
+        // du plateau — on reprend là où l'on regardait.
+        val b = board
+        val keepCamera = b != null && b.skill.endless && cellPx > 0f &&
+            oldw > 0 && oldh > 0
+        val cx = if (keepCamera) (oldw / 2f - panX) / cellPx - 0.5f else 0f
+        val cy = if (keepCamera) (oldh / 2f - panY) / cellPx - 0.5f else 0f
+        val zoomPx = if (keepCamera) cellPx else 0f
         super.onSizeChanged(w, h, oldw, oldh)
         viewportInitialized = false
         board?.let { fitBoard() }
         viewportInitialized = true
+        if (b != null && keepCamera) {
+            // Le zoom est préservé (borné au nouveau plancher), le pan
+            // reposé sur le centre mémorisé.
+            cellPx = zoomPx.coerceIn(floorCellPx(b), maxCellPx)
+            panX = width / 2f - (cx + 0.5f) * cellPx
+            panY = height / 2f - (cy + 0.5f) * cellPx
+        }
     }
 
     /**
@@ -459,6 +529,81 @@ class BoardView @JvmOverloads constructor(
             return
         }
         clampPan()
+    }
+
+    /**
+     * Caméra d'ARRIVÉE sur un plateau fraîchement posé, APRÈS le
+     * fitBoard/clampPan de [update] (elle prend le pas sur leur
+     * centrage). Priorité : la caméra d'une partie restaurée
+     * (emplacement et zoom de la sauvegarde — le zoom pour tous les
+     * niveaux, la position pour la famille Infini, la seule au pan
+     * libre ; les niveaux encadrés se re-clipent tout seuls). À
+     * défaut, un Néant qui démarre se centre sur sa zone visible —
+     * le serveur et son carré révélé — à un zoom confortable : le
+     * joueur ne cherche JAMAIS le réseau. Le reste de la famille
+     * garde le centrage plateau de fitBoard.
+     */
+    private fun applyArrivalCamera(solved: Boolean) {
+        val b = board ?: return
+        val camera = restoredCamera
+        restoredCamera = null
+        if (camera != null) {
+            cellPx = (camera.zoomCentiDp / 100f * screenDensity)
+                .coerceIn(floorCellPx(b), maxCellPx)
+            if (b.skill.endless) {
+                val cx = camera.centerMilliX / 1_000f
+                val cy = camera.centerMilliY / 1_000f
+                panX = width / 2f - (cx + 0.5f) * cellPx
+                panY = height / 2f - (cy + 0.5f) * cellPx
+            } else {
+                clampPan()
+            }
+            return
+        }
+        if (b.skill == Skill.VOID && !solved) {
+            // Zoom confort du Néant : le carré révélé — (2r+1) cases
+            // de côté, r = rayon de Chebyshev du brouillard — occupe
+            // la MOITIÉ du petit côté de la vue (spéc validée par
+            // eric : min / (2 x (2r+1))). Borné par le plancher de la
+            // famille : l'illusion d'infini ne se négocie que vers le
+            // haut, jamais vers le bas.
+            cellPx = (minOf(width, height) /
+                (2f * (2f * Board.FOG_RADIUS_CELLS + 1f)))
+                .coerceIn(floorCellPx(b), maxCellPx)
+            centerOnVisibleZone()
+        }
+    }
+
+    /**
+     * Centre la vue sur la zone visible du Néant : le centre de la
+     * boîte englobante du réseau connecté (au lancement, le réseau
+     * connecté se réduit au serveur et son carré révélé). Sur le
+     * tore, la boîte est calculée sans dénouage d'enroulement : la
+     * zone connectée d'un départ de partie est trop petite pour le
+     * subir, et le pan reste libre — le joueur peut toujours glisser
+     * vers ce qu'il cherche.
+     */
+    private fun centerOnVisibleZone() {
+        val b = board ?: return
+        val zone = connected ?: return
+        var minX = Int.MAX_VALUE
+        var maxX = Int.MIN_VALUE
+        var minY = Int.MAX_VALUE
+        var maxY = Int.MIN_VALUE
+        for (i in zone.indices) {
+            if (!zone[i]) continue
+            val x = i % b.width
+            val y = i / b.width
+            if (x < minX) minX = x
+            if (x > maxX) maxX = x
+            if (y < minY) minY = y
+            if (y > maxY) maxY = y
+        }
+        if (minX > maxX) return
+        val cx = (minX + maxX) / 2f
+        val cy = (minY + maxY) / 2f
+        panX = width / 2f - (cx + 0.5f) * cellPx
+        panY = height / 2f - (cy + 0.5f) * cellPx
     }
 
     /**

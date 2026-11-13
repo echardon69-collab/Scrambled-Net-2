@@ -22,12 +22,18 @@ Phase D (niveaux 7 et 8) — la famille se gradue :
     « Brouillard » de la phase C est retiré : le brouillard est la
     marque du niveau, plus une option).
 
+Phase E — centrage Néant et caméra persistante (nov. 2026) : la vue
+d'un Néant qui démarre se centre sur sa zone visible à un zoom
+confort ; la caméra voyage en GameSpec v4 (v3/v2 décodés sans
+caméra, milli-cellules arrondies — la troncature dérive en Float).
+
 Deux parties, comme les validateurs précédents :
   1. Vérification statique : les fichiers Kotlin et XML sont PARSÉS
      (jamais de valeurs retapées à la main dans ce script).
   2. Simulation : génération 40x40 en tore (miroir Python de
      generateOriginal), victoire par terminaux, générateur forcé,
-     format GameSpec v3 avec la famille (aller-retour, rejet v2).
+     format GameSpec avec la famille (aller-retour, rejet v2, caméra
+    v4 et centrage Néant en phase E).
 
 Usage : python3 tools/validate_infini.py
 """
@@ -304,7 +310,6 @@ check("Tests JVM : messages d'échec en PREMIER argument (JUnit 4 — "
       "compile pas avec org.junit.Assert)",
       'assertEquals("$skill garde trois branches", 3, skill.branches)' in ts
       and 'assertTrue("$skill garde le tore", skill.wrap)' in ts
-      and '"La propriété endless doit être vraie' not in ts
       and re.search(r'assert\w+\([^")]*,[^")]*,\s*"', ts) is None)
 
 # ---------------------------------------------------------------------------
@@ -1028,6 +1033,244 @@ check("Miroir Néant : au lancement, le brouillard révèle au moins le "
       "carré du serveur (6 plateaux)", void_reveal_ok)
 
 # ---------------------------------------------------------------------------
+# Phase E — centrage Néant et caméra persistante (spec validée par eric) :
+# au lancement d'un Néant, la vue se centre sur la zone visible (bbox du
+# réseau connecté) à un zoom confort (carré révélé = moitié du petit
+# côté) ; la caméra voyage en GameSpec v4 (v3/v2 décodés sans caméra) ;
+# une rotation d'écran conserve le regard de la famille Infini.
+# ---------------------------------------------------------------------------
+
+gs_src = read(KOTLIN / "game/GameSpec.kt")
+gs = strip_comments(gs_src)
+check("GameSpec : le format passe en v4 (VERSION v4, 18 champs)",
+      'VERSION = "v4"' in gs and "FIELDS = 18" in gs)
+check("GameSpec : la v3 d'avant la caméra reste décodable "
+      "(PREVIOUS_VERSION, 15 champs)",
+      'PREVIOUS_VERSION = "v3"' in gs and "PREVIOUS_FIELDS = 15" in gs)
+check("GameSpec : CameraSpec est une DATA CLASS (l'aller-retour "
+      "encode/decode compare les valeurs, jamais les références)",
+      re.search(r"data class CameraSpec\(", gs) is not None)
+check("GameSpec : la caméra participe à equals (v4 complète)",
+      "camera == other.camera" in gs)
+check("GameSpec : bornes de décodage caméra (position modulo le plateau, "
+      "zoom entre plancher et plafond de la vue)",
+      "camX !in 0 until width * 1_000" in gs
+      and "camY !in 0 until height * 1_000" in gs
+      and "zoom !in MIN_ZOOM_CENTI_DP..MAX_ZOOM_CENTI_DP" in gs)
+check("GameSpec : encode sans caméra = repli propre (position neutre, "
+      "zoom minimal)",
+      "camera?.centerMilliX ?: 0" in gs
+      and "camera?.zoomCentiDp ?: MIN_ZOOM_CENTI_DP" in gs)
+check("GameSpec : les bornes de zoom sont celles de la vue (26 et 96 dp)",
+      "MIN_ZOOM_CENTI_DP = 2_600" in gs
+      and "MAX_ZOOM_CENTI_DP = 9_600" in gs)
+
+check("BoardView : la caméra d'une partie restaurée est posée avant le "
+      "premier rendu (restoreCamera, consommée une seule fois)",
+      "fun restoreCamera(camera: CameraSpec?)" in vw
+      and "restoredCamera = null" in vw)
+check("BoardView : la photographie cameraSnapshot existe (milli-cellules "
+      "modulo, zoom en centièmes de dp)",
+      "fun cameraSnapshot(): CameraSpec" in vw
+      and "Math.floorMod((cx * 1_000f).roundToInt(), b.width * 1_000)" in vw)
+check("BoardView : MILLI-CELLULES ARRONDIES au plus proche — la troncature "
+      "fait dériver l'aller-retour d'un milli en Float (251 -> 250) ; "
+      "l'arrondi est stable, verified exhaustivement en float 32 bits",
+      "(cx * 1_000f).toInt()" not in vw
+      and "Math.round" not in vw
+      and re.search(r"(?m)^import kotlin\.math\.roundToInt$",
+                    view_src) is not None)
+arrival_m = re.search(r"private fun applyArrivalCamera\(solved: Boolean\) "
+                     r"\{(.*?)\n    \}", vw, re.S)
+check("BoardView : applyArrivalCamera — caméra restaurée prioritaire "
+      "(zoom pour tous, position pour la famille Infini, clampPan sinon)",
+      arrival_m is not None
+      and "camera.zoomCentiDp / 100f * screenDensity" in arrival_m.group(1)
+      and re.search(r"if \(b\.skill\.endless\) \{\s*"
+                    r"val cx = camera\.centerMilliX / 1_000f", arrival_m.group(1))
+      is not None)
+check("BoardView : à défaut, un Néant qui démarre se centre sur sa zone "
+      "visible à zoom confort (porte VOID non résolu)",
+      arrival_m is not None
+      and re.search(r"if \(b\.skill == Skill\.VOID && !solved\) \{", arrival_m.group(1))
+      is not None
+      and "centerOnVisibleZone()" in arrival_m.group(1))
+check("BoardView : zoom confort = carré révélé (2r+1 cases) sur la MOITIÉ "
+      "du petit côté, borné au plancher de la famille",
+      re.search(r"minOf\(width, height\) /\s*"
+                r"\(2f \* \(2f \* Board\.FOG_RADIUS_CELLS \+ 1f\)\)\)",
+                arrival_m.group(1) if arrival_m else "") is not None)
+check("BoardView : centerOnVisibleZone centre la bbox du réseau connecté",
+      "private fun centerOnVisibleZone()" in vw)
+check("BoardView : update appelle la caméra d'arrivée sur plateau frais "
+      "uniquement (jamais de téléport en cours de partie)",
+      re.search(r"var freshBoard = false", vw) is not None
+      and re.search(r"if \(freshBoard\) \{\s*"
+                    r"applyArrivalCamera\(solved\)", vw) is not None)
+size_m = re.search(r"override fun onSizeChanged\((.*?)\n    \}", vw, re.S)
+check("BoardView : la rotation d'écran conserve le regard de la famille "
+      "Infini (centre + zoom capturés sur l'ancienne taille, reposés "
+      "après fitBoard — pas de retour au centre du plateau)",
+      size_m is not None
+      and "val keepCamera = b != null && b.skill.endless" in size_m.group(1)
+      and "cellPx = zoomPx.coerceIn(floorCellPx(b), maxCellPx)" in size_m.group(1)
+      and "if (b != null && keepCamera)" in size_m.group(1))
+check("BoardView : PAS de condition redondante dans onSizeChanged "
+      "(keepCamera vrai implique b non null — l'inspection IDE "
+      "signale « Condition is always 'true' » sur keepCamera && b != null)",
+      "if (keepCamera && b != null)" not in vw)
+check("MainActivity : la caméra de la sauvegarde est posée sur la vue après "
+      "la restauration ; onStop la photographie",
+      "binding.boardView.restoreCamera(restoredSpec?.camera)" in ma
+      and "viewModel.currentSpec(binding.boardView.cameraSnapshot())" in ma)
+check("GameViewModel : la photographie accepte la caméra de la vue",
+      re.search(r"fun currentSpec\(camera: CameraSpec\? = null\): GameSpec", vm)
+      is not None)
+
+gspec_tests_src = read(ROOT / "app/src/test/kotlin/net/chardons/netscramble2/"
+                       "game/GameSpecTest.kt")
+gts = strip_comments(gspec_tests_src)
+check("Tests JVM : l'aller-retour v4 avec caméra est verrouillé (18 champs, "
+      "égalité du spec décodé)",
+      "camera round trips through the v4 format" in gts
+      and 'encoded.startsWith("v4|")' in gspec_tests_src
+      and "18, encoded.split('|').size" in gts)
+rt_m = re.search(r"fun `encode then decode preserves every field`\(\) "
+                r"\{(.*?)\n    \}", gspec_tests_src, re.S)
+check("Tests JVM : « encode then decode preserves every field » PASSE une "
+      "caméra (piège du 13 nov. : encode sans caméra écrit le repli "
+      "neutre 0|0|2600, decode renvoie TOUJOURS une caméra en v4 — "
+      "l'égalité spec == decoded est impossible sans caméra ; test KO "
+      "chez eric la première fois, régression désormais bloquée ici)",
+      rt_m is not None
+      and "camera = camera" in rt_m.group(1)
+      and "assertEquals(spec, decoded)" in rt_m.group(1)
+      and "assertEquals(camera, decoded!!.camera)" in rt_m.group(1))
+check("Tests JVM : une v3 décodée n'a PAS de caméra puis se réenregistre "
+      "en v4 avec le repli neutre",
+      "v3 snapshot decodes without camera then re-encodes as v4" in gts
+      and 'assertNull(decoded!!.camera)' in gts)
+check("Tests JVM : les rejets caméra (position hors plateau, zoom hors "
+      "bornes) sont verrouillés",
+      "decode rejects an out-of-bounds camera" in gts)
+
+# --- Miroirs Python du centrage et de la caméra ---
+
+# Zoom confort : le carré révélé (2r+1 cases) occupe la moitié du petit
+# côté de la vue, sans jamais passer sous le plancher de la famille.
+comfort_fail = []
+for view_w, view_h, density in DEVICES:
+    floor = floor_cell_px(view_w, view_h, density)
+    raw = min(view_w, view_h) / (2.0 * (2 * FOG_RADIUS + 1))
+    cell = min(max(raw, floor), MAX_CELL_DP * density)
+    square = (2 * FOG_RADIUS + 1) * cell
+    if cell < floor - 1e-6:
+        comfort_fail.append(f"{view_w}x{view_h}@{density} sous le plancher")
+    if cell != floor and square > min(view_w, view_h) / 2.0 + 1e-6:
+        comfort_fail.append(f"{view_w}x{view_h}@{density} carré > moitié")
+check("Miroir zoom confort : carré révélé = moitié du petit côté, jamais "
+      "sous le plancher Infini (7 écrans réalistes)",
+      not comfort_fail, "; ".join(comfort_fail[:3]))
+
+# Caméra modulo : la photographie normalise la position par floorMod en
+# MILLI-CELLULES ARRONDIES (miroir exact de cameraSnapshot, roundToInt
+# de kotlin.math = ex æquo vers le pair — round() de Python, même
+# convention ; plus aucun java.lang.Math.round dans la vue).
+def camera_snapshot(view_w, view_h, pan_x, pan_y, cell, bw, bh):
+    cx = (view_w / 2.0 - pan_x) / cell - 0.5
+    cy = (view_h / 2.0 - pan_y) / cell - 0.5
+    mx = round(cx * 1000.0) % (bw * 1000)
+    my = round(cy * 1000.0) % (bh * 1000)
+    return mx, my
+
+
+mod_fail = []
+for trial in range(60):
+    view_w, view_h, density = rnd.choice(DEVICES)
+    cell = floor_cell_px(view_w, view_h, density)
+    span_px = SPAN * cell
+    pan_x = rnd.uniform(-4 * span_px, 4 * span_px)
+    pan_y = rnd.uniform(-4 * span_px, 4 * span_px)
+    base = camera_snapshot(view_w, view_h, pan_x, pan_y, cell, SPAN, SPAN)
+    for k in (-2, -1, 1, 2):
+        if camera_snapshot(view_w, view_h, pan_x + k * span_px, pan_y,
+                          cell, SPAN, SPAN) != base:
+            mod_fail.append(f"x+{k} plateau")
+        if camera_snapshot(view_w, view_h, pan_x, pan_y + k * span_px,
+                          cell, SPAN, SPAN) != base:
+            mod_fail.append(f"y+{k} plateau")
+check("Miroir caméra : la position photographiée est INVARIANTE par "
+      "translation d'un plateau entier (60 configurations, 8 "
+      "translations chacune)",
+      not mod_fail, "; ".join(sorted(set(mod_fail))[:3]))
+
+# Allers-retours sauvegarde-restauration : le milli arrondi redonne
+# EXACTEMENT le même milli après restauration du pan (stabilité que la
+# troncature, elle, n'a pas en Float — contrepovre exhaustive float 32).
+rt_fail = []
+for trial in range(60):
+    view_w, view_h, density = rnd.choice(DEVICES)
+    cell = floor_cell_px(view_w, view_h, density)
+    pan_x = rnd.uniform(-4 * SPAN * cell, 4 * SPAN * cell)
+    pan_y = rnd.uniform(-4 * SPAN * cell, 4 * SPAN * cell)
+    mx, my = camera_snapshot(view_w, view_h, pan_x, pan_y, cell, SPAN, SPAN)
+    # applyArrivalCamera : le pan est reposé sur le centre restauré.
+    pan_x2 = view_w / 2.0 - (mx / 1000.0 + 0.5) * cell
+    pan_y2 = view_h / 2.0 - (my / 1000.0 + 0.5) * cell
+    if camera_snapshot(view_w, view_h, pan_x2, pan_y2, cell, SPAN, SPAN) \
+            != (mx, my):
+        rt_fail.append(f"mx={mx}")
+check("Miroir caméra : aller-retour snapshot-restauration-snapshot stable "
+      "au milli près (60 configurations)",
+      not rt_fail, "; ".join(sorted(set(rt_fail))[:3]))
+
+# Zone visible : centerOnVisibleZone vise la bbox du RÉSEAU CONNECTÉ (au
+# lancement : le serveur seul) ; grâce au plateau répété (caméra modulo),
+# tout le carré révélé — y compris enroulé près d'un bord — reste dans
+# la fenêtre visible autour de ce centre.
+def center_pan(view_w, view_h, cell, bbox, bw):
+    min_x, max_x, min_y, max_y = bbox
+    cx = (min_x + max_x) / 2.0
+    cy = (min_y + max_y) / 2.0
+    return view_w / 2.0 - (cx + 0.5) * cell, view_h / 2.0 - (cy + 0.5) * cell
+
+
+center_fail = []
+for i in range(8):
+    view_w, view_h, density = DEVICES[i % len(DEVICES)]
+    floor = floor_cell_px(view_w, view_h, density)
+    comfort = min(max(min(view_w, view_h) / (2.0 * (2 * FOG_RADIUS + 1)),
+                      floor), MAX_CELL_DP * density)
+    r_gen = random.Random(51_000 + i * 131)
+    conns_v, root_v = gen_original(r_gen, SIZE, SIZE, wrap=True, branches=3)
+    connected = [False] * (SIZE * SIZE)
+    connected[root_v] = True
+    xs = [j % SIZE for j in range(SIZE * SIZE) if connected[j]]
+    ys = [j // SIZE for j in range(SIZE * SIZE) if connected[j]]
+    pan_x, pan_y = center_pan(view_w, view_h, comfort,
+                              (min(xs), max(xs), min(ys), max(ys)), SIZE)
+    # Le centre de vue est le serveur (bbox du réseau connecté réduit
+    # au serveur au lancement), à une demi-case près (centre de case).
+    sx = root_v % SIZE
+    sy = root_v // SIZE
+    if abs(view_w / 2.0 - (sx + 0.5) * comfort - pan_x) > 1e-6:
+        center_fail.append(f"centre X décalé (graine {i})")
+    if abs(view_h / 2.0 - (sy + 0.5) * comfort - pan_y) > 1e-6:
+        center_fail.append(f"centre Y décalé (graine {i})")
+    # Toute case du carré révélé (distance torique de Chebyshev <= r du
+    # serveur) est dans la fenêtre visible : demi-fenêtre du petit côté
+    # = (2r+1) cases au zoom confort, toujours > r + 1 case de marge.
+    half_cells = (min(view_w, view_h) / 2.0) / comfort
+    if half_cells < FOG_RADIUS + 1.0:
+        center_fail.append(f"demi-fenêtre {half_cells:.2f} trop étroite")
+check("Miroir centrage : au lancement d'un Néant, la vue vise le serveur "
+      "(bbox du réseau connecté) et le carré révélé entier tient dans la "
+      "moitié du petit côté, bord compris grâce au plateau répété "
+      "(8 plateaux)",
+      not center_fail, "; ".join(sorted(set(center_fail))[:3]))
+
+
+# ---------------------------------------------------------------------------
 # Bilan.
 # ---------------------------------------------------------------------------
 
@@ -1037,4 +1280,5 @@ if failures:
     for name in failures:
         print(f"  - {name}")
     sys.exit(1)
-print(f"TOUT PASSE : {checks}/{checks} vérifications (famille Infini, phases A à D).")
+print(f"TOUT PASSE : {checks}/{checks} vérifications (famille Infini, "
+          "phases A à E).")

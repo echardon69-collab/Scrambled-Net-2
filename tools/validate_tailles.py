@@ -112,6 +112,9 @@ check("Skill.kt : taille fixe du niveau Infini (bypass Screen)",
       re.search(r"const val ENDLESS_SIZE = 40", skill_src) is not None)
 check("Skill.kt : plus aucune dimension width/height",
       "width" not in skill_src and "height" not in skill_src)
+# Les 8 niveaux parsés servent de référence au miroir decode (section 7) :
+# jamais de liste retapée à la main.
+ALL_SKILLS = set(skills)
 
 
 # ---------------------------------------------------------------------------
@@ -142,16 +145,36 @@ check("Board.kt : la racine imposée est une propriété (consigne transportée)
 
 
 # ---------------------------------------------------------------------------
-# 4. Vérification statique : GameSpec.kt (format v3 + rétrocompat v2).
+# 4. Vérification statique : GameSpec.kt (format v4 + rétrocompat v3/v2).
 # ---------------------------------------------------------------------------
 
 spec_src = read("game/GameSpec.kt")
-check('GameSpec.kt : version v3', 'VERSION = "v3"' in spec_src)
-check('GameSpec.kt : version historique v2 décodable', 'LEGACY_VERSION = "v2"' in spec_src)
-check("GameSpec.kt : 15 champs en v3", "FIELDS = 15" in spec_src)
+check('GameSpec.kt : version v4', 'VERSION = "v4"' in spec_src)
+check('GameSpec.kt : version précédente v3 décodable',
+      'PREVIOUS_VERSION = "v3"' in spec_src)
+check('GameSpec.kt : version historique v2 décodable',
+      'LEGACY_VERSION = "v2"' in spec_src)
+check("GameSpec.kt : 18 champs en v4 (15 + caméra)", "FIELDS = 18" in spec_src)
+check("GameSpec.kt : 15 champs en v3", "PREVIOUS_FIELDS = 15" in spec_src)
 check("GameSpec.kt : 11 champs en v2", "LEGACY_FIELDS = 11" in spec_src)
-check("GameSpec.kt : décalage des champs joueur (v2 : 3, v3 : 7)",
+check("GameSpec.kt : décalage des champs joueur (v2 : 3, v3/v4 : 7)",
       "if (legacy) 3 else 7" in spec_src)
+# Caméra (chantier « centrage Néant ») : classe data — l'aller-retour
+# encode/decode doit comparer les VALEURS, jamais les références.
+check("GameSpec.kt : CameraSpec est une data class (égalité par valeur)",
+      re.search(r"data class CameraSpec\(", spec_src) is not None)
+check("GameSpec.kt : bornes zoom caméra (plancher et plafond de la vue)",
+      "MIN_ZOOM_CENTI_DP = 2_600" in spec_src and
+      "MAX_ZOOM_CENTI_DP = 9_600" in spec_src)
+check("GameSpec.kt : position des champs caméra (fin de format)",
+      "CAMERA_BASE = 15" in spec_src)
+check("GameSpec.kt : décodage caméra borné (position modulo, zoom)",
+      "camX !in 0 until width * 1_000" in spec_src and
+      "camY !in 0 until height * 1_000" in spec_src and
+      "zoom !in MIN_ZOOM_CENTI_DP..MAX_ZOOM_CENTI_DP" in spec_src)
+check("GameSpec.kt : encode sans caméra = repli (position neutre, zoom mini)",
+      "camera?.centerMilliX ?: 0" in spec_src and
+      "camera?.zoomCentiDp ?: MIN_ZOOM_CENTI_DP" in spec_src)
 legacy_sizes = dict(
     (name, (int(a), int(b)))
     for name, a, b in re.findall(
@@ -170,6 +193,7 @@ order_markers = [
     "root", "moves", "elapsedMs", "solverUsed", "prevClicked",
     "solveQueue.joinToString(QUEUE_SEP)",
     "for (r in rotations)", "for (l in locked)", "for (r in revealed)",
+    "camera?.centerMilliX", "camera?.centerMilliY", "camera?.zoomCentiDp",
 ]
 pos = 0
 order_ok = True
@@ -179,7 +203,7 @@ for marker in order_markers:
         order_ok = False
         break
     pos = found
-check("GameSpec.kt : ordre des champs v3", order_ok)
+check("GameSpec.kt : ordre des champs v4 (caméra en fin)", order_ok)
 check("GameSpec.kt : racine = consigne de reconstruction (-1 = tirée)",
       "require(root in -1 until width * height)" in spec_src and
       "root !in -1 until size" in spec_src)
@@ -219,7 +243,15 @@ check("MainActivity : dimensions calculées par Screen.find",
 check("MainActivity : 4 lancements de partie aux dimensions de l'écran",
       len(re.findall(r"viewModel\.newGame\([^)]*\)", ma_src)) == 4)
 check("MainActivity : première visite = nouvelle partie si rien à restaurer",
-      "if (!viewModel.restoreIfPending(GameSpec.decode(savedSpec)))" in ma_src)
+      "val restoredSpec = GameSpec.decode(savedSpec)" in ma_src and
+      "if (viewModel.restoreIfPending(restoredSpec))" in ma_src)
+check("MainActivity : la caméra de la sauvegarde est posée sur la vue",
+      "binding.boardView.restoreCamera(restoredSpec?.camera)" in ma_src)
+check("MainActivity : la photographie en onStop emporte la caméra",
+      "viewModel.currentSpec(binding.boardView.cameraSnapshot())" in ma_src)
+check("GameViewModel : la photographie accepte la caméra de la vue",
+      "fun currentSpec(camera: CameraSpec? = null): GameSpec" in vm_src and
+      "camera = camera" in vm_src)
 
 # --- Tests JVM : la nouvelle API doit être utilisée partout. ---
 test_dir = ROOT / "app/src/test/kotlin/net/chardons/netscramble2/game"
@@ -528,7 +560,7 @@ check("TREE : 100 pour cent des cellules actives, soluble par rotation",
 
 
 # ---------------------------------------------------------------------------
-# 7. Format GameSpec : aller-retour v3 et rétrocompatibilité v2.
+# 7. Format GameSpec : aller-retour v4 (caméra), rétrocompat v3 et v2.
 # ---------------------------------------------------------------------------
 
 def encode_v3(skill, seed, gen, width, height, root, moves, ms, solver,
@@ -542,10 +574,24 @@ def encode_v3(skill, seed, gen, width, height, root, moves, ms, solver,
     ])
 
 
+def encode_v4(skill, seed, gen, width, height, root, moves, ms, solver,
+              prev, queue, rotations, locked, revealed, cam_x, cam_y, zoom):
+    # encode_v3 produit le corps ; SEULE la version change, puis la
+    # caméra (trois champs) complète le format.
+    return encode_v3(skill, seed, gen, width, height, root, moves, ms,
+                     solver, prev, queue, rotations, locked, revealed) \
+        .replace("v3|", "v4|", 1) + \
+        "|" + "|".join([str(cam_x), str(cam_y), str(zoom)])
+
+
 def decode_mirror(spec):
-    """Miroir de GameSpec.decode (v3 et v2)."""
+    """Miroir de GameSpec.decode (v4, v3 et v2)."""
     parts = spec.split("|")
-    if parts[0] == "v3":
+    if parts[0] == "v4":
+        if len(parts) != 18:
+            return None
+        legacy = False
+    elif parts[0] == "v3":
         if len(parts) != 15:
             return None
         legacy = False
@@ -556,7 +602,7 @@ def decode_mirror(spec):
     else:
         return None
     skill = parts[1]
-    if skill not in ORIGINAL_SKILL:
+    if skill not in ALL_SKILLS:
         return None
     if legacy:
         gen, (width, height) = "TREE", {
@@ -582,6 +628,23 @@ def decode_mirror(spec):
     rotations = [int(c) for c in rot_s]
     if any(r not in (0, 1, 2, 3) for r in rotations):
         return None
+    # Caméra : uniquement en v4 (trois champs de plus), bornée comme le
+    # Kotlin — position modulo le plateau, zoom entre plancher et
+    # plafond ; hors bornes : rejet, jamais de confiance.
+    camera = None
+    if parts[0] == "v4":
+        try:
+            cam_x, cam_y, zoom = (int(parts[15]), int(parts[16]),
+                                  int(parts[17]))
+        except ValueError:
+            return None
+        if not (0 <= cam_x < width * 1000):
+            return None
+        if not (0 <= cam_y < height * 1000):
+            return None
+        if not (2600 <= zoom <= 9600):
+            return None
+        camera = (cam_x, cam_y, zoom)
     seed = int(parts[2])
     moves, ms = int(parts[base]), int(parts[base + 1])
     prev = int(parts[base + 3])
@@ -590,29 +653,40 @@ def decode_mirror(spec):
                 root=root, moves=moves, ms=ms, solver=solver, prev=prev,
                 queue=queue, rotations=rotations,
                 locked=[c == "1" for c in lock_s],
-                revealed=[c == "1" for c in rev_s])
+                revealed=[c == "1" for c in rev_s], camera=camera)
 
 
-# Aller-retour v3 sur une partie simulée.
+# Aller-retour v4 sur une partie simulée, caméra comprise.
 rnd = random.Random(42)
 conns, root = gen_original(rnd, 11, 7, False, 2)
 rotations = [rnd.randrange(4) for _ in range(77)]
 locked = [rnd.random() < 0.2 for _ in range(77)]
 revealed = [rnd.random() < 0.1 for _ in range(77)]
 queue = [3, 5, 7, 9]
-# Une partie v3 fraîche transporte la consigne -1 (racine tirée du flux).
-spec = encode_v3("EXPERT", 12345678901, "ORIGINAL", 11, 7, -1, 42, 65000,
-                 True, 12, queue, rotations, locked, revealed)
+cam = (3500, 5250, 4200)  # plateau 11 x 7 : milli-cellules dans les bornes
+# Une partie v4 fraîche transporte la consigne -1 (racine tirée du flux)
+# et la caméra du joueur (position milli-cellules, zoom centièmes de dp).
+spec = encode_v4("EXPERT", 12345678901, "ORIGINAL", 11, 7, -1, 42, 65000,
+                 True, 12, queue, rotations, locked, revealed, *cam)
 back = decode_mirror(spec)
 ok = (back is not None and back["skill"] == "EXPERT"
       and back["seed"] == 12345678901 and back["gen"] == "ORIGINAL"
       and (back["width"], back["height"]) == (11, 7) and back["root"] == -1
-      and back["rotations"] == rotations and back["queue"] == queue)
-check("GameSpec v3 : aller-retour intact (consigne de racine -1)", ok)
+      and back["rotations"] == rotations and back["queue"] == queue
+      and back["camera"] == cam)
+check("GameSpec v4 : aller-retour intact (racine -1 + caméra)", ok)
+
+# Une v3 d'avant la caméra se décode toujours, sans caméra.
+spec_v3 = encode_v3("EXPERT", 12345678901, "ORIGINAL", 11, 7, -1, 42, 65000,
+                    True, 12, queue, rotations, locked, revealed)
+back_v3 = decode_mirror(spec_v3)
+check("GameSpec v3 : décodage rétrocompatible (aucune caméra)",
+      back_v3 is not None and back_v3["camera"] is None
+      and back_v3["rotations"] == rotations)
 
 # Rejets de chaînes invalides.
-check("GameSpec v3 : rejets (version, longueur, dimensions, racine)",
-      decode_mirror("v4|NORMAL|1|TREE|7|7|24|0|0|false|-1||0000000|0000000|0000000") is None
+check("GameSpec v4 : rejets (version, longueur, dimensions, racine)",
+      decode_mirror("v5|NORMAL|1|TREE|7|7|24|0|0|false|-1||0000000|0000000|0000000|0|0|3000") is None
       and decode_mirror(spec + "|extra") is None
       and decode_mirror("v3|NORMAL|1|TREE|99|7|24|0|0|false|-1||" + "0" * 49
                         + "|" + "0" * 49 + "|" + "0" * 49) is None
@@ -620,6 +694,47 @@ check("GameSpec v3 : rejets (version, longueur, dimensions, racine)",
                         + "|" + "0" * 49 + "|" + "0" * 49) is None
       and decode_mirror("v3|NORMAL|1|TREE|7|7|49|0|0|false|-1||" + "0" * 49
                         + "|" + "0" * 49 + "|" + "0" * 49) is None)
+
+# Rejets propres à la caméra v4 : position hors plateau (modulo exclu,
+# négative) et zoom hors bornes.
+def with_camera(cam_x, cam_y, zoom):
+    return encode_v4("EXPERT", 12345678901, "ORIGINAL", 11, 7, -1, 42, 65000,
+                     True, 12, queue, rotations, locked, revealed,
+                     cam_x, cam_y, zoom)
+
+check("GameSpec v4 : rejets caméra (position et zoom bornés)",
+      decode_mirror(with_camera(11 * 1000, 8250, 4200)) is None
+      and decode_mirror(with_camera(3500, 7 * 1000, 4200)) is None
+      and decode_mirror(with_camera(-1, 8250, 4200)) is None
+      and decode_mirror(with_camera(3500, 8250, 2599)) is None
+      and decode_mirror(with_camera(3500, 8250, 9601)) is None
+      and decode_mirror(with_camera("x", 8250, 4200)) is None)
+
+# ASYMÉTRIE du format v4 (piège du 13 nov.) : une photographie SANS
+# caméra encode le repli neutre (0|0|2600) et le décodage renvoie
+# TOUJOURS une caméra — null n'est PAS préservé par l'aller-retour.
+# Un test d'égalité GameSpec doit donc toujours passer une caméra
+# (« encode then decode preserves every field » était KO chez eric
+# la première fois, corrigé et bloqué côté tests JVM par
+# validate_infini).
+back_nc = decode_mirror(encode_v4(
+    "EXPERT", 12345678901, "ORIGINAL", 11, 7, -1, 42, 65000,
+    True, 12, queue, rotations, locked, revealed, 0, 0, 2600))
+check("GameSpec v4 : sans caméra photographiée, le repli neutre décode "
+      "en caméra NON NULLE — null n'est pas préservé, les tests "
+      "d'égalité passent une caméra",
+      back_nc is not None and back_nc["camera"] == (0, 0, 2600))
+
+# v4 famille Infini : un Néant sauvegardé (40 x 40) transporte sa
+# caméra modulo le plateau.
+rot40 = [rnd.randrange(4) for _ in range(1600)]
+spec_void = encode_v4("VOID", 987654321, "ORIGINAL", 40, 40, -1, 42, 65000,
+                      True, -1, [], rot40, [False] * 1600, [False] * 1600,
+                      39999, 39999, 6000)
+back_void = decode_mirror(spec_void)
+check("GameSpec v4 : caméra d'un Néant modulo le plateau 40 x 40",
+      back_void is not None and back_void["skill"] == "VOID"
+      and back_void["camera"] == (39999, 39999, 6000))
 
 # v2 : une ancienne partie se décode et se reconstruit à l'identique.
 old_rotations = [rnd.randrange(4) for _ in range(49)]

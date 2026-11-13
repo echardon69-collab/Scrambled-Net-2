@@ -8,28 +8,64 @@ package net.chardons.netscramble2.game
  * Le plateau est entièrement reproductible depuis (niveau, graine,
  * générateur, dimensions, racine) — la génération et le mélange sont
  * déterministes — donc seuls les états modifiés par le joueur
- * (rotations, verrous, cellules révélées) et l'avancement général
+ * (rotations, verrous, cellules révélées), l'avancement général
  * (coups, chrono, solveur, file du solveur, cellule précédemment
- * touchée) voyagent.
+ * touchée) et la CAMÉRA voyagent.
  *
- * Format « v3 », champs séparés par « | » :
- *   v3|NIVEAU|graine|GÉNÉRATEUR|largeur|hauteur|racine|coups|millisecondes|solveur|précédente|file|rotations|verrous|révélations
+ * La caméra ([CameraSpec], chantier « centrage Néant ») : position du
+ * centre de la vue en coordonnées de cellules et zoom en dp — une
+ * représentation indépendante de l'écran, de la densité et de
+ * l'orientation. Elle est utile aux trois niveaux de la famille
+ * Infini (pan libre, caméra modulo) ; pour les niveaux encadrés,
+ * seule la position ne sert à rien ([ clampPan ] de la vue recentre),
+ * le zoom reste pertinent.
+ *
+ * Format « v4 », champs séparés par « | » :
+ *   v4|NIVEAU|graine|GÉNÉRATEUR|largeur|hauteur|racine|coups|millisecondes|solveur|précédente|file|rotations|verrous|révélations|camX|camY|zoom
  * où les rotations sont un chiffre 0 à 3 par cellule (sans séparateur),
- * les verrous et révélations un 0 ou 1 par cellule, et la file du
- * solveur des indices séparés par des virgules (vide si inactive). La
- * « racine » est une consigne de reconstruction : -1 = retirée du flux
- * du générateur comme à la création ; sinon imposée sans tirer (les
- * anciennes v2 réenregistrées, serveur central).
+ * les verrous et révélations un 0 ou 1 par cellule, la file du
+ * solveur des indices séparés par des virgules (vide si inactive), et
+ * la caméra trois ENTIERS (piège maison : jamais de flottant textuel,
+ * les locales écrivent « 1.5 » ou « 1,5 ») : position en
+ * MILLI-CELLULES, zoom en CENTIÈMES de dp. La « racine » est une
+ * consigne de reconstruction : -1 = retirée du flux du générateur
+ * comme à la création ; sinon imposée sans tirer (les anciennes v2
+ * réenregistrées, serveur central).
+ *
+ * Le format « v3 » d'avant la caméra (mêmes champs sans les trois
+ * derniers) reste décodable à l'identique : une partie sauvegardée
+ * avant la mise à jour se restaure exactement — sans caméra, la vue
+ * repose la sienne (centrage Néant pour un Néant, centrage plateau
+ * pour le reste de la famille) — puis se réenregistre en v4.
  *
  * Le format « v2 » d'avant le chantier tailles (grilles carrées par
  * niveau, générateur arbre, serveur central) reste décodable à
- * l'identique : une partie sauvegardée avant la mise à jour se
- * restaure exactement, puis se réenregistre en v3.
+ * l'identique, lui aussi sans caméra.
  *
- * [decode] renvoie null sur toute donnée invalide : une chaîne
+ * [ decode ] renvoie null sur toute donnée invalide : une chaîne
  * corrompue ou d'une version future ne casse jamais le lancement,
  * elle est simplement ignorée (nouvelle partie).
  */
+/**
+ * Photographie de la caméra de la vue, la seule partie de la
+ * sauvegarde qui ne décrit pas le plateau : position du CENTRE de la
+ * vue en coordonnées de cellules (milli-cellules, normalisée modulo
+ * les côtés du plateau — pour la famille Infini et sa caméra modulo,
+ * c'est la forme canonique d'une infinité de pans équivalents) et
+ * niveau de zoom en centièmes de dp (indépendant de la densité).
+ * Encodée en ENTIERS : jamais de flottant textuel.
+ */
+data class CameraSpec(
+    val centerMilliX: Int,
+    val centerMilliY: Int,
+    val zoomCentiDp: Int
+) {
+    init {
+        require(centerMilliX >= 0 && centerMilliY >= 0)
+        require(zoomCentiDp > 0)
+    }
+}
+
 class GameSpec(
     val skill: Skill,
     val seed: Long,
@@ -53,7 +89,12 @@ class GameSpec(
     val solveQueue: List<Int>,
     val rotations: IntArray,
     val locked: BooleanArray,
-    val revealed: BooleanArray
+    val revealed: BooleanArray,
+    /**
+     * Caméra de la vue au moment de la photographie (v4). Absente des
+     * sauvegardes v3/v2 décodées : la vue repose alors la sienne.
+     */
+    val camera: CameraSpec? = null
 ) {
     init {
         require(width in 1..64 && height in 1..64)
@@ -82,6 +123,15 @@ class GameSpec(
         for (l in locked) append(if (l) '1' else '0')
         append(SEP)
         for (r in revealed) append(if (r) '1' else '0')
+        // Caméra : toujours écrite (v4). Une photographie sans caméra
+        // (défensive : l'activité en fournit toujours une) garde le
+        // zoom minimal, une position neutre.
+        append(SEP)
+        append(camera?.centerMilliX ?: 0)
+        append(SEP)
+        append(camera?.centerMilliY ?: 0)
+        append(SEP)
+        append(camera?.zoomCentiDp ?: MIN_ZOOM_CENTI_DP)
     }
 
     /**
@@ -117,7 +167,8 @@ class GameSpec(
                 solveQueue == other.solveQueue &&
                 rotations.contentEquals(other.rotations) &&
                 locked.contentEquals(other.locked) &&
-                revealed.contentEquals(other.revealed)
+                revealed.contentEquals(other.revealed) &&
+                camera == other.camera
     }
 
     override fun hashCode(): Int {
@@ -135,16 +186,32 @@ class GameSpec(
         result = 31 * result + rotations.contentHashCode()
         result = 31 * result + locked.contentHashCode()
         result = 31 * result + revealed.contentHashCode()
+        result = 31 * result + camera.hashCode()
         return result
     }
 
     companion object {
-        private const val VERSION = "v3"
+        private const val VERSION = "v4"
+        private const val PREVIOUS_VERSION = "v3"
         private const val LEGACY_VERSION = "v2"
         private const val SEP = '|'
         private const val QUEUE_SEP = ","
-        private const val FIELDS = 15
+        private const val FIELDS = 18
+        private const val PREVIOUS_FIELDS = 15
         private const val LEGACY_FIELDS = 11
+
+        /**
+         * Zoom minimal en centièmes de dp (MIN_CELL_DP de la vue) :
+         * borne BASSE du zoom accepté au décodage — le plancher de la
+         * famille Infini, jamais contourné par une sauvegarde falsifiée.
+         */
+        const val MIN_ZOOM_CENTI_DP = 2_600
+
+        /** Zoom maximal en centièmes de dp (MAX_CELL_DP de la vue). */
+        const val MAX_ZOOM_CENTI_DP = 9_600
+
+        /** Position des trois champs caméra dans le format v4. */
+        private const val CAMERA_BASE = 15
 
         /**
          * Tailles historiques du format v2 : grilles carrées par niveau,
@@ -167,6 +234,8 @@ class GameSpec(
             return when (parts.firstOrNull()) {
                 VERSION ->
                     if (parts.size == FIELDS) decodeFields(parts, legacy = false) else null
+                PREVIOUS_VERSION ->
+                    if (parts.size == PREVIOUS_FIELDS) decodeFields(parts, legacy = false) else null
                 LEGACY_VERSION ->
                     if (parts.size == LEGACY_FIELDS) decodeFields(parts, legacy = true) else null
                 else -> null
@@ -236,6 +305,22 @@ class GameSpec(
                 locked[i] = lockBit == '1'
                 revealed[i] = revBit == '1'
             }
+            // Caméra : uniquement en v4 (trois champs supplémentaires).
+            // Une position hors plateau (milli-cellules >= côté x 1000,
+            // modulo exclu) ou un zoom hors bornes rejette la partie,
+            // comme toute autre incohérence — jamais de confiance.
+            val camera: CameraSpec? =
+                if (!legacy && parts.size == FIELDS) {
+                    val camX = parts[CAMERA_BASE].toIntOrNull() ?: return null
+                    val camY = parts[CAMERA_BASE + 1].toIntOrNull() ?: return null
+                    val zoom = parts[CAMERA_BASE + 2].toIntOrNull() ?: return null
+                    if (camX !in 0 until width * 1_000) return null
+                    if (camY !in 0 until height * 1_000) return null
+                    if (zoom !in MIN_ZOOM_CENTI_DP..MAX_ZOOM_CENTI_DP) return null
+                    CameraSpec(centerMilliX = camX, centerMilliY = camY, zoomCentiDp = zoom)
+                } else {
+                    null
+                }
             return try {
                 val seed = parts[2].toLong()
                 val moves = parts[base].toInt()
@@ -262,7 +347,8 @@ class GameSpec(
                     solveQueue = queue,
                     rotations = rotations,
                     locked = locked,
-                    revealed = revealed
+                    revealed = revealed,
+                    camera = camera
                 )
             } catch (_: NumberFormatException) {
                 null
