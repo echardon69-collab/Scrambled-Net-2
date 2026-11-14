@@ -27,6 +27,20 @@
     <string name="lang_fr">Français</string>
     <string name="lang_en">English</string>
 
+    <!-- Descriptions des niveaux (page Réglages, v4 du 14 nov. 2026) :
+         la taille est RÉELLE, préfixée au runtime depuis la matrice
+         Screen de l'écran (mêmes règles que le jeu, chantier
+         « tailles fidèles ») ; les règles sont propres à chaque
+         niveau, la famille Infini y passe aussi (taille fixe). -->
+    <string name="skill_novice_desc">Board %1$d × %2$d — two branches, open edges</string>
+    <string name="skill_normal_desc">Board %1$d × %2$d — two branches, open edges</string>
+    <string name="skill_expert_desc">Board %1$d × %2$d — two branches, open edges</string>
+    <string name="skill_master_desc">Board %1$d × %2$d — torus: edges wrap around, three branches</string>
+    <string name="skill_insane_desc">Board %1$d × %2$d — torus, three branches, hidden wiring at junctions</string>
+    <string name="skill_endless_desc">Board %1$d × %2$d — torus, panning never shows an edge</string>
+    <string name="skill_abyss_desc">Board %1$d × %2$d — torus, hidden wiring at junctions</string>
+    <string name="skill_void_desc">Board %1$d × %2$d — torus, hidden wiring, fog over the network</string>
+
     <!-- Endless family levels (Abyss, Void) replace the former fog
          setting: the fog is now the mark of the Void level. -->
 

@@ -74,7 +74,17 @@
                      d'eric) : les règles qui le distinguent vraiment,
                      fidèles à l'enum Skill (game/Skill.kt). La taille
                      du plateau des niveaux classiques vient de la
-                     matrice Screen de l'écran, PAS du niveau. -->
+                     matrice Screen de l'écran, PAS du niveau.
+                     V4 : SOUS chaque radio, une description visible
+                     du joueur — la taille réelle du plateau sur CET
+                     écran (préfixée au runtime, mêmes règles que le
+                     jeu) suivie des règles du niveau. Le texte n'est
+                     PAS posé en XML : il dépend de l'écran et de
+                     l'orientation (SettingsActivity.bindSkillDescriptions).
+                     L'alignement sur le libellé de la radio se pose
+                     AUSSI au runtime (compoundPaddingStart — la
+                     largeur de l'indicateur Material varie avec le
+                     thème et la densité, rien de retapé). -->
                 <!-- Novice : deux branches par carrefour, pas de tore —
                      le réseau le plus simple, sur la plus petite
                      grille de la matrice Screen de l'écran. -->
@@ -84,6 +94,15 @@
                     android:maxWidth="320dp"
                     android:layout_height="wrap_content"
                     android:text="@string/skill_novice" />
+
+                <TextView
+                    android:id="@+id/skill_novice_desc"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content"
+                    android:paddingBottom="8dp"
+                    android:textAppearance="?attr/textAppearanceBodySmall"
+                    android:textColor="?attr/colorOnSurfaceVariant" />
 
                 <!-- Normal : comme Novice (deux branches, pas de tore),
                      sur la grille de taille intermédiaire de la
@@ -95,6 +114,15 @@
                     android:layout_height="wrap_content"
                     android:text="@string/skill_normal" />
 
+                <TextView
+                    android:id="@+id/skill_normal_desc"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content"
+                    android:paddingBottom="8dp"
+                    android:textAppearance="?attr/textAppearanceBodySmall"
+                    android:textColor="?attr/colorOnSurfaceVariant" />
+
                 <!-- Expert : comme Novice (deux branches, pas de tore),
                      sur la plus grande grille de la matrice Screen. -->
                 <com.google.android.material.radiobutton.MaterialRadioButton
@@ -103,6 +131,15 @@
                     android:maxWidth="320dp"
                     android:layout_height="wrap_content"
                     android:text="@string/skill_expert" />
+
+                <TextView
+                    android:id="@+id/skill_expert_desc"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content"
+                    android:paddingBottom="8dp"
+                    android:textAppearance="?attr/textAppearanceBodySmall"
+                    android:textColor="?attr/colorOnSurfaceVariant" />
 
                 <!-- Maître : trois branches par carrefour (croisements
                      à trois voies, parfois des croix complètes) et
@@ -115,6 +152,15 @@
                     android:layout_height="wrap_content"
                     android:text="@string/skill_master" />
 
+                <TextView
+                    android:id="@+id/skill_master_desc"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content"
+                    android:paddingBottom="8dp"
+                    android:textAppearance="?attr/textAppearanceBodySmall"
+                    android:textColor="?attr/colorOnSurfaceVariant" />
+
                 <!-- Dément : comme Maître, plus les câbles INVISIBLES
                      dans les cellules à 3 ou 4 connexions. -->
                 <com.google.android.material.radiobutton.MaterialRadioButton
@@ -123,6 +169,15 @@
                     android:maxWidth="320dp"
                     android:layout_height="wrap_content"
                     android:text="@string/skill_insane" />
+
+                <TextView
+                    android:id="@+id/skill_insane_desc"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content"
+                    android:paddingBottom="8dp"
+                    android:textAppearance="?attr/textAppearanceBodySmall"
+                    android:textColor="?attr/colorOnSurfaceVariant" />
 
                 <!-- Infini : plateau géant FIXE 40 x 40 en tore, caméra
                      modulo — le déplacement ne montre jamais de bord
@@ -134,6 +189,15 @@
                     android:layout_height="wrap_content"
                     android:text="@string/skill_endless" />
 
+                <TextView
+                    android:id="@+id/skill_endless_desc"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content"
+                    android:paddingBottom="8dp"
+                    android:textAppearance="?attr/textAppearanceBodySmall"
+                    android:textColor="?attr/colorOnSurfaceVariant" />
+
                 <!-- Abîme : comme Infini (plateau 40 x 40 sans bornes),
                      plus le masquage à la Dément — câbles invisibles
                      dans les cellules à 3 ou 4 connexions. -->
@@ -143,6 +207,15 @@
                     android:maxWidth="320dp"
                     android:layout_height="wrap_content"
                     android:text="@string/skill_abyss" />
+
+                <TextView
+                    android:id="@+id/skill_abyss_desc"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content"
+                    android:paddingBottom="8dp"
+                    android:textAppearance="?attr/textAppearanceBodySmall"
+                    android:textColor="?attr/colorOnSurfaceVariant" />
 
                 <!-- Néant : comme Abîme, plus le brouillard — seuls les
                      abords des tuiles connectées au serveur restent
@@ -154,6 +227,15 @@
                     android:maxWidth="320dp"
                     android:layout_height="wrap_content"
                     android:text="@string/skill_void" />
+
+                <TextView
+                    android:id="@+id/skill_void_desc"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content"
+                    android:paddingBottom="8dp"
+                    android:textAppearance="?attr/textAppearanceBodySmall"
+                    android:textColor="?attr/colorOnSurfaceVariant" />
             </RadioGroup>
 
             <!-- Section 2 : sons. Choix immédiat, persisté à la clé

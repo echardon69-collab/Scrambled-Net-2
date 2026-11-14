@@ -248,7 +248,10 @@ check("MainActivity : le retour de la page relance la partie au "
 settings_src = read(RES / "layout/activity_settings.xml")
 group = re.search(
     r'android:id="@\+id/skill_group"(.*?)</RadioGroup>', settings_src, re.S)
-menu_ids = re.findall(r'@\+id/(skill_\w+)', group.group(1)) if group else []
+# v4 : les TextViews de description (skill_*_desc) vivent aussi dans
+# le RadioGroup — on ne retient que les MaterialRadioButton.
+menu_ids = (re.findall(r'MaterialRadioButton[^>]*@\+id/(skill_\w+)',
+                       group.group(1)) if group else [])
 check("menu_main.xml : les 8 niveaux sont dans le groupe du Niveau",
       menu_ids == expected_labels, f"lu={menu_ids}")
 check("menu_main.xml : Infini vient après Dément, Abîme et Néant "

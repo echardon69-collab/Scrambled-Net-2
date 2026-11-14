@@ -25,6 +25,20 @@
     <string name="lang_fr">Français</string>
     <string name="lang_en">English</string>
 
+    <!-- Descriptions des niveaux (page Réglages, v4 du 14 nov. 2026) :
+         la taille est RÉELLE, préfixée au runtime depuis la matrice
+         Screen de l'écran (mêmes règles que le jeu, chantier
+         « tailles fidèles ») ; les règles sont propres à chaque
+         niveau, la famille Infini y passe aussi (taille fixe). -->
+    <string name="skill_novice_desc">Plateau %1$d × %2$d — deux branches, bords ouverts</string>
+    <string name="skill_normal_desc">Plateau %1$d × %2$d — deux branches, bords ouverts</string>
+    <string name="skill_expert_desc">Plateau %1$d × %2$d — deux branches, bords ouverts</string>
+    <string name="skill_master_desc">Plateau %1$d × %2$d — tore : les bords se referment, trois branches</string>
+    <string name="skill_insane_desc">Plateau %1$d × %2$d — tore, trois branches, câbles invisibles aux carrefours</string>
+    <string name="skill_endless_desc">Plateau %1$d × %2$d — tore, le déplacement ne montre jamais de bord</string>
+    <string name="skill_abyss_desc">Plateau %1$d × %2$d — tore, câbles invisibles aux carrefours</string>
+    <string name="skill_void_desc">Plateau %1$d × %2$d — tore, câbles invisibles, brouillard sur le réseau</string>
+
     <!-- Les niveaux de la famille Infini (Abîme, Néant) remplacent
          l'ancien réglage brouillard : il est désormais la marque du
          niveau Néant. -->

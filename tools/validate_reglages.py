@@ -59,6 +59,23 @@ V3 (retour d'eric du 14 nov. 2026 au soir) :
     via AppCompatDelegate.setApplicationLocales — stockage et
     restauration par appcompat (autoStoreLocales au manifeste,
     localeConfig pour Android 13+), aucune clé maison.
+
+V4 (nouveau sujet d'eric, 14 nov. 2026) : « renseigner le joueur
+sur la taille et les caractéristiques du tableau de jeu de chaque
+niveau de difficulté, dans la page de réglage ».
+  - Sous chaque radio du niveau, une description VISIBLE : la
+    TAILLE RÉELLE du plateau sur cet écran (matrice Screen du
+    chantier « tailles fidèles », mêmes metrics et prédicat
+    d'orientation que MainActivity.boardSize — la famille Infini
+    passe par la même table, sa taille y est fixe 40 x 40), suivie
+    des règles du niveau (branches, tore, câbles invisibles,
+    brouillard). Texte posé au runtime : il dépend de l'écran.
+  - L'alignement de la description sur le libellé de sa radio se
+    lit AU RUNTIME (compoundPaddingStart) — la largeur de
+    l'indicateur Material varie avec le thème et la densité.
+  - 8 nouvelles strings EN+FR (skill_*_desc), taille en arguments
+    de format ; miroir Python de la table Screen (tailles réelles
+    par matrice, échange portrait/paysage, Infini toujours 40 x 40).
 """
 
 import re
@@ -133,11 +150,16 @@ check("Layout : toolbar Material avec le titre Réglages",
 check("Layout : ScrollView déroulant (settings_scroll)",
       re.search(r"<ScrollView[^>]*@\+id/settings_scroll", layout_src,
                 re.S) is not None)
+# V4 : les TextViews de description (skill_*_desc) ne sont PAS des
+# radios — l'extraction ne retient que les ids des
+# MaterialRadioButton du groupe, sinon les descriptions compteraient
+# comme des niveaux.
 skill_block = re.search(
     r'<RadioGroup[^>]*@\+id/skill_group(.*?)</RadioGroup>', layout_src,
     re.S)
-skill_radios = (re.findall(r"@\+id/(skill_\w+)", skill_block.group(1))
-                if skill_block else [])
+skill_radios = (re.findall(
+    r'MaterialRadioButton[^>]*@\+id/(skill_\w+)',
+    skill_block.group(1)) if skill_block else [])
 check("Layout : section niveau avec les 8 radios attendues",
       skill_radios == ["skill_" + n.lower() for n in SKILL_ORDER],
       str(skill_radios))
@@ -183,10 +205,12 @@ check("Layout : chaque radio porte le libellé de son string",
 # rendu plus large que la limite Material de 320 dp
 # (VisualLintButtonSize) : les radios, en match_parent, la
 # dépassaient sur la plupart des écrans d'aperçu. V3 : les 3 radios
-# de la langue naissent déjà bornées — 16 au total.
-check("Layout : les 16 radios sont bornées à 320 dp "
-      "(VisualLintButtonSize — régression bloquée, langue incluse)",
-      layout_src.count('android:maxWidth="320dp"') == 16
+# de la langue naissent déjà bornées — 16 au total. V4 : les 8
+# descriptions de niveaux sont bornées pareil (cohérence du bloc,
+# radio et description alignées sur la même largeur) — 24 au total.
+check("Layout : les 16 radios et 8 descriptions sont bornées à "
+      "320 dp (VisualLintButtonSize — régression bloquée)",
+      layout_src.count('android:maxWidth="320dp"') == 24
       and all(f'android:maxWidth="320dp"' in block
               for block in (skill_block.group(1) if skill_block else "",
                             sound_block.group(1) if sound_block else "",
@@ -623,6 +647,116 @@ check("Miroir niveaux : les 8 radios sont commentées dans le layout "
       "avec leur description (mots-clés des règles réelles de Skill)",
       not desc_fail, "; ".join(desc_fail[:3]))
 
+# --- 12 bis. Descriptions VISIBLES des niveaux (v4, nouveau sujet) ------------
+
+# Sous chaque radio, une description que le JOUEUR lit : la taille
+# réelle du plateau sur CET écran (préfixée au runtime — le texte
+# n'est PAS dans le XML, il dépend de l'écran et de l'orientation)
+# suivie des règles du niveau. Une par radio, juste sous elle, en
+# style secondaire, bornée comme les radios.
+if skill_block:
+    v4_body = skill_block.group(1)
+else:
+    v4_body = ""
+v4_fail = []
+for rid in skill_radios:
+    did = f"{rid}_desc"
+    radio_pos = v4_body.find(f'@+id/{rid}"')
+    desc_pos = v4_body.find(f'@+id/{did}"')
+    if desc_pos < 0:
+        v4_fail.append(f"{did} absent")
+        continue
+    if not (0 <= radio_pos < desc_pos):
+        v4_fail.append(f"{did} avant sa radio")
+    # La description suit IMMÉDIATEMENT sa radio : aucune autre
+    # radio ne s'intercale.
+    next_radio = v4_body.find("MaterialRadioButton", radio_pos)
+    if 0 <= next_radio < desc_pos:
+        v4_fail.append(f"{did} pas juste sous {rid}")
+    tag = v4_body[desc_pos:v4_body.find("/>", desc_pos)]
+    if "textAppearanceBodySmall" not in tag:
+        v4_fail.append(f"{did} pas en style secondaire")
+    if "colorOnSurfaceVariant" not in tag:
+        v4_fail.append(f"{did} pas en couleur atténuée")
+    if 'maxWidth="320dp"' not in tag:
+        v4_fail.append(f"{did} non bornée à 320 dp")
+    if "android:text=" in tag:
+        v4_fail.append(f"{did} texte posé en XML — défendu, la "
+                       "taille dépend de l'écran")
+check("Layout v4 : 8 descriptions sous les radios (style "
+      "secondaire, bornées, SANS texte XML — rempli au runtime)",
+      not v4_fail
+      and len(re.findall(r'@\+id/skill_\w+_desc"', v4_body)) == 8,
+      "; ".join(v4_fail[:3]))
+
+check("SettingsActivity v4 : bindSkillDescriptions lit la matrice "
+      "Screen RÉELLE (mêmes metrics et prédicat que le jeu)",
+      re.search(r"private fun bindSkillDescriptions\(\)", sa)
+      is not None
+      and re.search(r"bindSkillDescriptions\(\)", re.search(
+          r"override fun onCreate\(.*?\n    \}", sa, re.S).group(0))
+      is not None
+      and "Screen.find(metrics.widthPixels, metrics.heightPixels)"
+      in sa
+      and re.search(r"val landscape = metrics\.widthPixels > "
+                    r"metrics\.heightPixels", sa) is not None
+      and "screen.boardSize(skill, landscape)" in sa)
+check("SettingsActivity v4 : la description s'aligne au runtime sur "
+      "le libellé de sa radio, taille en arguments de format",
+      "desc.setPaddingRelative(radio.compoundPaddingStart, 0, 0, 0)"
+      in sa
+      and "desc.text = getString(skillDescFor(skill), width, height)"
+      in sa
+      and re.search(r"private fun skillViewsFor\(skill: Skill\)",
+                    sa) is not None)
+
+# Parité avec le jeu : la page affiche EXACTEMENT ce que le jeu
+# jouera — le même find, le même prédicat d'orientation.
+check("SettingsActivity v4 : même calcul de taille que "
+      "MainActivity.boardSize (parité find + orientation)",
+      re.search(r"val landscape = metrics\.widthPixels > "
+                r"metrics\.heightPixels", ma) is not None
+      and re.search(r"Screen\.find\(metrics\.widthPixels, "
+                    r"metrics\.heightPixels\)", ma) is not None)
+
+desc_block = re.search(
+    r"private fun skillDescFor\(skill: Skill\): Int = when \(skill\) \{"
+    r"(.*?)\n    \}", sa_src, re.S)
+desc_pairs = (re.findall(r"Skill\.(\w+) -> R\.string\.(skill_\w+_desc)",
+                         desc_block.group(1)) if desc_block else [])
+check("Miroir v4 : bijection des 8 niveaux vers leurs strings de "
+      "description",
+      sorted(n for n, _ in desc_pairs) == sorted(SKILL_ORDER)
+      and len(set(s for _, s in desc_pairs)) == 8, str(desc_pairs))
+
+SKILL_DESC_KEYWORDS_STR = {
+    "skill_novice_desc": ("open edges", "bords ouverts"),
+    "skill_normal_desc": ("open edges", "bords ouverts"),
+    "skill_expert_desc": ("open edges", "bords ouverts"),
+    "skill_master_desc": ("wrap around", "se referment"),
+    "skill_insane_desc": ("hidden wiring", "invisibles"),
+    "skill_endless_desc": ("never shows an edge", "jamais de bord"),
+    "skill_abyss_desc": ("hidden wiring", "invisibles"),
+    "skill_void_desc": ("fog", "brouillard"),
+}
+strings_v4_fail = []
+for key, (kw_en, kw_fr) in SKILL_DESC_KEYWORDS_STR.items():
+    m_en = re.search(rf'name="{key}">([^<]*)</string>', en_src)
+    m_fr = re.search(rf'name="{key}">([^<]*)</string>', fr_src)
+    if not m_en or not m_fr:
+        strings_v4_fail.append(f"{key} absent EN ou FR")
+        continue
+    for txt, kw, lang in ((m_en.group(1), kw_en, "EN"),
+                          (m_fr.group(1), kw_fr, "FR")):
+        if "%1$d" not in txt or "%2$d" not in txt:
+            strings_v4_fail.append(f"{key} {lang} sans taille")
+        if kw not in txt:
+            strings_v4_fail.append(f"{key} {lang} sans « {kw} »")
+check("Strings v4 : 8 descriptions EN+FR — taille en arguments et "
+      "mot-clé des règles du niveau",
+      not strings_v4_fail and len(SKILL_DESC_KEYWORDS_STR) == 8,
+      "; ".join(strings_v4_fail[:3]))
+
 # --- 13. Miroir : sémantique RadioGroup.check (le bug corrigé) --------------
 
 # RadioGroup.check(id) d'Android : décoche l'ancienne et coche la
@@ -712,6 +846,92 @@ check("Miroir fix (v3) : chaque groupe cochée SEULEMENT par son "
       "propre id — les valeurs s'affichent (8 niveaux, 3 modes "
       "sonores, 2 modes d'animation, 3 langues)",
       not after_fail, "; ".join(after_fail[:2]))
+
+# --- 14. Miroir : la table Screen donne les tailles réelles (v4) -------------
+
+# Réplique de la table Screen (game/Screen.kt, chantier « tailles
+# fidèles ») : chaque écran reçoit sa matrice, chaque niveau y
+# prélève son rectangle, la famille Infini est fixe 40 x 40 — la
+# page Réglages affiche EXACTEMENT ce que le jeu jouera.
+SCREEN_MATRIX = {
+    "SMALL": (8, 6, 8, 6, 6, 6, 6, 4),
+    "WSMALL": (9, 6, 9, 6, 5, 6, 5, 4),
+    "MEDIUM": (11, 7, 11, 7, 9, 7, 5, 5),
+    "WMEDIUM": (12, 7, 10, 7, 8, 7, 6, 5),
+    "HUGE": (17, 10, 15, 8, 11, 8, 7, 6),
+}
+ENDLESS_SIZE = 40
+LEVEL_COLS = {
+    "MASTER": ("major", "minor"),
+    "INSANE": ("major", "minor"),
+    "EXPERT": ("expertMajor", "expertMinor"),
+    "NORMAL": ("normalMajor", "normalMinor"),
+    "NOVICE": ("noviceMajor", "noviceMinor"),
+}
+COL_NAMES = ("major", "minor", "expertMajor", "expertMinor",
+             "normalMajor", "normalMinor", "noviceMajor", "noviceMinor")
+
+
+def screen_size(matrix, level, landscape):
+    if level in ("ENDLESS", "ABYSS", "VOID"):
+        return (ENDLESS_SIZE, ENDLESS_SIZE)
+    cols = dict(zip(COL_NAMES, SCREEN_MATRIX[matrix]))
+    major = cols[LEVEL_COLS[level][0]]
+    minor = cols[LEVEL_COLS[level][1]]
+    return (major, minor) if landscape else (minor, major)
+
+
+def screen_find(width_px, height_px):
+    small, big = min(width_px, height_px), max(width_px, height_px)
+    aspect = big / small
+    if small <= 400:
+        return "WSMALL" if aspect > 1.4 else "SMALL"
+    if small <= 500:
+        return "WMEDIUM" if aspect > 1.5 else "MEDIUM"
+    return "HUGE"
+
+
+mirror_v4_fail = []
+# La famille Infini est fixe 40 x 40 sur TOUTES les matrices et
+# orientations — comme majorOf/minorOf de Screen.
+for matrix in SCREEN_MATRIX:
+    for landscape in (True, False):
+        for level in ("ENDLESS", "ABYSS", "VOID"):
+            if screen_size(matrix, level, landscape) != (40, 40):
+                mirror_v4_fail.append(f"{matrix}/{level}")
+# Portrait et paysage : mêmes côtés, échangés — comme boardSize.
+for matrix in SCREEN_MATRIX:
+    for level in ("NOVICE", "NORMAL", "EXPERT", "MASTER", "INSANE"):
+        if screen_size(matrix, level, True) != \
+                screen_size(matrix, level, False)[::-1]:
+            mirror_v4_fail.append(f"{matrix}/{level} échange")
+# Maître et Dément partagent la même géométrie (Screen.kt).
+for matrix in SCREEN_MATRIX:
+    for landscape in (True, False):
+        if screen_size(matrix, "MASTER", landscape) != \
+                screen_size(matrix, "INSANE", landscape):
+            mirror_v4_fail.append(f"{matrix} maître/dément")
+# Écrans sondés : matrice choisie par find, puis taille affichée
+# pour un niveau — les valeurs attendues sont calculées à la main
+# depuis la table ci-dessus.
+for w, h, matrix, level, landscape, expected in (
+        (360, 640, "WSMALL", "NOVICE", False, (4, 5)),
+        (360, 640, "WSMALL", "MASTER", False, (6, 9)),
+        (360, 640, "WSMALL", "VOID", True, (40, 40)),
+        (400, 400, "SMALL", "NOVICE", False, (4, 6)),
+        (480, 800, "WMEDIUM", "EXPERT", False, (7, 10)),
+        (1080, 1920, "HUGE", "NORMAL", False, (8, 11)),
+        (1920, 1080, "HUGE", "MASTER", True, (17, 10)),
+):
+    if screen_find(w, h) != matrix:
+        mirror_v4_fail.append(f"{w}x{h} → {screen_find(w, h)}")
+    if screen_size(matrix, level, landscape) != expected:
+        mirror_v4_fail.append(
+            f"{matrix}/{level} → {screen_size(matrix, level, landscape)}")
+check("Miroir v4 : tailles réelles fidèles à Screen — famille "
+      "Infini toujours 40 x 40, échange portrait/paysage, "
+      "Maître=Dément, 5 matrices et 7 écrans sondés",
+      not mirror_v4_fail, "; ".join(mirror_v4_fail[:3]))
 
 # --- Bilan -------------------------------------------------------------------
 

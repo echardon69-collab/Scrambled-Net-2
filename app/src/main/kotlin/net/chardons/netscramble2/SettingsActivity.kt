@@ -2,12 +2,15 @@ package net.chardons.netscramble2
 
 import android.content.Intent
 import android.os.Bundle
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.os.LocaleListCompat
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.radiobutton.MaterialRadioButton
 import net.chardons.netscramble2.audio.SoundMode
 import net.chardons.netscramble2.databinding.ActivitySettingsBinding
+import net.chardons.netscramble2.game.Screen
 import net.chardons.netscramble2.game.Skill
 import net.chardons.netscramble2.ui.EdgeToEdge
 
@@ -44,6 +47,15 @@ import net.chardons.netscramble2.ui.EdgeToEdge
  *    réglage système « langue par application » ensuite ; la pile
  *    d'activités se recrée pour l'appliquer (le ViewModel du jeu
  *    survit). AUCUNE clé maison : une seule source de vérité.
+ *
+ * V4 (retour d'eric du 14 nov. 2026, nouveau sujet) : sous chaque
+ * niveau, le joueur voit la TAILLE RÉELLE du plateau sur cet écran
+ * et les règles qui distinguent le niveau. La taille suit la même
+ * matrice Screen que le jeu (chantier « tailles fidèles » : les
+ * mêmes metrics, le même prédicat d'orientation que
+ * MainActivity.boardSize, la famille Infini y passe aussi — sa
+ * taille y est fixe 40 x 40) ; les règles sont des strings par
+ * niveau, EN et FR, avec la taille en arguments de format.
  */
 class SettingsActivity : AppCompatActivity() {
 
@@ -96,6 +108,10 @@ class SettingsActivity : AppCompatActivity() {
             if (Settings.loadAnimEnabled(this)) R.id.anim_on else R.id.anim_off
         )
         binding.langGroup.check(langRadioFor(currentLanguageTag()))
+
+        // Descriptions des niveaux (v4) : taille réelle de l'écran
+        // + règles propres à chaque niveau.
+        bindSkillDescriptions()
 
         // Niveau : protégé (relance une partie). Sons et animation :
         // choix immédiat, persisté aux clés historiques — MainActivity
@@ -191,6 +207,55 @@ class SettingsActivity : AppCompatActivity() {
         Skill.ENDLESS -> R.id.skill_endless
         Skill.ABYSS -> R.id.skill_abyss
         Skill.VOID -> R.id.skill_void
+    }
+
+    /**
+     * Remplit les 8 descriptions de niveaux (v4) : la TAILLE RÉELLE
+     * du plateau sur cet écran — matrice Screen du chantier « tailles
+     * fidèles », les mêmes metrics et le même prédicat d'orientation
+     * que MainActivity.boardSize (la famille Infini y passe aussi :
+     * sa taille y est fixe) — préfixée aux règles du niveau (branches,
+     * tore, câbles invisibles, brouillard). L'alignement de chaque
+     * description sur le LIBELLÉ de sa radio se lit au runtime
+     * (compoundPaddingStart) : la largeur de l'indicateur Material
+     * varie avec le thème et la densité — rien de retapé, même
+     * philosophie que les insets EdgeToEdge.
+     */
+    private fun bindSkillDescriptions() {
+        val metrics = resources.displayMetrics
+        val landscape = metrics.widthPixels > metrics.heightPixels
+        val screen = Screen.find(metrics.widthPixels, metrics.heightPixels)
+        for (skill in Skill.entries) {
+            val (width, height) = screen.boardSize(skill, landscape)
+            val (radio, desc) = skillViewsFor(skill)
+            desc.text = getString(skillDescFor(skill), width, height)
+            desc.setPaddingRelative(radio.compoundPaddingStart, 0, 0, 0)
+        }
+    }
+
+    /** Radio et description d'un niveau (liaisons ViewBinding). */
+    private fun skillViewsFor(skill: Skill): Pair<MaterialRadioButton, TextView> =
+        when (skill) {
+            Skill.NOVICE -> binding.skillNovice to binding.skillNoviceDesc
+            Skill.NORMAL -> binding.skillNormal to binding.skillNormalDesc
+            Skill.EXPERT -> binding.skillExpert to binding.skillExpertDesc
+            Skill.MASTER -> binding.skillMaster to binding.skillMasterDesc
+            Skill.INSANE -> binding.skillInsane to binding.skillInsaneDesc
+            Skill.ENDLESS -> binding.skillEndless to binding.skillEndlessDesc
+            Skill.ABYSS -> binding.skillAbyss to binding.skillAbyssDesc
+            Skill.VOID -> binding.skillVoid to binding.skillVoidDesc
+        }
+
+    /** Texte de description du niveau : la taille en arguments. */
+    private fun skillDescFor(skill: Skill): Int = when (skill) {
+        Skill.NOVICE -> R.string.skill_novice_desc
+        Skill.NORMAL -> R.string.skill_normal_desc
+        Skill.EXPERT -> R.string.skill_expert_desc
+        Skill.MASTER -> R.string.skill_master_desc
+        Skill.INSANE -> R.string.skill_insane_desc
+        Skill.ENDLESS -> R.string.skill_endless_desc
+        Skill.ABYSS -> R.string.skill_abyss_desc
+        Skill.VOID -> R.string.skill_void_desc
     }
 
     /**
