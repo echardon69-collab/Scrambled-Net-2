@@ -43,4 +43,125 @@
             the network animation off in the menu.</item>
     </string-array>
 
+    <!-- Titres des sections de la page « À propos » (refonte du
+         14 nov. 2026 : la fenêtre de dialogue devient une page
+         autonome). -->
+    <string-array name="about_titles">
+        <item>The game</item>
+        <item>The author</item>
+        <item>Origin and license</item>
+        <item>Get involved</item>
+        <item>New in this remake</item>
+        <item>Changed from the original</item>
+        <item>Unchanged from the original</item>
+        <item>Removed from the original</item>
+    </string-array>
+
+    <!-- Textes des sections de la page « À propos ». La licence
+         cite la chaîne complète : jeu KDE d\'origine, portage
+         Android, puis cette refonte. La section « Get involved »
+         est volontairement en texte représentatif : les liens
+         réels ne sont pas encore disponibles (évolution
+         « Renseigner les liens de À propos » de la feuille de
+         route). -->
+    <string-array name="about_texts">
+        <item>Scrambled Net 2 is a modern, open-source remake of
+            Scrambled Net, an Android port of the KDE game
+            KNetWalk. Untangle a scrambled computer network so
+            that every terminal is connected to the server: all
+            the tiles are in the right place, but randomly
+            rotated. Rotate them one by one to rebuild the
+            network.</item>
+        <item>Scrambled Net 2 is the work of Éric Chardon, a
+            lifelong enthusiast of logic and puzzle games. In
+            early 2010 he discovered Ian Cameron Smith\'s famous
+            application, shipped with its source code, and in
+            2014 its takeover by Michael Mueller — expecting the
+            latter to bring more evolutions to the game and keep
+            players interested. As the years went by without
+            those hopes materializing, he decided to write the
+            awaited sequel himself: this modern, open-source
+            remake, faithful to the original.</item>
+        <item>KNetWalk, the original KDE game: © 2004–2007 Andi
+            Peredri, Thomas Nagy and Fela Winkelmolen.\n\n
+            Scrambled Net, the Android port: © 2007–2010 Ian
+            Cameron Smith, © 2014 Michael Mueller.\n\nThis
+            remake, Scrambled Net 2: © 2026 Éric Chardon.\n\n
+            All distributed under the GPL-2.0 license — this
+            game is free software.\n\nSource code:
+            https://github.com/echardon69-collab/Scrambled-Net-2</item>
+        <item>You can help improve the game:\n\n• Report a bug —
+            link to come.\n\n• Contact the author — link to
+            come.\n\n• Propose a translation into a new language
+            — link to come.\n\n• Propose a new tile skin — link
+            to come.</item>
+        <item>Compared with the original game, this remake
+            adds:\n\n• The Endless family: three new skill levels
+            (Endless, Abyss, Void) on a giant 40 × 40 board
+            whose edges wrap around — the camera loops on
+            itself, panning never shows an edge; Abyss hides the
+            wiring, Void adds fog over the network.\n\n• A title
+            screen with automatic updates from GitHub, in two
+            distribution flavours: the GitHub APK with the
+            built-in updater, the Play Store APK without
+            it.\n\n• An electricity signature: the server lights
+            and the data blips pulse with a different rhythm
+            depending on which generator built the board.\n\n•
+            The description of every skill level — real board
+            size and rules — in the Settings page.\n\n• A
+            language setting (English, French, or follow the
+            system).</item>
+        <item>Features the original had, now done
+            differently:\n\n• Graphics: the bitmaps of the
+            original are now VectorDrawables — same look,
+            perfectly sharp at any zoom, one file for every
+            screen density.\n\n• Sound: no sample from the
+            original is reused; six short effects are
+            synthesized instead.\n\n• Rendering: instead of a
+            constant animation loop, the board redraws only
+            when something changes — easier on the
+            battery.\n\n• The board no longer stretches to fill
+            the screen: it is a camera viewport you can drag
+            and zoom with your fingers, and the zoom stays
+            anchored under them.\n\n• Board generation: half the
+            boards come from an alternate spanning-tree
+            generator that connects every cell (the original
+            generator still builds the other half — the
+            electricity signature tells them apart).\n\n• Menus:
+            a text action bar without title, settings on a
+            single page instead of cascading submenus, and the
+            About dialog became this page.</item>
+        <item>Features of the original, kept as they
+            were:\n\n• The five original skill levels (Novice to
+            Insane) with their exact rules — Master\'s wrapping
+            edges, Insane\'s hidden wiring.\n\n• The original
+            board generator: every puzzle can be won, and the
+            game is won when every terminal is connected.\n\n•
+            Board sizes adapt to your screen and orientation,
+            exactly as the original\'s Screen matrix did.\n\n•
+            Touch a tile to rotate it, press and hold to lock or
+            unlock it.\n\n• The auto-solver — a solved game is
+            never scored.\n\n• Personal bests (moves and time)
+            for each skill level.\n\n• The saved game survives
+            closing the app or letting it sleep; the clock
+            freezes in the background.\n\n• The rules reminders
+            when entering Master or Insane.\n\n• The three sound
+            modes and the animation setting.\n\n• The in-game
+            help.</item>
+        <item>Features of the original that are gone, and
+            why:\n\n• The D-pad, trackball and keyboard
+            controls: this remake is touch-only, built for
+            modern phones and tablets.\n\n• The persistent red
+            focus cursor, designed for the D-pad era: with
+            direct touch it was noise rather than help — the
+            alert blink and the auto-solver\'s moving cursor
+            cover what it was for.\n\n• Every dependency of the
+            original (the HermitAndroid and HermitLibrary
+            libraries, including the MTRandom random generator,
+            replaced by Kotlin\'s standard generator): the engine
+            was rewritten from scratch in Kotlin as a pure,
+            unit-tested game engine — no code from the original
+            is reused.</item>
+    </string-array>
+
 </resources>

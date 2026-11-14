@@ -119,10 +119,9 @@
     <string name="menu_scores_reset">Reset all scores</string>
     <string name="scores_reset_confirm">Erase all your personal bests?</string>
 
-    <!-- À propos -->
-    <string name="about_title">About Scrambled Net 2</string>
-    <string name="about_message">A modern, open-source remake of Scrambled Net, itself an
-        Android port of the KDE game KNetWalk.\n\nOriginal game © 2007–2010 Ian Cameron Smith,
-        © 2014 Michael Mueller (GPL-2.0).\n\nThis version: © 2026 Eric Chardon (GPL-2.0).\n
-        Source : https://github.com/echardon69-collab/Scrambled-Net-2</string>
+    <!-- À propos : la fenêtre de dialogue est devenue la page
+         autonome AboutActivity (refonte du 14 nov. 2026) — le
+         contenu vit dans about_titles / about_texts
+         (arrays.xml), about_title et about_message sont
+         retirées. -->
 </resources>

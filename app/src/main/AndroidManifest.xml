@@ -66,6 +66,17 @@
             android:label="@string/menu_settings"
             android:parentActivityName=".MainActivity" />
 
+        <!-- Page autonome « À propos » (refonte du 14 nov. 2026) :
+             la fenêtre de dialogue devient une page au patron des
+             records, de l'aide et des réglages — version, licence,
+             participation (bug, contact, traduction, skin) et
+             listes des fonctionnalités par rapport à l'original. -->
+        <activity
+            android:name=".AboutActivity"
+            android:exported="false"
+            android:label="@string/menu_about"
+            android:parentActivityName=".MainActivity" />
+
         <!-- Langue par application (page Réglages, v3 du 14 nov.
              2026) : ce service ne TOURNE jamais, il ne porte que le
              marqueur d'auto-stockage d'appcompat. Avant Android 13,

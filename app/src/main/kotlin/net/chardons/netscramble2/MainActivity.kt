@@ -252,8 +252,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            R.id.menu_new -> {
+        return when {
+            item.itemId == R.id.menu_new -> {
                 // Confirmation si une partie est en jeu (roadmap du
                 // 10 nov. 2026) : un clic malheureux sur le bouton
                 // « Nouvelle partie » ne doit plus perdre un plateau
@@ -268,7 +268,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 true
             }
-            R.id.menu_settings -> {
+            item.itemId == R.id.menu_settings -> {
                 // Page unique « Réglages » : l'état courant du jeu
                 // passe à la page (niveau en cours, avancement) pour
                 // ses coches initiales et sa protection de niveau.
@@ -282,7 +282,7 @@ class MainActivity : AppCompatActivity() {
                 )
                 true
             }
-            R.id.menu_solve -> {
+            item.itemId == R.id.menu_solve -> {
                 val starting = !viewModel.uiState.value.solving
                 viewModel.toggleSolver()
                 if (starting) {
@@ -292,16 +292,20 @@ class MainActivity : AppCompatActivity() {
                 }
                 true
             }
-            R.id.menu_scores -> {
+            item.itemId == R.id.menu_scores -> {
                 startActivity(Intent(this, ScoresActivity::class.java))
                 true
             }
-            R.id.menu_help -> {
+            item.itemId == R.id.menu_help -> {
                 startActivity(Intent(this, HelpActivity::class.java))
                 true
             }
-            R.id.menu_about -> {
-                showAbout()
+            item.itemId == R.id.menu_about -> {
+                // Refonte du 14 nov. 2026 : la fenêtre de
+                // dialogue devient la page autonome
+                // AboutActivity (participation, licence,
+                // listes des fonctionnalités vs l'original).
+                startActivity(Intent(this, AboutActivity::class.java))
                 true
             }
             else -> super.onOptionsItemSelected(item)
@@ -372,13 +376,5 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         soundEffects.release()
         super.onDestroy()
-    }
-
-    private fun showAbout() {
-        MaterialAlertDialogBuilder(this)
-            .setTitle(R.string.about_title)
-            .setMessage(R.string.about_message)
-            .setPositiveButton(android.R.string.ok, null)
-            .show()
     }
 }

@@ -99,4 +99,13 @@ Feuille de route (validée)
 - M6 finition UI/UX : edge-to-edge (barres système transparentes,
   contraste des icônes jour/nuit, retour prédictif), marges adaptées
   aux tablettes ≥ 600dp (livré)
+- « À propos » : page autonome à la place de la fenêtre — licence
+  complète (KNetWalk, Scrambled Net, Scrambled Net 2), propositions
+  de participation (bug, contact, traduction, skin) et listes des
+  fonctionnalités nouvelles, modifiées, conservées et retirées par
+  rapport au jeu d'origine (livré le 14 nov. 2026)
+- Renseigner les liens de À propos : les quatre propositions de
+  participation (signaler un bug, contacter l'auteur, proposer une
+  traduction, proposer un skin) affichent « lien à venir » en
+  attendant les adresses réelles (à venir)
 - Phase bonus : seed partageable, undo, tailles custom, thèmes daltoniens

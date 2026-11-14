@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <!-- Page autonome « À propos » (refonte du 14 nov. 2026) :
+         la fenêtre de dialogue d'origine devient une page, au
+         patron maison des Records, de l'Aide et des Réglages —
+         toolbar Material 3 + ScrollView bord à bord. Le contenu
+         (sections « titre + texte » EN et FR, version) est posé au
+         runtime par AboutActivity depuis les tableaux
+         about_titles / about_texts, comme l'aide le fait avec
+         help_titles / help_texts.
+
+         Hauteur : wrap_content + minHeight. À hauteur fixe
+         (?attr/actionBarSize = 56dp), le padding d'inset de barre
+         d'état ajouté par EdgeToEdge.padSystemBars écraserait le
+         contenu à 14-25dp (titre rogné) ; ici la toolbar grandit
+         pour absorber l'inset et son contenu garde au moins
+         56dp. -->
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/about_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="?attr/actionBarSize"
+        android:background="?attr/colorPrimary"
+        app:title="@string/menu_about"
+        app:titleTextColor="@color/brand_on_primary" />
+
+    <ScrollView
+        android:id="@+id/about_scroll"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false">
+
+        <LinearLayout
+            android:id="@+id/about_content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="@dimen/content_padding_h"
+            android:paddingTop="16dp"
+            android:paddingBottom="24dp" />
+    </ScrollView>
+
+</LinearLayout>

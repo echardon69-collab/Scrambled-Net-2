@@ -49,4 +49,138 @@
             couper l\'animation du réseau dans le menu.</item>
     </string-array>
 
+    <!-- Titres des sections de la page « À propos » (refonte du
+         14 nov. 2026 : la fenêtre de dialogue devient une page
+         autonome). -->
+    <string-array name="about_titles">
+        <item>Le jeu</item>
+        <item>L\'auteur actuel</item>
+        <item>Origine et licence</item>
+        <item>Participer</item>
+        <item>Nouveautés de cette refonte</item>
+        <item>Fonctionnalités d\'origine modifiées</item>
+        <item>Fonctionnalités d\'origine conservées</item>
+        <item>Fonctionnalités d\'origine retirées</item>
+    </string-array>
+
+    <!-- Textes des sections de la page « À propos ». La licence
+         cite la chaîne complète : jeu KDE d\'origine, portage
+         Android, puis cette refonte. La section « Participer »
+         est volontairement en texte représentatif : les liens
+         réels ne sont pas encore disponibles (évolution
+         « Renseigner les liens de À propos » de la feuille de
+         route). -->
+    <string-array name="about_texts">
+        <item>Scrambled Net 2 est une refonte moderne et libre
+            de Scrambled Net, portage Android du jeu KDE
+            KNetWalk. Rétablissez les connexions d\'un réseau
+            informatique emmêlé afin que chaque terminal soit
+            relié au serveur : toutes les tuiles sont à la bonne
+            place, mais tournées au hasard. Faites-les tourner
+            une à une pour reconstruire le réseau.</item>
+        <item>Scrambled Net 2 est l\'œuvre d\'Éric Chardon,
+            passionné depuis toujours par les jeux de logique et
+            de réflexion. Début 2010, il découvre la fameuse
+            application de Ian Cameron Smith, livrée avec son
+            code source, puis en 2014 sa reprise par Michael
+            Mueller — il pense alors que cette dernière se
+            traduira par plus d\'évolutions du jeu, de quoi
+            intéresser durablement les joueurs. Les années
+            passant sans que ces espoirs se concrétisent, il
+            décide d\'écrire lui-même la suite attendue : cette
+            refonte moderne, fidèle à l\'original et toujours libre,
+            conserve sa phylosophie : partage intégral du code
+            source et de ses ressources.</item>
+        <item>KNetWalk, le jeu KDE d\'origine : © 2004–2007
+            Andi Peredri, Thomas Nagy et Fela
+            Winkelmolen.\n\nScrambled Net, le portage Android :
+            © 2007–2010 Ian Cameron Smith, © 2014 Michael
+            Mueller.\n\nCette refonte, Scrambled Net 2 : © 2026
+            Éric Chardon.\n\nLe tout est distribué sous licence
+            GPL-2.0 — ce jeu est un logiciel libre.\n\nCode
+            source :
+            https://github.com/echardon69-collab/Scrambled-Net-2</item>
+        <item>Vous pouvez aider à améliorer le jeu :\n\n•
+            Signaler un bug — lien à venir.\n\n• Contacter
+            l\'auteur — lien à venir.\n\n• Proposer la
+            traduction dans une nouvelle langue — lien à
+            venir.\n\n• Proposer la création d\'un nouveau skin
+            — lien à venir.</item>
+        <item>Par rapport au jeu d\'origine, cette refonte
+            ajoute :\n\n• La famille Infini : trois nouveaux
+            niveaux (Infini, Abîme, Néant) sur un plateau géant
+            de 40 × 40 en tore — la caméra boucle sur elle-même,
+            le déplacement ne montre jamais de bord ; Abîme ajoute
+            le masquage des câbles, Néant ajoute en plus le brouillard
+            sur le réseau.\n\n• Une page titre avec mises à jour
+            automatiques depuis GitHub, en deux saveurs de
+            distribution : l\'APK GitHub avec le module intégré,
+            l\'APK Play Store sans.\n\n• Une signature
+            électricité : les DEL du serveur et les blips de
+            données pulsent à des rythmes différents selon le
+            générateur qui a construit le plateau.\n\n• La
+            description de chaque niveau — taille réelle du
+            plateau et règles — dans la page Réglages.\n\n• Un
+            réglage de langue (anglais, français, ou selon le
+            système).</item>
+        <item>Des fonctionnalités de l\'origine, désormais faites
+            autrement :\n\n• Code source : Java et Ant ont été remplacé
+            par Kotlin et Gradle.\n\n• Graphismes : les bitmaps de
+            l\'original sont devenus des VectorDrawables — même
+            look, netteté parfaite à tout zoom, un seul fichier
+            pour toutes les densités d\'écran.\n\n• Sons : aucun
+            échantillon de l\'original n\'est réutilisé ; six
+            effets courts sont synthétisés à la place.\n\n•
+            Rendu : au lieu d\'une boucle d\'animation
+            permanente, le plateau ne se redessine que quand
+            quelque chose change — économe en batterie.\n\n• Le
+            plateau ne s\'étire plus pour couvrir l\'écran :
+            c\'est une caméra qu\'on déplace et qu\'on zoome au
+            doigt, et le zoom reste ancré sous les doigts.\n\n•
+            Génération : la moitié des plateaux vient d\'un
+            générateur alternatif en arbre couvrant qui relie
+            toutes les cases (le générateur de l\'original
+            construit l\'autre moitié — la signature électricité
+            les distingue).\n\n• Menus : barre d\'actions texte
+            sans titre, réglages sur une page unique au lieu de
+            sous-menus en cascade, et la fenêtre À propos est
+            devenue cette page.</item>
+        <item>Des fonctionnalités de l\'origine, conservées
+            telles quelles :\n\n• Les cinq niveaux d\'origine
+            (de Novice à Dément) et leurs règles exactes — bords
+            qui se referment au Maître, câbles invisibles au
+            Dément.\n\n• Le générateur de plateaux de
+            l\'original : toute partie est gagnable, et la
+            victoire arrive quand chaque terminal est
+            connecté.\n\n• Les tailles des plateaux s\'adaptent
+            à l\'écran et à l\'orientation, exactement comme la
+            matrice Screen de l\'original.\n\n• Toucher une tuile
+            la fait tourner, un appui long la verrouille ou la
+            déverrouille.\n\n• L\'auto-solveur — une partie
+            résolue par lui n\'est jamais comptée aux
+            records.\n\n• Les records personnels (coups et
+            temps) pour chaque niveau.\n\n• La partie sauvegardée
+            survit à la fermeture de l\'app ou à la mise en
+            veille ; le chrono gèle en arrière-plan.\n\n• Les
+            rappels de règles à l\'arrivée au Maître ou au
+            Dément.\n\n• Les trois modes sonores et le réglage
+            de l\'animation.\n\n• L\'aide du jeu.</item>
+        <item>Des fonctionnalités de l\'origine qui ont été
+            retirées, et pourquoi :\n\n• Les commandes D-pad,
+            trackball et clavier : cette refonte est tactile de
+            bout en bout, pensée pour les téléphones et
+            tablettes modernes.\n\n• Le curseur de focus rouge
+            persistant, conçu pour l\'ère du D-pad : au doigt
+            direct, c\'était du bruit plus qu\'une aide — le
+            clignotement d\'alerte et le curseur mobile de
+            l\'auto-solveur couvrent son rôle.\n\n• Toutes les
+            dépendances de l\'origine (les bibliothèques
+            HermitAndroid et HermitLibrary, dont le générateur
+            aléatoire MTRandom, remplacé par le générateur
+            standard de Kotlin) : le moteur a été réécrit de
+            zéro en Kotlin comme moteur de jeu pur couvert de
+            tests unitaires — aucun code de l\'original n\'est
+            réutilisé.</item>
+    </string-array>
+
 </resources>
