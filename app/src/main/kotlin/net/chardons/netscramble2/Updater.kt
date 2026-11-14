@@ -32,9 +32,12 @@ import java.net.URL
  *   joueur doit autoriser une seule fois cette source à installer
  *   des applications (écran système pointé par l'app).
  *
- * Le Play Store est évoqué pour plus tard : rien ici ne lui est
- * dédié, l'app continuera de se mettre à jour via GitHub tant qu'elle
- * n'y est pas distribuée.
+ * Le Play Store est traité par les saveurs de distribution du
+ * 14 nov. 2026 : rien ici ne lui est dédié. L'APK « play » retire
+ * REQUEST_INSTALL_PACKAGES du manifeste fusionné et coupe cette
+ * vérification à la construction (Distribution.UPDATER_ENABLED
+ * faux, TitleActivity) : Play interdit l'auto-mise à jour. L'APK
+ * « github » garde tout ce fichier tel quel.
  */
 object Updater {
 

@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:ignore="VisualLintOverlap">
+
+    <!-- Page unique « Réglages » (refonte du 13 nov. 2026) : les trois
+         réglages qui vivaient en sous-menus en cascade (niveau, sons,
+         animation) tiennent désormais ICI, visibles d'un coup d'œil —
+         la page se déroule si l'écran est petit. Même patron que les
+         records et l'aide : toolbar + ScrollView bord à bord. V3 du
+         14 nov. : la langue s'ajoute en quatrième section (elle n'a
+         jamais vécu en sous-menu : nouveau réglage).
+
+         VisualLintOverlap, supprimé ci-dessus : l'aperçu statique
+         (validation de mise en page d'Android Studio) pose les barres
+         système bord à bord sans exécuter le code de l'activité —
+         or nos insets sont posés AU RUNTIME par
+         EdgeToEdge.padSystemBars (patron maison des quatre écrans :
+         toolbar en haut, contenu en bas). Le titre de la toolbar
+         semble donc couvert par la barre d'état dans l'aperçu,
+         seulement. -->
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/settings_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="?attr/actionBarSize"
+        android:background="?attr/colorPrimary"
+        app:title="@string/menu_settings"
+        app:titleTextColor="@color/brand_on_primary" />
+
+    <ScrollView
+        android:id="@+id/settings_scroll"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false">
+
+        <LinearLayout
+            android:id="@+id/settings_content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="@dimen/content_padding_h"
+            android:paddingTop="8dp"
+            android:paddingBottom="24dp">
+
+            <!-- Section 1 : niveau de difficulté. Le choix relance une
+                 partie (protégé par le dialogue de confirmation si une
+                 partie est en cours) — géré par SettingsActivity. -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="8dp"
+                android:text="@string/menu_skill"
+                android:textAppearance="?attr/textAppearanceTitleMedium" />
+
+            <!-- Radios bornées à 320 dp (v2) : la validation de
+                 mise en page d'Android Studio signale tout bouton
+                 rendu plus large que la limite Material de 320 dp
+                 (VisualLintButtonSize). Sur téléphone la borne ne
+                 change rien (le contenu est plus étroit) ; sur
+                 tablette les options ne s'étirent pas sur tout
+                 l'écran. -->
+            <RadioGroup
+                android:id="@+id/skill_group"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <!-- Chaque niveau porte sa description (v3, demande
+                     d'eric) : les règles qui le distinguent vraiment,
+                     fidèles à l'enum Skill (game/Skill.kt). La taille
+                     du plateau des niveaux classiques vient de la
+                     matrice Screen de l'écran, PAS du niveau. -->
+                <!-- Novice : deux branches par carrefour, pas de tore —
+                     le réseau le plus simple, sur la plus petite
+                     grille de la matrice Screen de l'écran. -->
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/skill_novice"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/skill_novice" />
+
+                <!-- Normal : comme Novice (deux branches, pas de tore),
+                     sur la grille de taille intermédiaire de la
+                     matrice Screen. -->
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/skill_normal"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/skill_normal" />
+
+                <!-- Expert : comme Novice (deux branches, pas de tore),
+                     sur la plus grande grille de la matrice Screen. -->
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/skill_expert"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/skill_expert" />
+
+                <!-- Maître : trois branches par carrefour (croisements
+                     à trois voies, parfois des croix complètes) et
+                     plateau en tore — les bords se referment sur
+                     eux-mêmes. -->
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/skill_master"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/skill_master" />
+
+                <!-- Dément : comme Maître, plus les câbles INVISIBLES
+                     dans les cellules à 3 ou 4 connexions. -->
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/skill_insane"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/skill_insane" />
+
+                <!-- Infini : plateau géant FIXE 40 x 40 en tore, caméra
+                     modulo — le déplacement ne montre jamais de bord
+                     au réseau. -->
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/skill_endless"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/skill_endless" />
+
+                <!-- Abîme : comme Infini (plateau 40 x 40 sans bornes),
+                     plus le masquage à la Dément — câbles invisibles
+                     dans les cellules à 3 ou 4 connexions. -->
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/skill_abyss"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/skill_abyss" />
+
+                <!-- Néant : comme Abîme, plus le brouillard — seuls les
+                     abords des tuiles connectées au serveur restent
+                     visibles, le reste se dévoile au fur et à mesure
+                     que le réseau avance. -->
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/skill_void"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/skill_void" />
+            </RadioGroup>
+
+            <!-- Section 2 : sons. Choix immédiat, persisté à la clé
+                 historique — le jeu applique le mode à son retour. -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="24dp"
+                android:text="@string/menu_sounds"
+                android:textAppearance="?attr/textAppearanceTitleMedium" />
+
+            <RadioGroup
+                android:id="@+id/sound_group"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/sounds_off"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/sounds_off" />
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/sounds_quiet"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/sounds_quiet" />
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/sounds_full"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/sounds_full" />
+            </RadioGroup>
+
+            <!-- Section 3 : animation. Choix immédiat, persisté à la
+                 clé historique (parité avec setAnimEnable de
+                 l'original : coupe les blips et le scintillement). -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="24dp"
+                android:text="@string/menu_anim"
+                android:textAppearance="?attr/textAppearanceTitleMedium" />
+
+            <RadioGroup
+                android:id="@+id/anim_group"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/anim_off"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/anim_off" />
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/anim_on"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/anim_on" />
+            </RadioGroup>
+
+            <!-- Section 4 : langue (v3 du 14 nov., demande d'eric).
+                 Choix immédiat : appcompat stocke le choix
+                 (autoStoreLocales, cf. manifeste) et recrée la pile
+                 d'activités pour l'appliquer partout ; sur Android
+                 13+, c'est le réglage système « langue par
+                 application » qui le porte (localeConfig). « Selon
+                 le système » vide le forçage : l'app suit la langue
+                 du téléphone. -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="24dp"
+                android:text="@string/menu_lang"
+                android:textAppearance="?attr/textAppearanceTitleMedium" />
+
+            <RadioGroup
+                android:id="@+id/lang_group"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/lang_system"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/lang_system" />
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/lang_fr"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/lang_fr" />
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/lang_en"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/lang_en" />
+            </RadioGroup>
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>

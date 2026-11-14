@@ -27,6 +27,7 @@
         android:enableOnBackInvokedCallback="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:localeConfig="@xml/locales_config"
         android:supportsRtl="true"
         android:theme="@style/Theme.ScrambledNet2"
         tools:targetApi="33">
@@ -58,6 +59,31 @@
             android:exported="false"
             android:label="@string/menu_help"
             android:parentActivityName=".MainActivity" />
+
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false"
+            android:label="@string/menu_settings"
+            android:parentActivityName=".MainActivity" />
+
+        <!-- Langue par application (page Réglages, v3 du 14 nov.
+             2026) : ce service ne TOURNE jamais, il ne porte que le
+             marqueur d'auto-stockage d'appcompat. Avant Android 13,
+             la bibliothèque y conserve la langue choisie et la
+             réapplique au démarrage, avant tout affichage ; sur
+             Android 13+, le réglage système « langue par
+             application » la porte (localeConfig ci-dessus, qui
+             déclare en et fr). Une seule source de vérité : la page
+             Réglages écrit via AppCompatDelegate, jamais dans un
+             fichier maison. -->
+        <service
+            android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"
+            android:enabled="false"
+            android:exported="false">
+            <meta-data
+                android:name="autoStoreLocales"
+                android:value="true" />
+        </service>
     </application>
 
 </manifest>

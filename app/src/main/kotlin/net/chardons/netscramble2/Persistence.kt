@@ -20,4 +20,16 @@ object Persistence {
 
     /** Clé de la photographie de partie sérialisée (GameSpec.encode). */
     const val GAME_SPEC_KEY = "gameSpec"
+
+    /**
+     * Clé du mode sonore, reprise de l'original. Vit dans le MÊME
+     * fichier (historique) que la partie : les réglages sauvegardés
+     * avant la page unique « Réglages » restent lisibles à
+     * l'identique (la page réglages écrit via [Settings], jamais
+     * dans un fichier qui lui serait propre).
+     */
+    const val SOUND_MODE_KEY = "soundMode"
+
+    /** Clé du réglage d'animation, reprise de l'original (cf. ci-dessus). */
+    const val ANIM_ENABLED_KEY = "animEnable"
 }

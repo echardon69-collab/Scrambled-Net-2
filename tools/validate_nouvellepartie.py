@@ -42,8 +42,17 @@ def check(label, ok):
 
 
 main_src = read(f"{KT}/MainActivity.kt")
+settings_src = read(f"{KT}/SettingsActivity.kt")
 en_src = read("app/src/main/res/values/strings.xml")
 fr_src = read("app/src/main/res/values-fr/strings.xml")
+
+# Retour de la page « Réglages » : le changement confirmé y relance la
+# partie et montre le rappel des niveaux spéciaux.
+settings_launcher = re.search(
+    r"settingsLauncher = registerForActivityResult\((.*?)\n    \}",
+    main_src,
+    re.S,
+)
 
 # ---------------------------------------------------------------------------
 # 1. Vérification statique : MainActivity.kt.
@@ -84,27 +93,37 @@ check("MainActivity : « Nouvelle partie » confirme avec le libellé « Nouvell
       and "R.string.win_new" in menu_new.group(1))
 
 # Changement de niveau : même confirmation, libellé adapté, coche à la
-# confirmation seulement.
-skill_branch = re.search(
-    r"skill != null -> \{(.*?)\n            \}",
-    main_src,
+# confirmation seulement. Depuis la page unique « Réglages » (13 nov.
+# 2026), c'est SettingsActivity qui protège le changement, et
+# MainActivity qui suit au retour (settingsLauncher).
+change_skill = re.search(
+    r"private fun changeSkill\(skill: Skill\)(.*?)\n    \}",
+    settings_src,
     re.S,
 )
-check("MainActivity : le changement de niveau passe par la confirmation",
-      skill_branch is not None
-      and "confirmIfInProgress(" in skill_branch.group(1))
-check("MainActivity : libellé « Changer de niveau » pour le changement de niveau",
-      skill_branch is not None
-      and "R.string.confirm_change_title" in skill_branch.group(1)
-      and "R.string.confirm_change_ok" in skill_branch.group(1))
-check("MainActivity : la coche du niveau ne bouge qu'à la confirmation",
-      skill_branch is not None
-      and "item.isChecked = true" in skill_branch.group(1)
-      and skill_branch.group(1).index("item.isChecked = true")
-      > skill_branch.group(1).index("confirmIfInProgress("))
-check("MainActivity : l'aide Maître/Dément suit toujours le changement confirmé",
-      skill_branch is not None
-      and "showSkillHelpIfNeeded(skill, previous)" in skill_branch.group(1))
+check("SettingsActivity : le changement de niveau passe par la "
+      "confirmation (partie en cours)",
+      change_skill is not None
+      and "solved || moves == 0" in change_skill.group(1)
+      and "MaterialAlertDialogBuilder(this)" in change_skill.group(1))
+check("SettingsActivity : libellé « Changer de niveau » pour le "
+      "changement de niveau",
+      change_skill is not None
+      and "R.string.confirm_change_title" in change_skill.group(1)
+      and "R.string.confirm_change_ok" in change_skill.group(1))
+check("SettingsActivity : la coche du niveau ne bouge qu'à la "
+      "confirmation (Annuler la remet sur le niveau courant)",
+      change_skill is not None
+      and re.search(r"setNegativeButton\(android\.R\.string\.cancel\) "
+                        r"\{ _, _ ->[^{}]*?"
+                        r"checkSkillRadio\(skillRadioFor"
+                        r"\(currentSkill\)\)",
+                    change_skill.group(1), re.S) is not None)
+check("MainActivity : l'aide Maître/Dément suit toujours le "
+      "changement confirmé (au retour de la page)",
+      settings_launcher is not None
+      and "showSkillHelpIfNeeded(skill, previous)"
+          in settings_launcher.group(1))
 
 # Le dialogue de victoire reste DIRECT : rien à protéger une fois gagné.
 win = re.search(r"private fun showWinDialog\(.*?\n    \}", main_src, re.S)

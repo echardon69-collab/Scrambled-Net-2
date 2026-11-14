@@ -21,80 +21,14 @@
         android:title="@string/menu_solve"
         app:showAsAction="ifRoom" />
 
-    <!-- Réglages regroupés (niveau, sons, animations) derrière un seul
-         bouton texte ; sous-menus en cascade, ids inchangés. -->
+    <!-- Page unique « Réglages » (refonte du 13 nov. 2026) : les
+         sous-menus en cascade (niveau, sons, animation) vivent
+         désormais sur SettingsActivity, visible d'un coup d'œil —
+         ce bouton ouvre la page. -->
     <item
         android:id="@+id/menu_settings"
         android:title="@string/menu_settings"
-        app:showAsAction="ifRoom">
-        <menu>
-            <item
-                android:id="@+id/menu_skill"
-                android:title="@string/menu_skill">
-                <menu>
-                    <group android:checkableBehavior="single">
-                        <item
-                            android:id="@+id/skill_novice"
-                            android:title="@string/skill_novice" />
-                        <item
-                            android:id="@+id/skill_normal"
-                            android:title="@string/skill_normal" />
-                        <item
-                            android:id="@+id/skill_expert"
-                            android:title="@string/skill_expert" />
-                        <item
-                            android:id="@+id/skill_master"
-                            android:title="@string/skill_master" />
-                        <item
-                            android:id="@+id/skill_insane"
-                            android:title="@string/skill_insane" />
-                        <item
-                            android:id="@+id/skill_endless"
-                            android:title="@string/skill_endless" />
-                        <item
-                            android:id="@+id/skill_abyss"
-                            android:title="@string/skill_abyss" />
-                        <item
-                            android:id="@+id/skill_void"
-                            android:title="@string/skill_void" />
-                    </group>
-                </menu>
-            </item>
-
-            <item
-                android:id="@+id/menu_sounds"
-                android:title="@string/menu_sounds">
-                <menu>
-                    <group android:checkableBehavior="single">
-                        <item
-                            android:id="@+id/sounds_off"
-                            android:title="@string/sounds_off" />
-                        <item
-                            android:id="@+id/sounds_quiet"
-                            android:title="@string/sounds_quiet" />
-                        <item
-                            android:id="@+id/sounds_full"
-                            android:title="@string/sounds_full" />
-                    </group>
-                </menu>
-            </item>
-
-            <item
-                android:id="@+id/menu_anim"
-                android:title="@string/menu_anim">
-                <menu>
-                    <group android:checkableBehavior="single">
-                        <item
-                            android:id="@+id/anim_off"
-                            android:title="@string/anim_off" />
-                        <item
-                            android:id="@+id/anim_on"
-                            android:title="@string/anim_on" />
-                    </group>
-                </menu>
-            </item>
-        </menu>
-    </item>
+        app:showAsAction="ifRoom" />
 
     <!-- Items génériques et rares : débordement uniquement. -->
     <item

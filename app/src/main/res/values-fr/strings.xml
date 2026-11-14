@@ -16,6 +16,15 @@
     <string name="anim_off">Sans animation</string>
     <string name="anim_on">Animation</string>
 
+    <!-- Langue (page Réglages, v3 du 14 nov. 2026) : appcompat
+         stocke le choix (autoStoreLocales) et le système le porte
+         sur Android 13+ (localeConfig). Noms propres identiques
+         dans toutes les langues. -->
+    <string name="menu_lang">Langue</string>
+    <string name="lang_system">Selon le système</string>
+    <string name="lang_fr">Français</string>
+    <string name="lang_en">English</string>
+
     <!-- Les niveaux de la famille Infini (Abîme, Néant) remplacent
          l'ancien réglage brouillard : il est désormais la marque du
          niveau Néant. -->

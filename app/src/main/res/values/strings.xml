@@ -18,6 +18,15 @@
     <string name="anim_off">No animation</string>
     <string name="anim_on">Animation</string>
 
+    <!-- Language (settings page, v3 of Nov. 14, 2026): appcompat
+         stores the choice (autoStoreLocales) and the system carries
+         it on Android 13+ (localeConfig). Proper names identical in
+         every language. -->
+    <string name="menu_lang">Language</string>
+    <string name="lang_system">Follow the system</string>
+    <string name="lang_fr">Français</string>
+    <string name="lang_en">English</string>
+
     <!-- Endless family levels (Abyss, Void) replace the former fog
          setting: the fog is now the mark of the Void level. -->
 

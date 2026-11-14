@@ -209,38 +209,45 @@ expected_labels = ["skill_" + name.lower() for name in skill_order]
 check("MainActivity : 8 libellés d'état alignés sur l'ordre de l'enum",
       status_ids == expected_labels, f"lu={status_ids}")
 
-when_current = re.search(
-    r"when \(current\) \{(.*?)\n        \}\?\.", ma, re.S)
-check("MainActivity : la coche du menu suit ENDLESS",
-      when_current is not None
-      and re.search(r"Skill\.ENDLESS -> skillMenu\?\.findItem\(R\.id\.skill_endless\)",
-                    when_current.group(1)) is not None)
-check("MainActivity : la coche du menu suit ABYSS et VOID",
-      when_current is not None
-      and re.search(r"Skill\.ABYSS -> skillMenu\?\.findItem\(R\.id\.skill_abyss\)",
-                    when_current.group(1)) is not None
-      and re.search(r"Skill\.VOID -> skillMenu\?\.findItem\(R\.id\.skill_void\)",
-                    when_current.group(1)) is not None)
-
-skill_ids_block = re.search(
-    r"val skill = when \(item\.itemId\) \{(.*?)\n            else -> null",
-    ma, re.S)
-mapping = (dict(re.findall(r"R\.id\.(\w+) -> (Skill\.\w+)",
-                           skill_ids_block.group(1)))
-           if skill_ids_block else {})
-check("MainActivity : l'entrée skill_endless lance Skill.ENDLESS",
-      mapping.get("skill_endless") == "Skill.ENDLESS", f"lu={mapping.get('skill_endless')}")
-check("MainActivity : les 8 niveaux du menu mappent chacun vers son Skill",
-      {k: v for k, v in mapping.items()} == {
+# Depuis la page unique « Réglages » (13 nov. 2026), le niveau choisi
+# au tap vit sur SettingsActivity : c'est elle qui mappe chaque Skill
+# vers SA radio, et MainActivity qui relance la partie au retour.
+sa = read(KOTLIN / "SettingsActivity.kt")
+radio_block = re.search(
+    r"private fun skillRadioFor\(skill: Skill\): Int = when \(skill\) \{"
+    r"(.*?)\n    \}", sa, re.S)
+radio_mapping = (dict(re.findall(r"Skill\.(\w+) -> R\.id\.(skill_\w+)",
+                                radio_block.group(1)))
+                if radio_block else {})
+radio_map = {v: "Skill." + k for k, v in radio_mapping.items()}
+check("SettingsActivity : la radio skill_endless mappe Skill.ENDLESS",
+      radio_map.get("skill_endless") == "Skill.ENDLESS",
+      f"lu={radio_map.get('skill_endless')}")
+check("SettingsActivity : les 8 radios mappent chacune vers son Skill",
+      radio_map == {
           "skill_" + name.lower(): "Skill." + name for name in skill_order},
-      str(mapping))
+      str(radio_map))
+check("SettingsActivity : la page s'ouvre sur le niveau reçu du jeu",
+      re.search(r"Skill\.entries\.firstOrNull \{\s*"
+                r"it\.name == intent\.getStringExtra\(EXTRA_SKILL\)",
+                sa) is not None)
+check("MainActivity : le retour de la page relance la partie au "
+      "niveau choisi (avec le rappel des règles)",
+      re.search(r"settingsLauncher.*?skill != previous.*?"
+                r"viewModel\.newGame\(skill, width, height\).*?"
+                r"showSkillHelpIfNeeded\(skill, previous\)",
+                ma, re.S) is not None)
 
 # ---------------------------------------------------------------------------
 # 5. Menu, chaînes, records.
 # ---------------------------------------------------------------------------
 
+# Les 8 niveaux vivaient dans le sous-menu du jeu ; depuis la page
+# unique « Réglages » (13 nov. 2026), ils vivent dans le RadioGroup
+# de la page — même invariant, même ordre.
+settings_src = read(RES / "layout/activity_settings.xml")
 group = re.search(
-    r'<group android:checkableBehavior="single">(.*?)</group>', menu_src, re.S)
+    r'android:id="@\+id/skill_group"(.*?)</RadioGroup>', settings_src, re.S)
 menu_ids = re.findall(r'@\+id/(skill_\w+)', group.group(1)) if group else []
 check("menu_main.xml : les 8 niveaux sont dans le groupe du Niveau",
       menu_ids == expected_labels, f"lu={menu_ids}")

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Saveur « play » (14 nov. 2026) : Play interdit
+         REQUEST_INSTALL_PACKAGES pour l'auto-mise à jour (politique
+         « Use of the REQUEST_INSTALL_PACKAGES permission » : no
+         self-updates) — c'est le store qui met à jour. La permission
+         vit dans le manifeste principal pour la saveur GitHub ; elle
+         est retirée ici du manifeste FUSIONNÉ de l'APK Play
+         (tools:node="remove"). Le double verrou complet : la
+         vérification de mise à jour est aussi coupée à la
+         construction (Distribution.UPDATER_ENABLED = false dans
+         src/play, TitleActivity). -->
+    <uses-permission
+        android:name="android.permission.REQUEST_INSTALL_PACKAGES"
+        tools:node="remove" />
+</manifest>

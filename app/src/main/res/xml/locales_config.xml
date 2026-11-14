@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Langues de l'application (page Réglages, v3 du 14 nov. 2026).
+     Déclaré au manifeste par android:localeConfig : sur Android 13+,
+     le réglage système « langue par application » propose exactement
+     ces deux langues. La base est l'anglais (values), le français
+     la traduction (values-fr) ; la page Réglages force l'une ou
+     l'autre via appcompat, ou suit le système. -->
+<locale-config xmlns:android="http://schemas.android.com/apk/res/android">
+    <locale android:name="en" />
+    <locale android:name="fr" />
+</locale-config>

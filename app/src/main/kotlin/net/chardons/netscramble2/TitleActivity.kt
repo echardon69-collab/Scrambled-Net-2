@@ -38,7 +38,9 @@ import java.io.File
  * - la VÉRIFICATION DE MISE À JOUR GitHub, à chaque lancement,
  *   CAPÉE à 5 secondes : le jeu n'est jamais retenu au-delà, et une
  *   réponse plus tardive n'est pas exploitée (le prochain lancement
- *   revérifiera).
+ *   revérifiera). Saveur « play » : coupée à la construction
+ *   (Distribution.UPDATER_ENABLED faux) — Play interdit l'auto-mise
+ *   à jour, c'est le store qui met à jour.
  *
  * Un affichage minimum (1,2 s) rend le titre lisible. Puis :
  * - mise à jour disponible (répondue à temps) : le joueur choisit —
@@ -130,9 +132,17 @@ class TitleActivity : AppCompatActivity() {
             val gameLoad = async(Dispatchers.Default) { loadSavedGame() }
             binding.titleStatus.setText(R.string.title_checking)
             // Vérification GitHub, capée : une réponse tardive est
-            // annulée, elle ne sera pas exploitée.
-            val release = withTimeoutOrNull(CHECK_TIMEOUT_MS) {
-                Updater.checkLatest()
+            // annulée, elle ne sera pas exploitée. Saveur « play » :
+            // coupée à la construction (Distribution.UPDATER_ENABLED
+            // faux) — Play interdit l'auto-mise à jour, le store
+            // s'en charge : release reste null, entrée directe dans
+            // le jeu, aucun appel réseau, aucun bouton.
+            val release = if (!Distribution.UPDATER_ENABLED) {
+                null
+            } else {
+                withTimeoutOrNull(CHECK_TIMEOUT_MS) {
+                    Updater.checkLatest()
+                }
             }
             gameLoad.await()
             branding.join()

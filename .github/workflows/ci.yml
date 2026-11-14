@@ -30,11 +30,17 @@ jobs:
         with:
           validate-wrappers: true
 
+      # Saveurs de distribution (14 nov. 2026) : avec des saveurs, les
+      # tâches Gradle changent de nom (testGithubDebugUnitTest,
+      # assemblePlayDebug, lintGithubDebug...) — les DEUX APK sont
+      # testés, bâtis et lintés à chaque poussée : l'APK Play doit
+      # rester propre (manifeste sans REQUEST_INSTALL_PACKAGES), le
+      # GitHub ne régresse pas.
       - name: Unit tests (JVM)
-        run: ./gradlew testDebugUnitTest --stacktrace
+        run: ./gradlew testGithubDebugUnitTest testPlayDebugUnitTest --stacktrace
 
-      - name: Build debug APK
-        run: ./gradlew assembleDebug --stacktrace
+      - name: Build debug APKs
+        run: ./gradlew assembleGithubDebug assemblePlayDebug --stacktrace
 
       - name: Lint
-        run: ./gradlew lintDebug --stacktrace
+        run: ./gradlew lintGithubDebug lintPlayDebug --stacktrace

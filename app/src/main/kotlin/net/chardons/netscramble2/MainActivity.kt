@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.edit
 import androidx.lifecycle.Lifecycle
@@ -38,6 +39,29 @@ class MainActivity : AppCompatActivity() {
     private var soundMode = SoundMode.FULL
     private var animEnabled = true
     private var lastSolving = false
+
+    /**
+     * Page unique « Réglages » (refonte du 13 nov. 2026) : le niveau
+     * de difficulté CHOISI revient ici en résultat — même circuit que
+     * l'ancien sous-menu (nouvelle partie + rappel des règles des
+     * niveaux spéciaux). La page a déjà demandé confirmation si une
+     * partie était en cours.
+     */
+    private val settingsLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode != RESULT_OK) return@registerForActivityResult
+        val name = result.data?.getStringExtra(SettingsActivity.EXTRA_SKILL)
+            ?: return@registerForActivityResult
+        val skill = Skill.entries.firstOrNull { it.name == name }
+            ?: return@registerForActivityResult
+        val previous = viewModel.uiState.value.skill
+        if (skill != previous) {
+            val (width, height) = boardSize(skill)
+            viewModel.newGame(skill, width, height)
+            showSkillHelpIfNeeded(skill, previous)
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -75,12 +99,12 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Mode sonore persisté (même clé que l'original), puis lecteur.
-        soundMode = loadSoundMode()
+        soundMode = Settings.loadSoundMode(this)
         soundEffects = SoundEffects(this)
         scoresStore = ScoresStore(this)
 
         // Réglage « Animation » (même clé que l'original, activé par défaut).
-        animEnabled = getPreferences(MODE_PRIVATE).getBoolean(ANIM_ENABLED_KEY, true)
+        animEnabled = Settings.loadAnimEnabled(this)
         binding.boardView.blipsEnabled = animEnabled
 
         binding.boardView.onCellTapped = { viewModel.onCellTapped(it) }
@@ -110,6 +134,12 @@ class MainActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         viewModel.setClockPaused(false)
+        // Retour de la page « Réglages » (ou simple reprise) : les deux
+        // réglages qui s'y changent (sons, animation) sont relus — la
+        // page les persiste, c'est ici qu'ils prennent effet.
+        soundMode = Settings.loadSoundMode(this)
+        animEnabled = Settings.loadAnimEnabled(this)
+        binding.boardView.blipsEnabled = animEnabled
     }
 
     override fun onStop() {
@@ -206,32 +236,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        // Les réglages (niveau, sons, animation) vivent sur la page
+        // unique « Réglages » : plus aucune coche à poser ici.
         menuInflater.inflate(R.menu.menu_main, menu)
-        // Coche le niveau courant.
-        val skillMenu = menu.findItem(R.id.menu_skill).subMenu
-        val current = viewModel.uiState.value.skill
-        when (current) {
-            Skill.NOVICE -> skillMenu?.findItem(R.id.skill_novice)
-            Skill.NORMAL -> skillMenu?.findItem(R.id.skill_normal)
-            Skill.EXPERT -> skillMenu?.findItem(R.id.skill_expert)
-            Skill.MASTER -> skillMenu?.findItem(R.id.skill_master)
-            Skill.INSANE -> skillMenu?.findItem(R.id.skill_insane)
-            Skill.ENDLESS -> skillMenu?.findItem(R.id.skill_endless)
-            Skill.ABYSS -> skillMenu?.findItem(R.id.skill_abyss)
-            Skill.VOID -> skillMenu?.findItem(R.id.skill_void)
-        }?.isChecked = true
-        // Coche le mode sonore courant.
-        val soundMenu = menu.findItem(R.id.menu_sounds).subMenu
-        val modeItem = when (soundMode) {
-            SoundMode.NONE -> R.id.sounds_off
-            SoundMode.QUIET -> R.id.sounds_quiet
-            SoundMode.FULL -> R.id.sounds_full
-        }
-        soundMenu?.findItem(modeItem)?.isChecked = true
-        // Coche le réglage d'animation courant.
-        val animMenu = menu.findItem(R.id.menu_anim).subMenu
-        val animItem = if (animEnabled) R.id.anim_on else R.id.anim_off
-        animMenu?.findItem(animItem)?.isChecked = true
         return true
     }
 
@@ -245,19 +252,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        val skill = when (item.itemId) {
-            R.id.skill_novice -> Skill.NOVICE
-            R.id.skill_normal -> Skill.NORMAL
-            R.id.skill_expert -> Skill.EXPERT
-            R.id.skill_master -> Skill.MASTER
-            R.id.skill_insane -> Skill.INSANE
-            R.id.skill_endless -> Skill.ENDLESS
-            R.id.skill_abyss -> Skill.ABYSS
-            R.id.skill_void -> Skill.VOID
-            else -> null
-        }
-        return when {
-            item.itemId == R.id.menu_new -> {
+        return when (item.itemId) {
+            R.id.menu_new -> {
                 // Confirmation si une partie est en jeu (roadmap du
                 // 10 nov. 2026) : un clic malheureux sur le bouton
                 // « Nouvelle partie » ne doit plus perdre un plateau
@@ -272,20 +268,21 @@ class MainActivity : AppCompatActivity() {
                 }
                 true
             }
-            item.itemId == R.id.sounds_off || item.itemId == R.id.sounds_quiet ||
-                item.itemId == R.id.sounds_full -> {
-                item.isChecked = true
-                soundMode = when (item.itemId) {
-                    R.id.sounds_off -> SoundMode.NONE
-                    R.id.sounds_quiet -> SoundMode.QUIET
-                    else -> SoundMode.FULL
-                }
-                getPreferences(MODE_PRIVATE).edit {
-                    putString(SOUND_MODE_KEY, soundMode.name)
-                }
+            R.id.menu_settings -> {
+                // Page unique « Réglages » : l'état courant du jeu
+                // passe à la page (niveau en cours, avancement) pour
+                // ses coches initiales et sa protection de niveau.
+                val state = viewModel.uiState.value
+                settingsLauncher.launch(
+                    Intent(this, SettingsActivity::class.java)
+                        .putExtra(SettingsActivity.EXTRA_SKILL, state.skill.name)
+                        .putExtra(SettingsActivity.EXTRA_MOVES, state.moves)
+                        .putExtra(SettingsActivity.EXTRA_SOLVED, state.solved)
+                        .putExtra(SettingsActivity.EXTRA_ELAPSED_MS, state.elapsedMs)
+                )
                 true
             }
-            item.itemId == R.id.menu_solve -> {
+            R.id.menu_solve -> {
                 val starting = !viewModel.uiState.value.solving
                 viewModel.toggleSolver()
                 if (starting) {
@@ -295,42 +292,15 @@ class MainActivity : AppCompatActivity() {
                 }
                 true
             }
-            item.itemId == R.id.anim_off || item.itemId == R.id.anim_on -> {
-                item.isChecked = true
-                animEnabled = item.itemId == R.id.anim_on
-                binding.boardView.blipsEnabled = animEnabled
-                getPreferences(MODE_PRIVATE).edit {
-                    putBoolean(ANIM_ENABLED_KEY, animEnabled)
-                }
-                true
-            }
-            skill != null -> {
-                // Même protection que « Nouvelle partie » : changer de
-                // niveau écrase aussi la partie en cours, avec un
-                // libellé adapté (« Changer de niveau »).
-                val previous = viewModel.uiState.value.skill
-                val (width, height) = boardSize(skill)
-                confirmIfInProgress(
-                    R.string.confirm_change_title,
-                    R.string.confirm_change_ok
-                ) {
-                    // La coche du sous-menu ne bouge qu'à la confirmation :
-                    // Annuler doit laisser le niveau inchangé.
-                    item.isChecked = true
-                    viewModel.newGame(skill, width, height)
-                    showSkillHelpIfNeeded(skill, previous)
-                }
-                true
-            }
-            item.itemId == R.id.menu_scores -> {
+            R.id.menu_scores -> {
                 startActivity(Intent(this, ScoresActivity::class.java))
                 true
             }
-            item.itemId == R.id.menu_help -> {
+            R.id.menu_help -> {
                 startActivity(Intent(this, HelpActivity::class.java))
                 true
             }
-            item.itemId == R.id.menu_about -> {
+            R.id.menu_about -> {
                 showAbout()
                 true
             }
@@ -374,14 +344,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * Mode sonore sauvegardé (même clé que l'original), FULL par défaut.
-     */
-    private fun loadSoundMode(): SoundMode {
-        val stored = getPreferences(MODE_PRIVATE).getString(SOUND_MODE_KEY, null)
-        return SoundMode.entries.firstOrNull { it.name == stored } ?: SoundMode.FULL
-    }
-
-    /**
      * Comme dans l'original (startGame) : en arrivant au niveau Maître
      * ou Dément, un message rappelle les règles spéciales (bords qui
      * se referment, câbles invisibles). La famille Infini a ses
@@ -418,13 +380,5 @@ class MainActivity : AppCompatActivity() {
             .setMessage(R.string.about_message)
             .setPositiveButton(android.R.string.ok, null)
             .show()
-    }
-
-    companion object {
-        /** Clé SharedPreferences du mode sonore, reprise de l'original. */
-        private const val SOUND_MODE_KEY = "soundMode"
-
-        /** Clé du réglage d'animation, reprise de l'original. */
-        private const val ANIM_ENABLED_KEY = "animEnable"
     }
 }
