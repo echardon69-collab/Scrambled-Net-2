@@ -2,14 +2,22 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <!-- Barre sans titre (activity_main.xml) : trois boutons texte
+    <!-- Barre sans titre (activity_main.xml) : quatre boutons texte
          visibles (Material 3 : actions essentielles de l'écran), le
          reste dans le menu de débordement (⋮).
 
          « always » : jamais sacrifié, même sur écran étroit.
          « ifRoom » : replié automatiquement dans le débordement quand la
          largeur manque (écrans < 360dp, ou pendant la résolution quand
-         le bouton devient « Arrêter le solveur », plus large). -->
+         le titre devient « Arrêter le solveur », plus large).
+
+         « Indice » (always) porte un badge du plafond restant — titre
+         posé dynamiquement dans onPrepareOptionsMenu ; à 0 (plafond
+         épuisé ou désactivé), à partie résolue ou pendant le solveur,
+         le bouton est grisé mais reste visible pour rappeler le
+         réglage. « Outils » ouvre un popup (menu_tools.xml) qui porte
+         « Résoudre » et « Démonstration », actions plus rares depuis
+         le chantier « Aide à la résolution » (15 nov. 2026). -->
 
     <item
         android:id="@+id/menu_new"
@@ -17,8 +25,13 @@
         app:showAsAction="always" />
 
     <item
-        android:id="@+id/menu_solve"
-        android:title="@string/menu_solve"
+        android:id="@+id/menu_hint"
+        android:title="@string/menu_hint"
+        app:showAsAction="always" />
+
+    <item
+        android:id="@+id/menu_tools"
+        android:title="@string/menu_tools"
         app:showAsAction="ifRoom" />
 
     <!-- Page unique « Réglages » (refonte du 13 nov. 2026) : les

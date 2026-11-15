@@ -32,4 +32,25 @@ object Persistence {
 
     /** Clé du réglage d'animation, reprise de l'original (cf. ci-dessus). */
     const val ANIM_ENABLED_KEY = "animEnable"
+
+    // --- Chantier Aide à la résolution : réglages indice et
+    //     démonstration, même fichier historique que le reste. ---
+
+    /** Clé de la stratégie d'indice (SIGNAL ou FIX). */
+    const val HINT_STRATEGY_KEY = "hintStrategy"
+
+    /** Clé du plafond d'indices en pourcentage (0 à 50, pas de 5). */
+    const val HINT_PERCENT_KEY = "hintPercent"
+
+    /** Clé de la difficulté de la démonstration (FIXED, RANDOM, PROGRESSIVE). */
+    const val DEMO_DIFFICULTY_KEY = "demoDifficulty"
+
+    /** Clé du niveau de départ de la démonstration. */
+    const val DEMO_SKILL_KEY = "demoSkill"
+
+    /** Clé du zoom de la démonstration (multiplicateur du plancher). */
+    const val DEMO_ZOOM_KEY = "demoZoom"
+
+    /** Clé du rythme de la démonstration (délai par coup du solveur). */
+    const val DEMO_SPEED_KEY = "demoSpeed"
 }

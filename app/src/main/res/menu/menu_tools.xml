@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!-- Popup « Outils » (chantier « Aide à la résolution », 15 nov.
+         2026) : ouvert depuis le bouton Outils de la barre
+         (menu_main.xml, menu_tools). Il regroupe les actions
+         d'assistance, plus rares que Nouvelle partie ou Indice :
+         « Résoudre » (solveur automatique, partie marquée comme
+         grillée dans les records) et « Démonstration » (page plein
+         écran en boucle, le toucher revient au jeu). Le titre de
+         « Résoudre » devient « Arrêter le solveur » pendant
+         l'exécution — posé dynamiquement dans MainActivity. -->
+
+    <item
+        android:id="@+id/menu_solve"
+        android:title="@string/menu_solve"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/menu_demo"
+        android:title="@string/menu_demo"
+        app:showAsAction="never" />
+
+</menu>

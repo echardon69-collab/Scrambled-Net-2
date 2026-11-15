@@ -90,6 +90,43 @@
                         android:textAppearance="?attr/textAppearanceLabelMedium" />
                 </TableRow>
             </TableLayout>
+
+            <!-- Chantier Aide à la résolution : les indices ne grillent
+                 plus les records (chaque valeur porte son compte), et
+                 cette rubrique cumule ce qui a été consommé, tous
+                 niveaux confondus puis par niveau. -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="24dp"
+                android:text="@string/hints_section"
+                android:textAppearance="?attr/textAppearanceTitleMedium" />
+
+            <TextView
+                android:id="@+id/hints_total"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="8dp"
+                android:textAppearance="?attr/textAppearanceTitleMedium"
+                android:textColor="?attr/colorPrimary" />
+
+            <TableLayout
+                android:id="@+id/hints_table"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:stretchColumns="0,1">
+
+                <TableRow>
+                    <TextView
+                        android:paddingTop="12dp"
+                        android:text="@string/scores_skill"
+                        android:textAppearance="?attr/textAppearanceLabelMedium" />
+                    <TextView
+                        android:paddingTop="12dp"
+                        android:text="@string/hints_column_tiles"
+                        android:textAppearance="?attr/textAppearanceLabelMedium" />
+                </TableRow>
+            </TableLayout>
         </LinearLayout>
     </ScrollView>
 

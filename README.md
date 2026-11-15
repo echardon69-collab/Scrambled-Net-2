@@ -108,4 +108,13 @@ Feuille de route (validée)
   participation (signaler un bug, contacter l'auteur, proposer une
   traduction, proposer un skin) affichent « lien à venir » en
   attendant les adresses réelles (à venir)
+- Processus de traduction : kit généré par script depuis les sources
+  (tableau clé|texte|contexte, glossaire, règles de format, licence),
+  traducteur sur GitHub PR, relecture IA, complétion par delta à
+  chaque évolution, contrôles CI ; guide docs/,
+  preparer_kit_traduction.py et validate_langues.py (étude actée le
+  14 nov. 2026, chantier à venir au feu vert)
+- Aide à la résolution : Indice (plafond paramétrable, informatif ou
+  correctif) + Résoudre sous Outils + Démonstration en boucle
+  (difficulté, zoom, rythme) (livré le 15 nov. 2026)
 - Phase bonus : seed partageable, undo, tailles custom, thèmes daltoniens

@@ -77,6 +77,16 @@
             android:label="@string/menu_about"
             android:parentActivityName=".MainActivity" />
 
+        <!-- Mode Démonstration (chantier « Aide à la résolution », 15
+             nov. 2026) : plein écran, boucle plateau-résolution-victoire,
+             sans sons. TOUT contact avec l'écran referme la page et
+             rend la main sur la partie en cours, intacte. -->
+        <activity
+            android:name=".DemoActivity"
+            android:exported="false"
+            android:label="@string/menu_demo"
+            android:parentActivityName=".MainActivity" />
+
         <!-- Langue par application (page Réglages, v3 du 14 nov.
              2026) : ce service ne TOURNE jamais, il ne porte que le
              marqueur d'auto-stockage d'appcompat. Avant Android 13,

@@ -149,15 +149,15 @@ check("Board.kt : la racine imposée est une propriété (consigne transportée)
 # ---------------------------------------------------------------------------
 
 spec_src = read("game/GameSpec.kt")
-check('GameSpec.kt : version v4', 'VERSION = "v4"' in spec_src)
-check('GameSpec.kt : version précédente v3 décodable',
-      'PREVIOUS_VERSION = "v3"' in spec_src)
+check('GameSpec.kt : version v5', 'VERSION = "v5"' in spec_src)
+check('GameSpec.kt : version précédente v4 décodable',
+      'PREVIOUS_VERSION = "v4"' in spec_src)
 check('GameSpec.kt : version historique v2 décodable',
       'LEGACY_VERSION = "v2"' in spec_src)
-check("GameSpec.kt : 18 champs en v4 (15 + caméra)", "FIELDS = 18" in spec_src)
-check("GameSpec.kt : 15 champs en v3", "PREVIOUS_FIELDS = 15" in spec_src)
+check("GameSpec.kt : 22 champs en v5 (18 + indices)", "FIELDS = 22" in spec_src)
+check("GameSpec.kt : 18 champs en v4", "PREVIOUS_FIELDS = 18" in spec_src)
 check("GameSpec.kt : 11 champs en v2", "LEGACY_FIELDS = 11" in spec_src)
-check("GameSpec.kt : décalage des champs joueur (v2 : 3, v3/v4 : 7)",
+check("GameSpec.kt : décalage des champs joueur (v2 : 3, v3/v4/v5 : 7)",
       "if (legacy) 3 else 7" in spec_src)
 # Caméra (chantier « centrage Néant ») : classe data — l'aller-retour
 # encode/decode doit comparer les VALEURS, jamais les références.
@@ -166,8 +166,8 @@ check("GameSpec.kt : CameraSpec est une data class (égalité par valeur)",
 check("GameSpec.kt : bornes zoom caméra (plancher et plafond de la vue)",
       "MIN_ZOOM_CENTI_DP = 2_600" in spec_src and
       "MAX_ZOOM_CENTI_DP = 9_600" in spec_src)
-check("GameSpec.kt : position des champs caméra (fin de format)",
-      "CAMERA_BASE = 15" in spec_src)
+check("GameSpec.kt : position des champs caméra (après les indices)",
+      "CAMERA_BASE = 19" in spec_src)
 check("GameSpec.kt : décodage caméra borné (position modulo, zoom)",
       "camX !in 0 until width * 1_000" in spec_src and
       "camY !in 0 until height * 1_000" in spec_src and
@@ -244,7 +244,7 @@ check("MainActivity : 4 lancements de partie aux dimensions de l'écran",
       len(re.findall(r"viewModel\.newGame\([^)]*\)", ma_src)) == 4)
 check("MainActivity : première visite = nouvelle partie si rien à restaurer",
       "val restoredSpec = GameSpec.decode(savedSpec)" in ma_src and
-      "if (viewModel.restoreIfPending(restoredSpec))" in ma_src)
+      "if (viewModel.restoreIfPending(restoredSpec," in ma_src)
 check("MainActivity : la caméra de la sauvegarde est posée sur la vue",
       "binding.boardView.restoreCamera(restoredSpec?.camera)" in ma_src)
 check("MainActivity : la photographie en onStop emporte la caméra",

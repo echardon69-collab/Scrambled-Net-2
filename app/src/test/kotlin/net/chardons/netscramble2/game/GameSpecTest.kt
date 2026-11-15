@@ -9,10 +9,11 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Tests de la persistance de partie (GameSpec) : aller-retour v4 et
- * sa caméra, régénération à l'identique pour les deux générateurs,
- * rétrocompatibilité des formats v3 (sans caméra) et v2, robustesse
- * aux données corrompues.
+ * Tests de la persistance de partie (GameSpec) : aller-retour v5, sa
+ * caméra et les champs du chantier Aide à la résolution (scellées,
+ * touchées, indices), régénération à l'identique pour les deux
+ * générateurs, rétrocompatibilité des formats v4 (sans indice), v3
+ * (sans caméra) et v2, robustesse aux données corrompues.
  * La sérialisation est pure — tout tourne sur la JVM.
  */
 class GameSpecTest {
@@ -47,6 +48,8 @@ class GameSpecTest {
         rotations = board.rotations.copyOf(),
         locked = board.locked.copyOf(),
         revealed = board.revealed.copyOf(),
+        sealedCells = board.sealedCells.copyOf(),
+        touched = board.touched.copyOf(),
         camera = camera
     )
 
@@ -142,25 +145,110 @@ class GameSpecTest {
     }
 
     @Test
-    fun `camera round trips through the v4 format`() {
+    fun `camera round trips through the v5 format`() {
         val board = Board.generate(Skill.EXPERT, 7, 11, Generator.TREE, seed = 1234L)
         val camera = CameraSpec(
             centerMilliX = 3_500, centerMilliY = 8_250, zoomCentiDp = 4_200
         )
         val spec = snapshotOf(board, Skill.EXPERT, seed = 1234L, camera = camera)
         val encoded = spec.encode()
-        assertTrue("Le format passe en v4 dès qu'une caméra existe", encoded.startsWith("v4|"))
-        assertEquals("La caméra ajoute exactement trois champs", 18, encoded.split('|').size)
+        assertTrue("Le format passe en v5 dès qu'une caméra existe", encoded.startsWith("v5|"))
+        assertEquals("La caméra ajoute exactement trois champs", 22, encoded.split('|').size)
         val decoded = GameSpec.decode(encoded)
         assertEquals(spec, decoded)
         assertEquals(camera, decoded!!.camera)
     }
 
     @Test
-    fun `v3 snapshot decodes without camera then re-encodes as v4`() {
+    fun `hint fields round trip through the v5 format`() {
+        // Chantier Aide à la résolution : scellées, touchées, indices
+        // consommés et plafond voyagent dans la photographie.
+        val board = Board.generate(Skill.EXPERT, 7, 11, Generator.TREE, seed = 99L)
+        board.rotateCell(5, 2, byPlayer = true)
+        board.toggleLock(5)
+        board.seal(9)
+        val spec = GameSpec(
+            skill = Skill.EXPERT,
+            seed = 99L,
+            width = board.width,
+            height = board.height,
+            generator = board.generator,
+            root = board.forcedRoot,
+            moves = 7,
+            elapsedMs = 12_000L,
+            solverUsed = false,
+            prevClicked = -1,
+            solveQueue = emptyList(),
+            rotations = board.rotations.copyOf(),
+            locked = board.locked.copyOf(),
+            revealed = board.revealed.copyOf(),
+            sealedCells = board.sealedCells.copyOf(),
+            touched = board.touched.copyOf(),
+            hintsUsed = 3,
+            hintsAllowed = 6,
+            // Caméra obligatoire pour l'égalité (piège v4 documenté) :
+            // l'encode d'une spec sans caméra écrit le repli neutre,
+            // mais le décode v5 renvoie TOUJOURS une caméra.
+            camera = CameraSpec(
+                centerMilliX = 3_500, centerMilliY = 8_250, zoomCentiDp = 4_200
+            )
+        )
+        val encoded = spec.encode()
+        assertTrue(encoded.startsWith("v5|"))
+        assertEquals(22, encoded.split('|').size)
+        val decoded = GameSpec.decode(encoded)
+        assertEquals(spec, decoded)
+        assertEquals(3, decoded!!.hintsUsed)
+        assertEquals(6, decoded.hintsAllowed)
+        assertTrue(decoded.sealedCells[9])
+        assertTrue(decoded.touched[5])
+
+        // Falsification : une cellule scellée sans être verrouillée
+        // est une incohérence — la sauvegarde est rejetée.
+        val size = board.size
+        val falsified = encoded.split('|').toMutableList()
+        falsified[13] = "0".repeat(size) // verrous : plus rien de verrouillé
+        assertNull(GameSpec.decode(falsified.joinToString("|")))
+    }
+
+    @Test
+    fun `v4 snapshot decodes with hint fallbacks then re-encodes as v5`() {
+        // Une sauvegarde d'avant l'aide à la résolution : décodable à
+        // l'identique, scellées et touchées vides, aucun indice
+        // consommé, plafond en sentinelle -1 (recalculé à la
+        // restauration) — puis réenregistrée en v5.
+        val seed = 42L
+        val v4 = listOf(
+            "v4", "NORMAL", seed.toString(), "TREE", "7", "7", "24", "5", "12000",
+            "false", "-1", "", "0".repeat(49), "0".repeat(49), "0".repeat(49),
+            "3500", "6250", "4200"
+        ).joinToString("|")
+        val decoded = GameSpec.decode(v4)
+        assertNotNull(decoded)
+        assertEquals(18, v4.split('|').size)
+        assertEquals(0, decoded!!.hintsUsed)
+        assertEquals(-1, decoded.hintsAllowed)
+        assertTrue(decoded.sealedCells.none { it })
+        assertTrue(decoded.touched.none { it })
+        assertEquals(CameraSpec(3_500, 6_250, 4_200), decoded.camera)
+
+        val reEncoded = decoded.encode()
+        assertTrue(
+            "Réenregistrée, la partie v4 passe en v5",
+            reEncoded.startsWith("v5|")
+        )
+        assertEquals(22, reEncoded.split('|').size)
+        val reDecoded = GameSpec.decode(reEncoded)
+        assertNotNull(reDecoded)
+        assertEquals(-1, reDecoded!!.hintsAllowed)
+        assertEquals(0, reDecoded.hintsUsed)
+    }
+
+    @Test
+    fun `v3 snapshot decodes without camera then re-encodes as v5`() {
         // Une sauvegarde d'avant la caméra : décodable à l'identique,
         // caméra absente — la vue repose la sienne — puis réenregistrée
-        // en v4 avec la caméra neutre de repli.
+        // en v5 avec la caméra neutre de repli.
         val seed = 55L
         val v3 = listOf(
             "v3", "NORMAL", seed.toString(), "TREE", "7", "7", "24", "3", "42000",
@@ -174,8 +262,8 @@ class GameSpecTest {
 
         val reEncoded = decoded.encode()
         assertTrue(
-            "Réenregistrée, la partie v3 passe en v4",
-            reEncoded.startsWith("v4|")
+            "Réenregistrée, la partie v3 passe en v5",
+            reEncoded.startsWith("v5|")
         )
         assertEquals("Le repli caméra est écrit : position neutre, zoom minimal",
             "0|0|2600", reEncoded.split('|').takeLast(3).joinToString("|"))
@@ -192,7 +280,7 @@ class GameSpecTest {
         )
         val good = snapshotOf(board, Skill.NOVICE, seed = 1L, camera = camera).encode()
         assertNotNull(GameSpec.decode(good))
-        assertEquals(18, good.split('|').size)
+        assertEquals(22, good.split('|').size)
 
         fun withField(index: Int, value: String): String {
             val parts = good.split('|').toMutableList()
@@ -200,11 +288,11 @@ class GameSpecTest {
             return parts.joinToString("|")
         }
 
-        assertNull(GameSpec.decode(withField(15, "5_000"))) // camX hors plateau 5 x 5
-        assertNull(GameSpec.decode(withField(16, "-1")))   // camY négative
-        assertNull(GameSpec.decode(withField(17, "2_599"))) // zoom sous le plancher
-        assertNull(GameSpec.decode(withField(17, "9_601"))) // zoom au-dessus du plafond
-        assertNull(GameSpec.decode(withField(15, "pas-un-nombre")))
+        assertNull(GameSpec.decode(withField(19, "5_000"))) // camX hors plateau 5 x 5
+        assertNull(GameSpec.decode(withField(20, "-1")))   // camY négative
+        assertNull(GameSpec.decode(withField(21, "2_599"))) // zoom sous le plancher
+        assertNull(GameSpec.decode(withField(21, "9_601"))) // zoom au-dessus du plafond
+        assertNull(GameSpec.decode(withField(19, "pas-un-nombre")))
     }
 
     @Test
@@ -255,6 +343,12 @@ class GameSpecTest {
         assertNull(
             GameSpec.decode(
                 "v4|NOVICE|1|TREE|5|5|12|0|0|false|-1||00000|00000|00000"
+            )
+        )
+        // v5 avec un corps de v4 (18 champs au lieu de 22) : rejet.
+        assertNull(
+            GameSpec.decode(
+                "v5|NOVICE|1|TREE|5|5|12|0|0|false|-1||00000|00000|00000|0|0|2600"
             )
         )
     }

@@ -208,9 +208,13 @@ check("Layout : chaque radio porte le libellé de son string",
 # de la langue naissent déjà bornées — 16 au total. V4 : les 8
 # descriptions de niveaux sont bornées pareil (cohérence du bloc,
 # radio et description alignées sur la même largeur) — 24 au total.
-check("Layout : les 16 radios et 8 descriptions sont bornées à "
+# V5 (chantier « Aide à la résolution ») : les 32 radios des
+# nouvelles sections Indice (2 stratégies + 11 plafonds) et
+# Démonstration (3 difficultés + 8 niveaux + 4 zooms + 4 rythmes)
+# naissent bornées de la même façon — 56 au total.
+check("Layout : les 56 radios et descriptions sont bornées à "
       "320 dp (VisualLintButtonSize — régression bloquée)",
-      layout_src.count('android:maxWidth="320dp"') == 24
+      layout_src.count('android:maxWidth="320dp"') == 56
       and all(f'android:maxWidth="320dp"' in block
               for block in (skill_block.group(1) if skill_block else "",
                             sound_block.group(1) if sound_block else "",
@@ -403,7 +407,7 @@ check("MainActivity : le retour de la page décode le niveau choisi",
 check("MainActivity : niveau différent du courant → nouvelle partie "
       "+ rappel des règles (même circuit que l'ancien sous-menu)",
       re.search(r"if \(skill != previous\) \{.*?"
-                r"viewModel\.newGame\(skill, width, height\).*?"
+                r"viewModel\.newGame\(skill, width, height,[^)]*\).*?"
                 r"showSkillHelpIfNeeded\(skill, previous\)", ma,
                 re.S) is not None)
 check("MainActivity : onStart RELIT les deux réglages persistés par "

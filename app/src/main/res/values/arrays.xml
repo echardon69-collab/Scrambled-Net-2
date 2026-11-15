@@ -112,7 +112,8 @@
             language setting (English, French, or follow the
             system).</item>
         <item>Features the original had, now done
-            differently:\n\n• Graphics: the bitmaps of the
+            differently:\n\n• Source code: Java and Ant have been
+            replaced by Kotlin and Gradle.\n\n• Graphics: the bitmaps of the
             original are now VectorDrawables — same look,
             perfectly sharp at any zoom, one file for every
             screen density.\n\n• Sound: no sample from the

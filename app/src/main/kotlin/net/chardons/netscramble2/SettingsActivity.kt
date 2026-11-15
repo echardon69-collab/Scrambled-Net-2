@@ -56,6 +56,16 @@ import net.chardons.netscramble2.ui.EdgeToEdge
  * MainActivity.boardSize, la famille Infini y passe aussi — sa
  * taille y est fixe 40 x 40) ; les règles sont des strings par
  * niveau, EN et FR, avec la taille en arguments de format.
+ *
+ * V5 (chantier Aide à la résolution, 15 nov. 2026) : deux nouvelles
+ * sections — « Indice » (stratégie SIGNAL ou FIX ; plafond de 0
+ * (désactivé) à 50 pour cent des tuiles mal orientées, par pas de 5,
+ * les libellés des pourcentages posés au runtime) et
+ * « Démonstration » (difficulté fixe, aléatoire ou progressive,
+ * niveau de départ, zoom, rythme). Choix immédiats, persistés par
+ * [Settings] (mêmes clés et fichier historiques) ; le jeu relit le
+ * plafond à chaque nouvelle partie, la démonstration ses réglages à
+ * chaque lancement.
  */
 class SettingsActivity : AppCompatActivity() {
 
@@ -109,6 +119,43 @@ class SettingsActivity : AppCompatActivity() {
         )
         binding.langGroup.check(langRadioFor(currentLanguageTag()))
 
+        // V5 : sections « Indice » et « Démonstration » — mêmes coches
+        // initiales AVANT l'écoute (patron V3), puis libellés du
+        // plafond posés au runtime (une seule string à argument).
+        binding.hintStrategyGroup.check(
+            if (Settings.loadHintStrategy(this) == HintStrategy.FIX) {
+                R.id.hint_strategy_fix
+            } else {
+                R.id.hint_strategy_signal
+            }
+        )
+        binding.hintLimitGroup.check(hintLimitRadioFor(Settings.loadHintPercent(this)))
+        bindHintLimitRadios()
+        binding.demoDiffGroup.check(
+            when (Settings.loadDemoDifficulty(this)) {
+                DemoDifficulty.FIXED -> R.id.demo_diff_fixed
+                DemoDifficulty.RANDOM -> R.id.demo_diff_random
+                DemoDifficulty.PROGRESSIVE -> R.id.demo_diff_progressive
+            }
+        )
+        binding.demoSkillGroup.check(demoSkillRadioFor(Settings.loadDemoSkill(this)))
+        binding.demoZoomGroup.check(
+            when (Settings.loadDemoZoom(this)) {
+                DemoZoom.FIT -> R.id.demo_zoom_fit
+                DemoZoom.X1_5 -> R.id.demo_zoom_x15
+                DemoZoom.X2 -> R.id.demo_zoom_x2
+                DemoZoom.X3 -> R.id.demo_zoom_x3
+            }
+        )
+        binding.demoSpeedGroup.check(
+            when (Settings.loadDemoSpeed(this)) {
+                DemoSpeed.SLOW -> R.id.demo_speed_slow
+                DemoSpeed.NORMAL -> R.id.demo_speed_normal
+                DemoSpeed.FAST -> R.id.demo_speed_fast
+                DemoSpeed.LIGHTNING -> R.id.demo_speed_lightning
+            }
+        )
+
         // Descriptions des niveaux (v4) : taille réelle de l'écran
         // + règles propres à chaque niveau.
         bindSkillDescriptions()
@@ -139,6 +186,53 @@ class SettingsActivity : AppCompatActivity() {
         }
         binding.langGroup.setOnCheckedChangeListener { _, checkedId ->
             applyLanguage(checkedId)
+        }
+        // V5 : indice et démonstration — choix immédiats, persistés
+        // par Settings (mêmes clés et fichier historiques).
+        binding.hintStrategyGroup.setOnCheckedChangeListener { _, checkedId ->
+            Settings.saveHintStrategy(
+                this,
+                if (checkedId == R.id.hint_strategy_fix) HintStrategy.FIX
+                else HintStrategy.SIGNAL
+            )
+        }
+        binding.hintLimitGroup.setOnCheckedChangeListener { _, checkedId ->
+            Settings.saveHintPercent(this, hintPercentFor(checkedId))
+        }
+        binding.demoDiffGroup.setOnCheckedChangeListener { _, checkedId ->
+            Settings.saveDemoDifficulty(
+                this,
+                when (checkedId) {
+                    R.id.demo_diff_fixed -> DemoDifficulty.FIXED
+                    R.id.demo_diff_random -> DemoDifficulty.RANDOM
+                    else -> DemoDifficulty.PROGRESSIVE
+                }
+            )
+        }
+        binding.demoSkillGroup.setOnCheckedChangeListener { _, checkedId ->
+            demoSkillFor(checkedId)?.let { Settings.saveDemoSkill(this, it) }
+        }
+        binding.demoZoomGroup.setOnCheckedChangeListener { _, checkedId ->
+            Settings.saveDemoZoom(
+                this,
+                when (checkedId) {
+                    R.id.demo_zoom_x15 -> DemoZoom.X1_5
+                    R.id.demo_zoom_x2 -> DemoZoom.X2
+                    R.id.demo_zoom_x3 -> DemoZoom.X3
+                    else -> DemoZoom.FIT
+                }
+            )
+        }
+        binding.demoSpeedGroup.setOnCheckedChangeListener { _, checkedId ->
+            Settings.saveDemoSpeed(
+                this,
+                when (checkedId) {
+                    R.id.demo_speed_slow -> DemoSpeed.SLOW
+                    R.id.demo_speed_fast -> DemoSpeed.FAST
+                    R.id.demo_speed_lightning -> DemoSpeed.LIGHTNING
+                    else -> DemoSpeed.NORMAL
+                }
+            )
         }
     }
 
@@ -292,6 +386,76 @@ class SettingsActivity : AppCompatActivity() {
             else -> LocaleListCompat.getEmptyLocaleList()
         }
         AppCompatDelegate.setApplicationLocales(locales)
+    }
+
+    /** Radio du plafond d'indices pour un pourcentage (0 sinon). */
+    private fun hintLimitRadioFor(percent: Int): Int = when (percent) {
+        5 -> R.id.hint_limit_5
+        10 -> R.id.hint_limit_10
+        15 -> R.id.hint_limit_15
+        20 -> R.id.hint_limit_20
+        25 -> R.id.hint_limit_25
+        30 -> R.id.hint_limit_30
+        35 -> R.id.hint_limit_35
+        40 -> R.id.hint_limit_40
+        45 -> R.id.hint_limit_45
+        50 -> R.id.hint_limit_50
+        else -> R.id.hint_limit_0
+    }
+
+    /** Pourcentage porté par une radio du plafond (0 si inconnu). */
+    private fun hintPercentFor(checkedId: Int): Int = when (checkedId) {
+        R.id.hint_limit_5 -> 5
+        R.id.hint_limit_10 -> 10
+        R.id.hint_limit_15 -> 15
+        R.id.hint_limit_20 -> 20
+        R.id.hint_limit_25 -> 25
+        R.id.hint_limit_30 -> 30
+        R.id.hint_limit_35 -> 35
+        R.id.hint_limit_40 -> 40
+        R.id.hint_limit_45 -> 45
+        R.id.hint_limit_50 -> 50
+        else -> 0
+    }
+
+    /**
+     * Libellés du plafond d'indices (v5) : une seule string à
+     * argument (hint_limit_value, « n % »), posée au runtime sur les
+     * radios 5 à 50 — la radio 0 porte son propre libellé
+     * (« Désactivé ») en XML.
+     */
+    private fun bindHintLimitRadios() {
+        for (percent in 5..50 step 5) {
+            val radio = binding.hintLimitGroup.findViewById<MaterialRadioButton>(
+                hintLimitRadioFor(percent)
+            )
+            radio.text = getString(R.string.hint_limit_value, percent)
+        }
+    }
+
+    /** Radio du niveau de départ de la démonstration. */
+    private fun demoSkillRadioFor(skill: Skill): Int = when (skill) {
+        Skill.NOVICE -> R.id.demo_skill_novice
+        Skill.NORMAL -> R.id.demo_skill_normal
+        Skill.EXPERT -> R.id.demo_skill_expert
+        Skill.MASTER -> R.id.demo_skill_master
+        Skill.INSANE -> R.id.demo_skill_insane
+        Skill.ENDLESS -> R.id.demo_skill_endless
+        Skill.ABYSS -> R.id.demo_skill_abyss
+        Skill.VOID -> R.id.demo_skill_void
+    }
+
+    /** Niveau porté par une radio de la démonstration, null si aucun. */
+    private fun demoSkillFor(checkedId: Int): Skill? = when (checkedId) {
+        R.id.demo_skill_novice -> Skill.NOVICE
+        R.id.demo_skill_normal -> Skill.NORMAL
+        R.id.demo_skill_expert -> Skill.EXPERT
+        R.id.demo_skill_master -> Skill.MASTER
+        R.id.demo_skill_insane -> Skill.INSANE
+        R.id.demo_skill_endless -> Skill.ENDLESS
+        R.id.demo_skill_abyss -> Skill.ABYSS
+        R.id.demo_skill_void -> Skill.VOID
+        else -> null
     }
 
     /** Même format de temps que la barre d'état du jeu (mm:ss). */

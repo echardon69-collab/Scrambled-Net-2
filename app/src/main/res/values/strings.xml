@@ -119,6 +119,40 @@
     <string name="menu_scores_reset">Reset all scores</string>
     <string name="scores_reset_confirm">Erase all your personal bests?</string>
 
+    <!-- Aide à la résolution (chantier du 15 nov. 2026) : Indice
+         (cadre vert pulsé en mode Signaler, rotation + tuile scellée
+         en mode Corriger, plafond paramétrable), popup Outils
+         (Résoudre, Démonstration), records enrichis d'indices. -->
+    <string name="menu_hint">Hint</string>
+    <string name="menu_hint_count">Hint (%1$d)</string>
+    <string name="menu_tools">Tools</string>
+    <string name="menu_demo">Demo</string>
+    <string name="hint_strategy_signal">Highlight the error</string>
+    <string name="hint_strategy_fix">Fix the error</string>
+    <string name="hint_limit_title">Hint allowance</string>
+    <string name="hint_limit_zero">Disabled</string>
+    <string name="hint_limit_value">%1$d%%</string>
+    <string name="demo_diff_fixed">Fixed level</string>
+    <string name="demo_diff_random">Random</string>
+    <string name="demo_diff_progressive">Progressive</string>
+    <string name="demo_skill_title">Level</string>
+    <string name="demo_zoom_title">Zoom</string>
+    <string name="demo_zoom_fit">Fit</string>
+    <string name="demo_zoom_x15">1.5×</string>
+    <string name="demo_zoom_x2">2×</string>
+    <string name="demo_zoom_x3">3×</string>
+    <string name="demo_speed_title">Speed</string>
+    <string name="demo_speed_slow">Slow</string>
+    <string name="demo_speed_normal">Normal</string>
+    <string name="demo_speed_fast">Fast</string>
+    <string name="demo_speed_lightning">Lightning</string>
+    <string name="hints_section">Hints</string>
+    <string name="hints_total">Hint tiles used: %1$d</string>
+    <string name="hints_none">no hint</string>
+    <string name="hints_n">%1$d hints</string>
+    <string name="hints_column_tiles">Hints</string>
+    <string name="demo_touch_return">Touch to return to the game</string>
+
     <!-- À propos : la fenêtre de dialogue est devenue la page
          autonome AboutActivity (refonte du 14 nov. 2026) — le
          contenu vit dans about_titles / about_texts

@@ -120,6 +120,40 @@
     <string name="menu_scores_reset">Effacer tous les scores</string>
     <string name="scores_reset_confirm">Effacer tous vos records personnels ?</string>
 
+    <!-- Aide à la résolution (chantier du 15 nov. 2026) : Indice
+         (cadre vert pulsé en mode Signaler, rotation + tuile scellée
+         en mode Corriger, plafond paramétrable), popup Outils
+         (Résoudre, Démonstration), records enrichis d'indices. -->
+    <string name="menu_hint">Indice</string>
+    <string name="menu_hint_count">Indice (%1$d)</string>
+    <string name="menu_tools">Outils</string>
+    <string name="menu_demo">Démonstration</string>
+    <string name="hint_strategy_signal">Signaler l\'erreur</string>
+    <string name="hint_strategy_fix">Corriger l\'erreur</string>
+    <string name="hint_limit_title">Plafond d\'indices</string>
+    <string name="hint_limit_zero">Désactivé</string>
+    <string name="hint_limit_value">%1$d %%</string>
+    <string name="demo_diff_fixed">Niveau fixe</string>
+    <string name="demo_diff_random">Aléatoire</string>
+    <string name="demo_diff_progressive">Progressive</string>
+    <string name="demo_skill_title">Niveau</string>
+    <string name="demo_zoom_title">Zoom</string>
+    <string name="demo_zoom_fit">Ajusté</string>
+    <string name="demo_zoom_x15">×1,5</string>
+    <string name="demo_zoom_x2">×2</string>
+    <string name="demo_zoom_x3">×3</string>
+    <string name="demo_speed_title">Rythme</string>
+    <string name="demo_speed_slow">Lent</string>
+    <string name="demo_speed_normal">Normal</string>
+    <string name="demo_speed_fast">Rapide</string>
+    <string name="demo_speed_lightning">Éclair</string>
+    <string name="hints_section">Indices</string>
+    <string name="hints_total">Tuiles traitées par l\'indice : %1$d</string>
+    <string name="hints_none">sans indice</string>
+    <string name="hints_n">%1$d indices</string>
+    <string name="hints_column_tiles">Indices</string>
+    <string name="demo_touch_return">Touchez pour revenir au jeu</string>
+
     <!-- À propos : la fenêtre de dialogue est devenue la page
          autonome AboutActivity (refonte du 14 nov. 2026) — le
          contenu vit dans about_titles / about_texts

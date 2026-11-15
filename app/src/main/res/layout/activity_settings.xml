@@ -348,6 +348,321 @@
                     android:layout_height="wrap_content"
                     android:text="@string/lang_en" />
             </RadioGroup>
+
+            <!-- Section 5 : indice (chantier Aide à la résolution, 15
+                 nov. 2026). Stratégie : SIGNAL montre l'erreur (cadre
+                 vert pulsé, informatif), FIX la corrige (rotation à
+                 l'aplomb puis tuile scellée). Plafond : pourcentage
+                 des tuiles mal orientées au mélange initial, de 0
+                 (désactivé) à 50 par pas de 5 — les libellés des
+                 pourcentages (5 à 50) sont posés au runtime par
+                 SettingsActivity (une seule string à argument,
+                 hint_limit_value), la radio 0 porte le sien. -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="24dp"
+                android:text="@string/menu_hint"
+                android:textAppearance="?attr/textAppearanceTitleMedium" />
+
+            <RadioGroup
+                android:id="@+id/hint_strategy_group"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/hint_strategy_signal"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/hint_strategy_signal" />
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/hint_strategy_fix"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/hint_strategy_fix" />
+            </RadioGroup>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="16dp"
+                android:text="@string/hint_limit_title"
+                android:textAppearance="?attr/textAppearanceTitleMedium" />
+
+            <RadioGroup
+                android:id="@+id/hint_limit_group"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/hint_limit_0"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/hint_limit_zero" />
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/hint_limit_5"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content" />
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/hint_limit_10"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content" />
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/hint_limit_15"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content" />
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/hint_limit_20"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content" />
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/hint_limit_25"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content" />
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/hint_limit_30"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content" />
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/hint_limit_35"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content" />
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/hint_limit_40"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content" />
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/hint_limit_45"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content" />
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/hint_limit_50"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content" />
+            </RadioGroup>
+
+            <!-- Section 6 : démonstration (chantier Aide à la
+                 résolution). Difficulté : niveau fixe, aléatoire à
+                 chaque plateau, ou progressive (départ au niveau
+                 choisi, montée d'un cran, boucle sur les huit
+                 niveaux — la famille Infini comprise). Les
+                 libellés de niveaux sont ceux du jeu (skill_*) ;
+                 zoom : multiplicateur du plancher de dézoom ; rythme
+                 : délai entre deux coups du solveur. -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="24dp"
+                android:text="@string/menu_demo"
+                android:textAppearance="?attr/textAppearanceTitleMedium" />
+
+            <RadioGroup
+                android:id="@+id/demo_diff_group"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/demo_diff_fixed"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/demo_diff_fixed" />
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/demo_diff_random"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/demo_diff_random" />
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/demo_diff_progressive"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/demo_diff_progressive" />
+            </RadioGroup>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="16dp"
+                android:text="@string/demo_skill_title"
+                android:textAppearance="?attr/textAppearanceTitleMedium" />
+
+            <RadioGroup
+                android:id="@+id/demo_skill_group"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/demo_skill_novice"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/skill_novice" />
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/demo_skill_normal"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/skill_normal" />
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/demo_skill_expert"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/skill_expert" />
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/demo_skill_master"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/skill_master" />
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/demo_skill_insane"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/skill_insane" />
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/demo_skill_endless"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/skill_endless" />
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/demo_skill_abyss"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/skill_abyss" />
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/demo_skill_void"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/skill_void" />
+            </RadioGroup>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="16dp"
+                android:text="@string/demo_zoom_title"
+                android:textAppearance="?attr/textAppearanceTitleMedium" />
+
+            <RadioGroup
+                android:id="@+id/demo_zoom_group"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/demo_zoom_fit"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/demo_zoom_fit" />
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/demo_zoom_x15"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/demo_zoom_x15" />
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/demo_zoom_x2"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/demo_zoom_x2" />
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/demo_zoom_x3"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/demo_zoom_x3" />
+            </RadioGroup>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="16dp"
+                android:text="@string/demo_speed_title"
+                android:textAppearance="?attr/textAppearanceTitleMedium" />
+
+            <RadioGroup
+                android:id="@+id/demo_speed_group"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/demo_speed_slow"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/demo_speed_slow" />
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/demo_speed_normal"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/demo_speed_normal" />
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/demo_speed_fast"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/demo_speed_fast" />
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/demo_speed_lightning"
+                    android:layout_width="match_parent"
+                    android:maxWidth="320dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/demo_speed_lightning" />
+            </RadioGroup>
         </LinearLayout>
     </ScrollView>
 

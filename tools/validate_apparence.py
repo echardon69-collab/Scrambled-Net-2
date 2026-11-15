@@ -110,7 +110,7 @@ check("BoardView : la boucle de trame reste active pendant les rotations",
 # ---------------------------------------------------------------------------
 
 check("GameViewModel : le modèle tourne toujours instantanément au tap",
-      "board.rotateCell(index, 1)" in vm_src)
+      "board.rotateCell(index, 1, byPlayer = true)" in vm_src)
 check("GameViewModel : le coup est toujours publié immédiatement",
       vm_src.count("publish()") >= 5)
 

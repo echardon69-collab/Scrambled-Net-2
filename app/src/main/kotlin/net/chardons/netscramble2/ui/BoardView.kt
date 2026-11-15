@@ -167,12 +167,54 @@ class BoardView @JvmOverloads constructor(
     private val blinkBandColor = ContextCompat.getColor(context, R.color.blink_band)
     private val focusPaint = Paint()
 
+    // --- Chantier Aide à la résolution : cadre vert pulsé de
+    //     l'indice, couleur résolue au constructeur selon le thème
+    //     (blinkBandColor pattern : le changement de thème recrée
+    //     l'activité). ---
+    private val hintPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val hintFrameColor = ContextCompat.getColor(context, R.color.hint_frame)
+
     /**
      * Tuile du coup EN COURS de l'auto-solveur (index), -1 si aucun :
      * posé par l'activité à chaque état, dessiné en cadre rouge
      * translucide par-dessus la tuile. Transitoire, jamais sérialisé.
      */
     var solverFocus = -1
+
+    /**
+     * Tuile visée par le dernier indice (index), -1 si aucune : cadre
+     * vert pulsé pendant [HINT_PULSE_MS], par-dessus tout — et même
+     * sous le brouillard du Néant : l'indice désigne ce qu'il faut
+     * corriger, c'est bien le seul moment où une tuile cachée se
+     * montre. Expire de lui-même, transitoire, jamais sérialisé.
+     * Posé par l'activité à chaque état.
+     */
+    var hintIndex = -1
+        set(value) {
+            field = value
+            if (field >= 0) {
+                hintStartMs = SystemClock.elapsedRealtime()
+                postInvalidateOnAnimation()
+            }
+        }
+
+    /**
+     * (Re)arme la mise en évidence d'indice : cadre vert pulsé sur
+     * [index] pendant [HINT_PULSE_MS], ou l'efface (-1). Seule
+     * entrée de l'activité — les publications du modèle ne touchent
+     * PAS à la pulsation (retour UAT du 15 nov. 2026 : réarmée à
+     * chaque tick du chrono, elle ne s'expire jamais et un nouvel
+     * appui reste invisible). Elle vit ses cinq secondes, touche
+     * du joueur comprise, et chaque demande la relance — même
+     * cible, même effet.
+     */
+    fun showHint(index: Int) {
+        hintIndex = index
+        if (index < 0) postInvalidateOnAnimation()
+    }
+
+    /** Départ de la pulsation du dernier indice posé. */
+    private var hintStartMs = 0L
 
     /**
      * Démarre le clignement d'une tuile : la bande diagonale
@@ -282,6 +324,16 @@ class BoardView @JvmOverloads constructor(
     private var panY = 0f
     private var viewportInitialized = false
 
+    // --- Pan animé du suivi de caméra (chantier Aide à la
+    //     résolution) : interpolation dans onDraw, recalculée à
+    //     chaque trame pendant PAN_FOLLOW_MS, terminée au clamp. ---
+    private var panAnimating = false
+    private var panFromX = 0f
+    private var panFromY = 0f
+    private var panTargetX = 0f
+    private var panTargetY = 0f
+    private var panAnimStartMs = 0L
+
     // --- Peintures (allouées une seule fois, jamais dans onDraw) ---
     private val boardPaint = Paint()
     private val fogPaint = Paint()
@@ -342,6 +394,13 @@ class BoardView @JvmOverloads constructor(
     //     choisie par la configuration (drawable-night). ---
     private val tileBg: Drawable = load(R.drawable.tile_background)
     private val tileBgLocked: Drawable = load(R.drawable.tile_background_locked)
+
+    /**
+     * Fond des cellules scellées par un indice correctif (visuel
+     * INTÉRIM : rose, à statuer avec eric — la tuile définitive
+     * devra se distinguer du simple verrou).
+     */
+    private val tileBgSealed: Drawable = load(R.drawable.tile_background_sealed)
     private val tileBgEmpty: Drawable = load(R.drawable.tile_background_empty)
 
     // --- Cache du décor gris : la tuile « empty » pré-rendue en bitmap à
@@ -740,6 +799,102 @@ class BoardView @JvmOverloads constructor(
     }
 
     /**
+     * Régimes du suivi de caméra du chantier Aide à la résolution.
+     * CENTER recentre toujours sur la tuile. VISIBLE ne recentre que
+     * si la tuile est ENTIÈREMENT hors de la vue (indice, solveur et
+     * démonstration : un plateau entièrement visible ne bouge
+     * JAMAIS — retour UAT d'eric du 15 nov. 2026 : l'ancien test de
+     * visibilité inversait la convention du pan et croyait hors vue
+     * les tuiles de la marge). HYSTERESIS ne recentre que si la
+     * tuile sort du rectangle central de la vue, de 30 à 70 pour
+     * cent.
+     */
+    enum class FollowMode { CENTER, VISIBLE, HYSTERESIS }
+
+    /**
+     * Suit la tuile [index] avec la caméra selon [mode] : pan ANIMÉ
+     * sur [PAN_FOLLOW_MS], interpolé dans onDraw. Sans effet sur une
+     * vue pas encore mesurée.
+     */
+    fun followCell(index: Int, mode: FollowMode) {
+        val b = board ?: return
+        if (index < 0 || index >= b.size) return
+        if (cellPx <= 0f || width == 0 || height == 0) return
+        val cellLeft = (index % b.width) * cellPx
+        val cellTop = (index / b.width) * cellPx
+        val cx = cellLeft + cellPx / 2f
+        val cy = cellTop + cellPx / 2f
+        when (mode) {
+            FollowMode.CENTER -> {
+                // Recentrage systématique : l'indice désigne, la vue suit.
+            }
+            FollowMode.VISIBLE -> {
+                // Convention du pan ADDITIVE (écran = contenu + pan) :
+                // la plage visible en coordonnées contenu est
+                // [-pan, taille - pan]. Toute cellule qui la coupe,
+                // même en partie, est visible : la caméra ne bouge
+                // pas (correctif UAT — l'ancien test comparait à
+                // [pan, pan + taille] et croyait hors vue les tuiles
+                // de la marge d'un plateau ajusté centré).
+                if (cellLeft + cellPx + panX >= 0f && cellLeft + panX <= width &&
+                    cellTop + cellPx + panY >= 0f && cellTop + panY <= height
+                ) return // visible, même en partie : la caméra ne bouge pas
+            }
+            FollowMode.HYSTERESIS -> {
+                // Rectangle central 30–70 % de la vue, ramené en
+                // coordonnées contenu par la même convention.
+                if (cx + panX >= width * 0.3f && cx + panX <= width * 0.7f &&
+                    cy + panY >= height * 0.3f && cy + panY <= height * 0.7f
+                ) return // encore dans le rectangle central
+            }
+        }
+        panFromX = panX
+        panFromY = panY
+        panTargetX = width / 2f - cx
+        panTargetY = height / 2f - cy
+        // Cible BORNÉE aux mêmes limites que clampPan : le pan animé
+        // survit au clampPan du prochain update() sans claquement de
+        // retour (la famille Infini garde son pan libre).
+        if (!b.skill.endless) {
+            val ring = GREY_RING_CELLS * cellPx
+            val boardW = b.width * cellPx
+            val boardH = b.height * cellPx
+            if (boardW + 2f * ring > width) {
+                panTargetX = panTargetX.coerceIn(width - boardW - ring, ring)
+            }
+            if (boardH + 2f * ring > height) {
+                panTargetY = panTargetY.coerceIn(height - boardH - ring, ring)
+            }
+        }
+        panAnimStartMs = SystemClock.elapsedRealtime()
+        panAnimating = true
+        postInvalidateOnAnimation()
+    }
+
+    /**
+     * Préréglage de zoom de la démonstration : multiplicateur du
+     * plancher. FIT (1f) ajuste le plateau à la vue (fitBoard) ;
+     * au-delà, la case vaut le plancher multiplié, bornée au maximum,
+     * et la vue se recentre : la caméra de la démo suit les coups du
+     * solveur (followCell), pas un pan hérité.
+     */
+    fun applyZoomPreset(multiplier: Float) {
+        val b = board ?: return
+        if (multiplier <= 1f || width == 0 || height == 0) {
+            fitBoard()
+            return
+        }
+        cellPx = (floorCellPx(b) * multiplier)
+            .coerceIn(floorCellPx(b), maxCellPx)
+        if (b.skill.endless) {
+            panX = (width - b.width * cellPx) / 2f
+            panY = (height - b.height * cellPx) / 2f
+        } else {
+            clampPan()
+        }
+    }
+
+    /**
      * Tuile « empty » pré-rendue en bitmap à la taille de case courante
      * (cache régénéré seulement quand la taille entière change, donc
      * pendant un zoom). Le décor peut couvrir des centaines de cases :
@@ -839,6 +994,21 @@ class BoardView @JvmOverloads constructor(
             }
         }
 
+        // Pan animé du suivi de caméra (indice, solveur, démo) :
+        // interpolation linéaire sur PAN_FOLLOW_MS, terminée au
+        // clamp — les niveaux encadrés se re-clipent tout seuls, la
+        // famille Infini garde son pan libre.
+        if (panAnimating) {
+            val t = ((now - panAnimStartMs).toFloat() / PAN_FOLLOW_MS)
+                .coerceIn(0f, 1f)
+            panX = panFromX + (panTargetX - panFromX) * t
+            panY = panFromY + (panTargetY - panFromY) * t
+            if (t >= 1f) {
+                panAnimating = false
+                clampPan()
+            }
+        }
+
         // Tant qu'une rotation est en cours quelque part, le plateau
         // ENTIER garde l'apparence d'avant le coup (gelé dans update) :
         // toutes les tuiles concernées par le coup basculent ensemble
@@ -922,7 +1092,7 @@ class BoardView @JvmOverloads constructor(
                         val index =
                             Math.floorMod(wy, b.height) * b.width +
                                 Math.floorMod(wx, b.width)
-                        if (fog != null && !fog[index]) {
+                        if (fog != null && !fog[index] && index != hintIndex) {
                             drawFogCell(wx * cellPx, wy * cellPx)
                         } else {
                             drawBoardCell(
@@ -1019,6 +1189,16 @@ class BoardView @JvmOverloads constructor(
         if (blipsEnabled || animDurationMs.any { it > 0L } || blinkIndex >= 0) {
             postInvalidateOnAnimation()
         }
+        // Chantier Aide à la résolution : le cadre d'indice vit tant
+        // que sa pulsation n'a pas expiré, et le pan animé du suivi
+        // de caméra tant qu'il n'est pas posé — la boucle de trame
+        // reste active pour eux, indépendamment des blips.
+        if (hintIndex >= 0) {
+            postInvalidateOnAnimation()
+        }
+        if (panAnimating) {
+            postInvalidateOnAnimation()
+        }
     }
 
     /**
@@ -1079,13 +1259,16 @@ class BoardView @JvmOverloads constructor(
         // Fond de tuile biseauté, parité background /
         // background_locked / empty de l'original. Priorité
         // comme Cell.doDraw : libre avant verrouillée avant
-        // normale (une cellule libre verrouillée reste grise).
+        // normale (une cellule libre verrouillée reste grise) —
+        // et la cellule SCELLÉE d'un indice correctif avant la
+        // verrouillée (visuel intérim rose, à statuer avec eric).
         // Une cellule libre DU plateau (générateur ORIGINAL)
         // reçoit le fond empty, exactement comme Cell.doDraw
         // de l'original (Dir.FREE -> Image.EMPTY) : elle se
         // fond dans le décor hors plateau.
         val bg = when {
             dirs == Dir.NO_DIRS -> tileBgEmpty
+            b.isSealed(index) -> tileBgSealed
             b.locked[index] -> tileBgLocked
             else -> tileBg
         }
@@ -1162,6 +1345,27 @@ class BoardView @JvmOverloads constructor(
             focusPaint.color = FOCUS_RED
             focusPaint.strokeWidth = cellPx / 8f
             drawRect(left, top, left + cellPx - 1f, top + cellPx - 1f, focusPaint)
+        }
+        // Indice (chantier Aide à la résolution) : cadre vert pulsé,
+        // par-dessus tout, qui vit HINT_PULSE_MS puis s'efface de
+        // lui-même — le joueur a le temps de voir, la vue n'a pas
+        // d'état à entretenir au-delà de la pulsation.
+        if (index == hintIndex) {
+            val age = now - hintStartMs
+            if (age < HINT_PULSE_MS) {
+                val pulse = 0.5f - 0.5f * cos(
+                    (2.0 * Math.PI * (age % HINT_PULSE_PERIOD_MS) /
+                        HINT_PULSE_PERIOD_MS).toFloat()
+                )
+                hintPaint.style = Paint.Style.STROKE
+                hintPaint.color = hintFrameColor
+                hintPaint.alpha = (HINT_ALPHA_MIN +
+                    (HINT_ALPHA_MAX - HINT_ALPHA_MIN) * pulse).toInt()
+                hintPaint.strokeWidth = cellPx / 8f
+                drawRect(left, top, left + cellPx - 1f, top + cellPx - 1f, hintPaint)
+            } else {
+                hintIndex = -1
+            }
         }
         // Blink : bande diagonale contrastée qui balaie la tuile en
         // BLINK_MS — les deux phases de l'original (le trait part du
@@ -1376,5 +1580,22 @@ class BoardView @JvmOverloads constructor(
 
         /** Basse de la respiration : le serveur ne paraît jamais éteint. */
         private const val SERVER_BREATH_MIN_ALPHA = 170
+
+        // --- Chantier Aide à la résolution (15 nov. 2026) ---
+
+        /** Vie du cadre d'indice : cinq secondes, puis extinction. */
+        private const val HINT_PULSE_MS = 5_000L
+
+        /** Période de la pulsation du cadre (alpha min vers max vers min). */
+        private const val HINT_PULSE_PERIOD_MS = 500L
+
+        /** Alpha minimal du cadre d'indice pendant la pulsation. */
+        private const val HINT_ALPHA_MIN = 90
+
+        /** Alpha maximal du cadre d'indice. */
+        private const val HINT_ALPHA_MAX = 220
+
+        /** Durée du pan animé du suivi de caméra (indice, solveur, démo). */
+        private const val PAN_FOLLOW_MS = 300L
     }
 }

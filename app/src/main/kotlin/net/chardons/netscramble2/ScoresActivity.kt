@@ -20,6 +20,11 @@ import kotlin.math.roundToInt
  * record — parité avec l'écran « High scores » de l'original
  * (ScoreList), en Material 3. Le menu permet de tout effacer, avec
  * confirmation (l'original effaçait sans demander).
+ *
+ * Chantier Aide à la résolution (15 nov. 2026) : un record N'EST PLUS
+ * grillé par l'indice — chaque valeur porte le nombre d'indices de sa
+ * partie (« sans indice » si aucun) — et une rubrique « Indices »
+ * cumule les indices consommés, total et détail par niveau.
  */
 class ScoresActivity : AppCompatActivity() {
 
@@ -72,21 +77,24 @@ class ScoresActivity : AppCompatActivity() {
             .show()
     }
 
-    /** Remplit les deux tables, une ligne par niveau de difficulté. */
+    /** Remplit les deux tables puis la rubrique « Indices ». */
     private fun showScores() {
-        fillTable(binding.movesTable, store::bestMoves) { it.toString() }
-        fillTable(binding.timeTable, store::bestTime) { formatSeconds(it) }
+        fillTable(binding.movesTable, store::bestMoves) { withHints(it.value, it.hints) }
+        fillTable(binding.timeTable, store::bestTime) { withHints(it.value, it.hints) }
+        fillHintsTable()
     }
 
     /**
      * Repeuple une table : l'en-tête (première ligne, en XML) est
      * conservée ; une ligne par niveau affiche le libellé suivi de la
-     * taille du plateau, la valeur et la date — comme l'original.
+     * taille du plateau, la valeur et la date — comme l'original. La
+     * valeur porte son nombre d'indices (chantier Aide à la
+     * résolution) : « X · sans indice » ou « X · n indices ».
      */
     private fun fillTable(
         table: TableLayout,
         best: (Skill) -> ScoresStore.Best?,
-        formatValue: (Int) -> String
+        formatValue: (ScoresStore.Best) -> String
     ) {
         while (table.childCount > HEADER_ROWS) {
             table.removeViewAt(table.childCount - 1)
@@ -97,10 +105,46 @@ class ScoresActivity : AppCompatActivity() {
                 (record?.takeIf { it.ntiles > 0 }?.let { " (${it.ntiles})" } ?: "")
             val row = TableRow(this)
             row.addView(cell(label))
-            row.addView(cell(record?.let { formatValue(it.value) } ?: NONE))
+            row.addView(cell(record?.let { formatValue(it) } ?: NONE))
             row.addView(cell(record?.let { formatDate(it.date) } ?: NONE))
             table.addView(row)
         }
+    }
+
+    /**
+     * Rubrique « Indices » : total consommé tous niveaux confondus,
+     * en évidence, puis une ligne par niveau avec son cumul — chaque
+     * indice pris au menu est compté, qu'il débouche sur une victoire
+     * ou pas.
+     */
+    private fun fillHintsTable() {
+        binding.hintsTotal.text = getString(
+            R.string.hints_total,
+            Skill.entries.sumOf { store.hintTiles(it) }
+        )
+        while (binding.hintsTable.childCount > HEADER_ROWS) {
+            binding.hintsTable.removeViewAt(binding.hintsTable.childCount - 1)
+        }
+        for ((index, skill) in Skill.entries.withIndex()) {
+            val row = TableRow(this)
+            row.addView(cell(getString(labels[index])))
+            row.addView(cell(store.hintTiles(skill).toString()))
+            binding.hintsTable.addView(row)
+        }
+    }
+
+    /**
+     * Valeur d'un record accompagnée de ses indices : « X · sans
+     * indice » ou « X · n indices » — l'indice ne grille plus le
+     * record, il l'accompagne.
+     */
+    private fun withHints(value: Int, hints: Int): String {
+        val suffix = if (hints == 0) {
+            getString(R.string.hints_none)
+        } else {
+            getString(R.string.hints_n, hints)
+        }
+        return "$value · $suffix"
     }
 
     private fun cell(text: String): TextView = TextView(this).apply {
@@ -119,10 +163,6 @@ class ScoresActivity : AppCompatActivity() {
         }
         return DateUtils.formatDateTime(this, date, flags or DateUtils.FORMAT_ABBREV_ALL)
     }
-
-    /** mm:ss, comme la barre d'état et l'écran de victoire. */
-    private fun formatSeconds(seconds: Int): String =
-        "%02d:%02d".format(seconds / 60, seconds % 60)
 
     private fun dp(value: Int): Int =
         (value * resources.displayMetrics.density).roundToInt()

@@ -115,6 +115,17 @@ class Board(
     /** Cellules cachées dont les câbles ont été révélés (solveur, fin). */
     val revealed = BooleanArray(size)
 
+    /**
+     * Cellules scellées par un indice correctif : la rotation à
+     * l'aplomb est jouée, la cellule est verrouillée pour de bon et
+     * ne peut plus être tournée ni déverrouillée (invariant : toute
+     * cellule scellée est verrouillée).
+     */
+    val sealedCells = BooleanArray(size)
+
+    /** Cellules touchées par le joueur au moins une fois. */
+    val touched = BooleanArray(size)
+
     init {
         val rnd = Random(seed)
         serverIndex = generate(rnd, forcedRoot)
@@ -289,9 +300,14 @@ class Board(
     /** Connexions courantes d'une cellule (solution tournée par sa rotation). */
     fun currentDirs(index: Int): Int = Dir.rotateMask(connections[index], rotations[index])
 
-    /** Fait tourner une cellule de [steps] quarts de tour horaires. */
-    fun rotateCell(index: Int, steps: Int) {
+    /**
+     * Fait tourner une cellule de [steps] quarts de tour horaires.
+     * [byPlayer] marque la cellule comme touchée (clic du joueur) ;
+     * le solveur et l'indice correctif la tournent sans la marquer.
+     */
+    fun rotateCell(index: Int, steps: Int, byPlayer: Boolean = false) {
         rotations[index] = ((rotations[index] + steps) % 4 + 4) % 4
+        if (byPlayer) touched[index] = true
     }
 
     /** Une cellule terminale : une seule connexion et ce n'est pas le serveur. */
@@ -314,10 +330,30 @@ class Board(
     fun isHidden(index: Int): Boolean =
         Integer.bitCount(connections[index]) >= hiddenThreshold
 
-    /** Verrouille / déverrouille une cellule (appui long). */
-    fun toggleLock(index: Int) {
+    /**
+     * Verrouille / déverrouille une cellule (appui long). Renvoie
+     * faux sans rien changer sur une cellule scellée : l'indice
+     * correctif l'a fixée pour de bon (l'invariant scellé implique
+     * verrouillé reste ainsi garanti).
+     */
+    fun toggleLock(index: Int): Boolean {
+        if (sealedCells[index]) return false
         locked[index] = !locked[index]
+        return true
     }
+
+    /**
+     * Scelle une cellule (indice correctif) : verrouillée pour de
+     * bon, révélée si elle était cachée.
+     */
+    fun seal(index: Int) {
+        sealedCells[index] = true
+        locked[index] = true
+        revealed[index] = true
+    }
+
+    /** Cellule scellée par un indice correctif. */
+    fun isSealed(index: Int): Boolean = sealedCells[index]
 
     /** Révèle les câbles d'une cellule cachée (solveur, fin de partie). */
     fun reveal(index: Int) {
@@ -356,6 +392,39 @@ class Board(
             }
         }
         return moves
+    }
+
+    /**
+     * Une cellule est mal orientée au sens FONCTIONNEL : son masque
+     * courant (rotation appliquée) diffère du masque de solution.
+     * Une tuile SYMÉTRIQUE — un câble droit tourné de 180° — reste
+     * bien orientée : l'indice ne doit jamais la soumettre au joueur
+     * (retour UAT d'eric du 15 nov. 2026 : « des tuiles déjà bien
+     * orientées »). Les cellules libres ne comptent jamais.
+     */
+    fun isMisplaced(index: Int): Boolean =
+        !isEmpty(index) && currentDirs(index) != connections[index]
+
+    /**
+     * Cellule cible de l'indice, selon la stratégie actée avec eric
+     * au retour UAT du 15 nov. 2026 : uniquement des tuiles MAL
+     * ORIENTÉES au sens fonctionnel de [isMisplaced] — (1) les
+     * VERROUILLÉES d'abord, (2) sinon les non verrouillées, tuiles à
+     * 3 connecteurs en priorité. Une tuile déjà en place n'est
+     * JAMAIS soumise : l'ancien repli « première touchée puis
+     * première verrouillée » — sans filtre d'orientation — est ce
+     * qui soumettait des tuiles verrouillées bien orientées. Sans
+     * cible : -1.
+     */
+    fun hintTarget(): Int {
+        (0 until size).firstOrNull { locked[it] && isMisplaced(it) }?.let { return it }
+        var fallback = -1
+        for (i in 0 until size) {
+            if (locked[i] || !isMisplaced(i)) continue
+            if (Integer.bitCount(connections[i]) == 3) return i
+            if (fallback < 0) fallback = i
+        }
+        return fallback
     }
 
     /**
@@ -467,6 +536,19 @@ class Board(
          * cellule connectée au serveur (spec validée le 12 nov. 2026).
          */
         const val FOG_RADIUS_CELLS = 2
+
+        /**
+         * Plafond d'indices d'une partie : [percent] pour cent des
+         * tuiles mal orientées au mélange initial, arrondi à
+         * l'entier inférieur, minimum 1 si le pourcentage est non
+         * nul. Zéro désactive l'indice. Le pourcentage vient du
+         * réglage (0 à 50, pas de 5).
+         */
+        fun hintAllowance(misplaced: Int, percent: Int): Int {
+            val p = percent.coerceIn(0, 50)
+            if (p == 0) return 0
+            return (misplaced * p / 100).coerceAtLeast(1)
+        }
 
         /**
          * Fabrique un plateau mélangé : niveau [skill] (règles, branches),

@@ -234,7 +234,7 @@ check("SettingsActivity : la page s'ouvre sur le niveau reçu du jeu",
 check("MainActivity : le retour de la page relance la partie au "
       "niveau choisi (avec le rappel des règles)",
       re.search(r"settingsLauncher.*?skill != previous.*?"
-                r"viewModel\.newGame\(skill, width, height\).*?"
+                r"viewModel\.newGame\(skill, width, height,[^)]*\).*?"
                 r"showSkillHelpIfNeeded\(skill, previous\)",
                 ma, re.S) is not None)
 
@@ -1052,11 +1052,11 @@ check("Miroir Néant : au lancement, le brouillard révèle au moins le "
 
 gs_src = read(KOTLIN / "game/GameSpec.kt")
 gs = strip_comments(gs_src)
-check("GameSpec : le format passe en v4 (VERSION v4, 18 champs)",
-      'VERSION = "v4"' in gs and "FIELDS = 18" in gs)
-check("GameSpec : la v3 d'avant la caméra reste décodable "
-      "(PREVIOUS_VERSION, 15 champs)",
-      'PREVIOUS_VERSION = "v3"' in gs and "PREVIOUS_FIELDS = 15" in gs)
+check("GameSpec : le format passe en v5 (VERSION v5, 22 champs)",
+      'VERSION = "v5"' in gs and "FIELDS = 22" in gs)
+check("GameSpec : la v4 d'avant les indices reste décodable "
+      "(PREVIOUS_VERSION, 18 champs)",
+      'PREVIOUS_VERSION = "v4"' in gs and "PREVIOUS_FIELDS = 18" in gs)
 check("GameSpec : CameraSpec est une DATA CLASS (l'aller-retour "
       "encode/decode compare les valeurs, jamais les références)",
       re.search(r"data class CameraSpec\(", gs) is not None)
@@ -1157,11 +1157,11 @@ check("GameViewModel : la photographie accepte la caméra de la vue",
 gspec_tests_src = read(ROOT / "app/src/test/kotlin/net/chardons/netscramble2/"
                        "game/GameSpecTest.kt")
 gts = strip_comments(gspec_tests_src)
-check("Tests JVM : l'aller-retour v4 avec caméra est verrouillé (18 champs, "
+check("Tests JVM : l'aller-retour v5 avec caméra est verrouillé (22 champs, "
       "égalité du spec décodé)",
-      "camera round trips through the v4 format" in gts
-      and 'encoded.startsWith("v4|")' in gspec_tests_src
-      and "18, encoded.split('|').size" in gts)
+      "camera round trips through the v5 format" in gts
+      and 'encoded.startsWith("v5|")' in gspec_tests_src
+      and "22, encoded.split('|').size" in gts)
 rt_m = re.search(r"fun `encode then decode preserves every field`\(\) "
                 r"\{(.*?)\n    \}", gspec_tests_src, re.S)
 check("Tests JVM : « encode then decode preserves every field » PASSE une "
@@ -1174,8 +1174,8 @@ check("Tests JVM : « encode then decode preserves every field » PASSE une "
       and "assertEquals(spec, decoded)" in rt_m.group(1)
       and "assertEquals(camera, decoded!!.camera)" in rt_m.group(1))
 check("Tests JVM : une v3 décodée n'a PAS de caméra puis se réenregistre "
-      "en v4 avec le repli neutre",
-      "v3 snapshot decodes without camera then re-encodes as v4" in gts
+      "en v5 avec le repli neutre",
+      "v3 snapshot decodes without camera then re-encodes as v5" in gts
       and 'assertNull(decoded!!.camera)' in gts)
 check("Tests JVM : les rejets caméra (position hors plateau, zoom hors "
       "bornes) sont verrouillés",

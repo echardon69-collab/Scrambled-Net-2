@@ -20,23 +20,33 @@ package net.chardons.netscramble2.game
  * seule la position ne sert à rien ([ clampPan ] de la vue recentre),
  * le zoom reste pertinent.
  *
- * Format « v4 », champs séparés par « | » :
- *   v4|NIVEAU|graine|GÉNÉRATEUR|largeur|hauteur|racine|coups|millisecondes|solveur|précédente|file|rotations|verrous|révélations|camX|camY|zoom
+ * Format « v5 », champs séparés par « | » :
+ *   v5|NIVEAU|graine|GÉNÉRATEUR|largeur|hauteur|racine|coups|millisecondes|solveur|précédente|file|rotations|verrous|révélations|scellées|touchées|indices|plafond|camX|camY|zoom
  * où les rotations sont un chiffre 0 à 3 par cellule (sans séparateur),
- * les verrous et révélations un 0 ou 1 par cellule, la file du
- * solveur des indices séparés par des virgules (vide si inactive), et
- * la caméra trois ENTIERS (piège maison : jamais de flottant textuel,
- * les locales écrivent « 1.5 » ou « 1,5 ») : position en
- * MILLI-CELLULES, zoom en CENTIÈMES de dp. La « racine » est une
- * consigne de reconstruction : -1 = retirée du flux du générateur
- * comme à la création ; sinon imposée sans tirer (les anciennes v2
+ * les verrous, révélations, scellées et touchées un 0 ou 1 par cellule,
+ * la file du solveur des indices séparés par des virgules (vide si
+ * inactive), « indices » et « plafond » les compteurs du chantier
+ * Aide à la résolution (le plafond vaut -1 pour une partie née avant,
+ * à recalculer à la restauration), et la caméra trois ENTIERS
+ * (piège maison : jamais de flottant textuel, les locales écrivent
+ * « 1.5 » ou « 1,5 ») : position en MILLI-CELLULES, zoom en
+ * CENTIÈMES de dp. La « racine » est une consigne de
+ * reconstruction : -1 = retirée du flux du générateur comme à la
+ * création ; sinon imposée sans tirer (les anciennes v2
  * réenregistrées, serveur central).
+ *
+ * Le format « v4 » d'avant l'aide à la résolution (18 champs, sans
+ * scellées, touchées, indices ni plafond) reste décodable à
+ * l'identique : les scellées et touchées repartent à vide, aucune
+ * indice n'a été consommé et le plafond vaut la sentinelle -1
+ * (recalculée à la restauration) — puis la partie se réenregistre
+ * en v5.
  *
  * Le format « v3 » d'avant la caméra (mêmes champs sans les trois
  * derniers) reste décodable à l'identique : une partie sauvegardée
  * avant la mise à jour se restaure exactement — sans caméra, la vue
  * repose la sienne (centrage Néant pour un Néant, centrage plateau
- * pour le reste de la famille) — puis se réenregistre en v4.
+ * pour le reste de la famille) — puis se réenregistre en v5.
  *
  * Le format « v2 » d'avant le chantier tailles (grilles carrées par
  * niveau, générateur arbre, serveur central) reste décodable à
@@ -91,17 +101,45 @@ class GameSpec(
     val locked: BooleanArray,
     val revealed: BooleanArray,
     /**
+     * Cellules scellées par un indice correctif (v5). Paramètre sans
+     * « val » : la propriété effective repart à vide si absent, le
+     * cas des parties décodées des formats v4 et moins.
+     */
+    sealedCells: BooleanArray? = null,
+    /** Cellules touchées par le joueur (v5), même mécanique. */
+    touched: BooleanArray? = null,
+    /** Indices consommés dans cette partie (v5). */
+    val hintsUsed: Int = 0,
+    /**
+     * Plafond d'indices de la partie (v5). Sentinelle -1 : partie
+     * née avant le chantier, plafond recalculé à la restauration.
+     */
+    val hintsAllowed: Int = -1,
+    /**
      * Caméra de la vue au moment de la photographie (v4). Absente des
      * sauvegardes v3/v2 décodées : la vue repose alors la sienne.
      */
     val camera: CameraSpec? = null
 ) {
+    /** Cellules scellées effectives (vides si la photographie est plus ancienne). */
+    val sealedCells: BooleanArray = sealedCells ?: BooleanArray(width * height)
+
+    /** Cellules touchées effectives (vides si la photographie est plus ancienne). */
+    val touched: BooleanArray = touched ?: BooleanArray(width * height)
+
     init {
         require(width in 1..64 && height in 1..64)
         require(rotations.size == width * height)
         require(locked.size == rotations.size)
         require(revealed.size == rotations.size)
+        // « this. » obligatoire : dans un bloc init, le paramètre de
+        // construction nullable du même nom MASQUE la propriété
+        // effective (piège vérifié par la CI d'eric le 15 nov. 2026).
+        require(this.sealedCells.size == rotations.size)
+        require(this.touched.size == rotations.size)
         require(root in -1 until width * height)
+        require(hintsUsed >= 0)
+        require(hintsAllowed >= -1)
     }
 
     /** Sérialise la partie. Chaîne courte (quelques centaines d'octets). */
@@ -123,7 +161,19 @@ class GameSpec(
         for (l in locked) append(if (l) '1' else '0')
         append(SEP)
         for (r in revealed) append(if (r) '1' else '0')
-        // Caméra : toujours écrite (v4). Une photographie sans caméra
+        // Chantier Aide à la résolution (v5) : scellées, touchées,
+        // indices consommés, plafond. Le plafond est écrit tel quel,
+        // sentinelle -1 comprise (une partie v4 réenregistrée le
+        // reste, il sera recalculé à la prochaine restauration).
+        append(SEP)
+        for (s in sealedCells) append(if (s) '1' else '0')
+        append(SEP)
+        for (t in touched) append(if (t) '1' else '0')
+        append(SEP)
+        append(hintsUsed)
+        append(SEP)
+        append(hintsAllowed)
+        // Caméra : toujours écrite (v5). Une photographie sans caméra
         // (défensive : l'activité en fournit toujours une) garde le
         // zoom minimal, une position neutre.
         append(SEP)
@@ -147,6 +197,8 @@ class GameSpec(
         rotations.copyInto(board.rotations)
         locked.copyInto(board.locked)
         revealed.copyInto(board.revealed)
+        sealedCells.copyInto(board.sealedCells)
+        touched.copyInto(board.touched)
         return board
     }
 
@@ -168,6 +220,10 @@ class GameSpec(
                 rotations.contentEquals(other.rotations) &&
                 locked.contentEquals(other.locked) &&
                 revealed.contentEquals(other.revealed) &&
+                sealedCells.contentEquals(other.sealedCells) &&
+                touched.contentEquals(other.touched) &&
+                hintsUsed == other.hintsUsed &&
+                hintsAllowed == other.hintsAllowed &&
                 camera == other.camera
     }
 
@@ -186,18 +242,24 @@ class GameSpec(
         result = 31 * result + rotations.contentHashCode()
         result = 31 * result + locked.contentHashCode()
         result = 31 * result + revealed.contentHashCode()
+        result = 31 * result + sealedCells.contentHashCode()
+        result = 31 * result + touched.contentHashCode()
+        result = 31 * result + hintsUsed
+        result = 31 * result + hintsAllowed
         result = 31 * result + camera.hashCode()
         return result
     }
 
     companion object {
-        private const val VERSION = "v4"
-        private const val PREVIOUS_VERSION = "v3"
+        private const val VERSION = "v5"
+        private const val PREVIOUS_VERSION = "v4"
+        private const val V3_VERSION = "v3"
         private const val LEGACY_VERSION = "v2"
         private const val SEP = '|'
         private const val QUEUE_SEP = ","
-        private const val FIELDS = 18
-        private const val PREVIOUS_FIELDS = 15
+        private const val FIELDS = 22
+        private const val PREVIOUS_FIELDS = 18
+        private const val V3_FIELDS = 15
         private const val LEGACY_FIELDS = 11
 
         /**
@@ -210,8 +272,11 @@ class GameSpec(
         /** Zoom maximal en centièmes de dp (MAX_CELL_DP de la vue). */
         const val MAX_ZOOM_CENTI_DP = 9_600
 
+        /** Position des trois champs caméra dans le format v5. */
+        private const val CAMERA_BASE = 19
+
         /** Position des trois champs caméra dans le format v4. */
-        private const val CAMERA_BASE = 15
+        private const val CAMERA_BASE_PREVIOUS = 15
 
         /**
          * Tailles historiques du format v2 : grilles carrées par niveau,
@@ -233,23 +298,26 @@ class GameSpec(
             val parts = spec.split(SEP)
             return when (parts.firstOrNull()) {
                 VERSION ->
-                    if (parts.size == FIELDS) decodeFields(parts, legacy = false) else null
+                    if (parts.size == FIELDS) decodeFields(parts, version = 5) else null
                 PREVIOUS_VERSION ->
-                    if (parts.size == PREVIOUS_FIELDS) decodeFields(parts, legacy = false) else null
+                    if (parts.size == PREVIOUS_FIELDS) decodeFields(parts, version = 4) else null
+                V3_VERSION ->
+                    if (parts.size == V3_FIELDS) decodeFields(parts, version = 3) else null
                 LEGACY_VERSION ->
-                    if (parts.size == LEGACY_FIELDS) decodeFields(parts, legacy = true) else null
+                    if (parts.size == LEGACY_FIELDS) decodeFields(parts, version = 2) else null
                 else -> null
             }
         }
 
         /**
-         * Analyse commune aux deux versions : en v3, générateur,
-         * dimensions et racine sont explicites ; en v2, ils sont
-         * reconstitués (générateur TREE, grille carrée du niveau, serveur
-         * central). Les champs du joueur sont décalés d'un nombre de
-         * positions propre à chaque version.
+         * Analyse commune aux quatre versions : en v3 et plus,
+         * générateur, dimensions et racine sont explicites ; en v2,
+         * ils sont reconstitués (générateur TREE, grille carrée du
+         * niveau, serveur central). Les champs du joueur sont décalés
+         * d'un nombre de positions propre à chaque version.
          */
-        private fun decodeFields(parts: List<String>, legacy: Boolean): GameSpec? {
+        private fun decodeFields(parts: List<String>, version: Int): GameSpec? {
+            val legacy = version <= 2
             val skill = Skill.entries.firstOrNull { it.name == parts[1] } ?: return null
 
             val generator: Generator
@@ -305,15 +373,50 @@ class GameSpec(
                 locked[i] = lockBit == '1'
                 revealed[i] = revBit == '1'
             }
-            // Caméra : uniquement en v4 (trois champs supplémentaires).
+            // Chantier Aide à la résolution (v5 uniquement) : scellées
+            // et touchées, indices consommés et plafond. Toute cellule
+            // scellée sans être verrouillée est une incohérence : la
+            // partie est rejetée, jamais de confiance. Les versions
+            // précédentes repartent à vide, plafond en sentinelle -1
+            // (recalculé à la restauration).
+            val sealedCells: BooleanArray
+            val touched: BooleanArray
+            val hintsUsed: Int
+            val hintsAllowed: Int
+            if (version >= 5) {
+                val sealStr = parts[15]
+                val touchStr = parts[16]
+                if (sealStr.length != size || touchStr.length != size) return null
+                sealedCells = BooleanArray(size)
+                touched = BooleanArray(size)
+                for (i in 0 until size) {
+                    val sealBit = sealStr[i]
+                    val touchBit = touchStr[i]
+                    if (sealBit != '0' && sealBit != '1') return null
+                    if (touchBit != '0' && touchBit != '1') return null
+                    if (sealBit == '1' && !locked[i]) return null
+                    sealedCells[i] = sealBit == '1'
+                    touched[i] = touchBit == '1'
+                }
+                hintsUsed = parts[17].toIntOrNull() ?: return null
+                hintsAllowed = parts[18].toIntOrNull() ?: return null
+                if (hintsUsed < 0 || hintsAllowed < -1) return null
+            } else {
+                sealedCells = BooleanArray(size)
+                touched = BooleanArray(size)
+                hintsUsed = 0
+                hintsAllowed = -1
+            }
+            // Caméra : en v4 et v5 (trois champs supplémentaires).
             // Une position hors plateau (milli-cellules >= côté x 1000,
             // modulo exclu) ou un zoom hors bornes rejette la partie,
             // comme toute autre incohérence — jamais de confiance.
+            val cameraBase = if (version >= 5) CAMERA_BASE else CAMERA_BASE_PREVIOUS
             val camera: CameraSpec? =
-                if (!legacy && parts.size == FIELDS) {
-                    val camX = parts[CAMERA_BASE].toIntOrNull() ?: return null
-                    val camY = parts[CAMERA_BASE + 1].toIntOrNull() ?: return null
-                    val zoom = parts[CAMERA_BASE + 2].toIntOrNull() ?: return null
+                if (!legacy && version >= 4) {
+                    val camX = parts[cameraBase].toIntOrNull() ?: return null
+                    val camY = parts[cameraBase + 1].toIntOrNull() ?: return null
+                    val zoom = parts[cameraBase + 2].toIntOrNull() ?: return null
                     if (camX !in 0 until width * 1_000) return null
                     if (camY !in 0 until height * 1_000) return null
                     if (zoom !in MIN_ZOOM_CENTI_DP..MAX_ZOOM_CENTI_DP) return null
@@ -348,6 +451,10 @@ class GameSpec(
                     rotations = rotations,
                     locked = locked,
                     revealed = revealed,
+                    sealedCells = sealedCells,
+                    touched = touched,
+                    hintsUsed = hintsUsed,
+                    hintsAllowed = hintsAllowed,
                     camera = camera
                 )
             } catch (_: NumberFormatException) {

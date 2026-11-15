@@ -80,7 +80,7 @@ check("MainActivity : Annuler referme sans rien toucher",
 # « Nouvelle partie » passe par la confirmation, avec le libellé du
 # bouton de victoire réutilisé (« Nouvelle partie »).
 menu_new = re.search(
-    r"item\.itemId == R\.id\.menu_new -> \{(.*?)\n            \}",
+    r"R\.id\.menu_new -> \{(.*?)\n            \}",
     main_src,
     re.S,
 )
@@ -130,7 +130,7 @@ win = re.search(r"private fun showWinDialog\(.*?\n    \}", main_src, re.S)
 check("MainActivity : le bouton « Nouvelle partie » du dialogue de victoire reste direct",
       win is not None
       and "confirmIfInProgress" not in win.group(0)
-      and "viewModel.newGame(current, width, height)" in win.group(0))
+      and "viewModel.newGame(current, width, height, Settings.loadHintPercent(this))" in win.group(0))
 
 check("MainActivity : plus aucune mention d'undo (retiré de la roadmap)",
       "undo" not in main_src)

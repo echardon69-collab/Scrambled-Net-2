@@ -25,6 +25,8 @@
          UAT du 13 nov.) — la bande prend la couleur contrastée du
          thème : ardoise le jour, blanc la nuit. -->
     <color name="blink_band">#FF39424D</color>
+    <!-- Cadre vert de l'indice (chantier Aide à la résolution), pulsé. -->
+    <color name="hint_frame">#FF1B5E20</color>
 
     <!-- Icône de lancement : fond de l'icône adaptative (API 26+) et du
          repli API 24-25. Blanc opaque — les lanceurs ne laissent pas passer

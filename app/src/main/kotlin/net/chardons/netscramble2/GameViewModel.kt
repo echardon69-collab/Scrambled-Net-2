@@ -23,16 +23,29 @@ import net.chardons.netscramble2.game.Sound
 
 
 /**
+ * Stratégie de l'indice (réglage du chantier Aide à la résolution) :
+ * SIGNAL signale la cellule fautive (cadre vert pulsé, informatif),
+ * FIX la corrige (rotation à l'aplomb, révélation si cachée, puis
+ * scellée).
+ */
+enum class HintStrategy { SIGNAL, FIX }
+
+
+/**
  * Victoire signalée une fois à l'UI : l'activité enregistre les records
  * et montre le dialogue de victoire — pas si le solveur a servi, comme
  * dans l'original (qui ne « se vante » pas non plus dans ce cas).
+ * L'indice, lui, ne grille PAS le record : chaque record porte son
+ * nombre d'indices consommés.
  */
 data class WinEvent(
     val skill: Skill,
     val moves: Int,
     val seconds: Int,
     val solverUsed: Boolean,
-    val ntiles: Int
+    val ntiles: Int,
+    /** Indices consommés dans la partie gagnée. */
+    val hints: Int = 0
 )
 
 
@@ -57,7 +70,27 @@ data class GameUiState(
      * tick, comme le focus de l'original. Transitoire : jamais sérialisé
      * dans GameSpec, remis à -1 à la fin ou à l'arrêt du solveur.
      */
-    val solverFocus: Int = -1
+    val solverFocus: Int = -1,
+    /**
+     * Indices restants au plafond de la partie (badge du menu) :
+     * plafond moins consommés, jamais négatif.
+     */
+    val hintRemaining: Int = 0,
+    /**
+     * Cellule visée par le dernier indice (index), -1 si aucune :
+     * cadre vert pulsé de la vue. Transitoire : jamais sérialisé
+     * dans GameSpec, expire visuellement de lui-même.
+     */
+    val hintIndex: Int = -1,
+    /**
+     * Génération de la mise en évidence d'indice : incrémenté à
+     * CHAQUE demande (nouvelle cible ou répétition) et aux
+     * changements de partie. C'est lui qui (re)arme la pulsation
+     * de la vue — jamais les publications du chrono (retour UAT du
+     * 15 nov. 2026 : la pulsation repartait à chaque tick et un
+     * nouvel appui restait invisible). Transitoire, jamais sérialisé.
+     */
+    val hintRequestId: Int = 0
 ) {
     // Tableau dans une data class : on compare les contenus, pas les références.
     override fun equals(other: Any?): Boolean {
@@ -71,7 +104,10 @@ data class GameUiState(
                 solved == other.solved &&
                 solverUsed == other.solverUsed &&
                 solving == other.solving &&
-                solverFocus == other.solverFocus
+                solverFocus == other.solverFocus &&
+                hintRemaining == other.hintRemaining &&
+                hintIndex == other.hintIndex &&
+                hintRequestId == other.hintRequestId
     }
 
     override fun hashCode(): Int {
@@ -84,6 +120,9 @@ data class GameUiState(
         result = 31 * result + solverUsed.hashCode()
         result = 31 * result + solving.hashCode()
         result = 31 * result + solverFocus
+        result = 31 * result + hintRemaining
+        result = 31 * result + hintIndex
+        result = 31 * result + hintRequestId
         return result
     }
 }
@@ -119,6 +158,25 @@ class GameViewModel : ViewModel() {
     private var moves = 0
     private var elapsedMs = 0L
     private var solverUsed = false
+
+    /**
+     * Indices consommés dans la partie (chantier Aide à la
+     * résolution) et plafond autorisé : sentinelle -1 = partie née
+     * avant le chantier, recalculée à la restauration.
+     */
+    private var hintsUsed = 0
+    private var hintsAllowed = -1
+
+    /** Cellule visée par le dernier indice (transitoire, jamais sérialisé). */
+    private var hintFocusIndex = -1
+
+    /**
+     * Génération de la mise en évidence d'indice : incrémenté à chaque
+     * demande et aux changements de partie, publié comme
+     * [GameUiState.hintRequestId] — l'activité (re)arme la pulsation
+     * de la vue sur son changement, lui seul.
+     */
+    private var hintPulseId = 0
 
     /** File des coups restant à jouer par l'auto-solveur (null = inactif). */
     private var solveQueue: ArrayDeque<Int>? = null
@@ -208,7 +266,7 @@ class GameViewModel : ViewModel() {
      * du serveur (scintillement) devient la carte d'identité constante
      * de la famille.
      */
-    fun newGame(skill: Skill, width: Int, height: Int) {
+    fun newGame(skill: Skill, width: Int, height: Int, hintPercent: Int = 10) {
         seed = newSeed()
         this.skill = skill
         // Famille Infini (Endless, Abîme, Néant) : générateur ORIGINAL
@@ -229,6 +287,14 @@ class GameViewModel : ViewModel() {
         solverUsed = false
         solveQueue = null
         solverFocusIndex = -1 // partie neuve : aucun curseur de solveur
+        // Plafond d'indices de la partie (chantier Aide à la
+        // résolution) : pourcentage du nombre de tuiles mal orientées
+        // au mélange initial. Zéro (réglage « Désactivé ») éteint
+        // l'indice pour toute la partie.
+        hintsUsed = 0
+        hintsAllowed = Board.hintAllowance(misplacedTiles(board), hintPercent)
+        hintFocusIndex = -1
+        ++hintPulseId
         // Plateau neuf : pas de son de connexion, juste le son de départ.
         lastConnectedCount = -1
         emit(Sound.START)
@@ -248,7 +314,7 @@ class GameViewModel : ViewModel() {
             emit(Sound.CLICK)
             return
         }
-        board.rotateCell(index, 1)
+        board.rotateCell(index, 1, byPlayer = true)
         if (index != prevClicked) {
             ++moves
             prevClicked = index
@@ -260,14 +326,57 @@ class GameViewModel : ViewModel() {
     /**
      * Appui long : verrouille / déverrouille la cellule, comme dans
      * l'original — un repère visuel pour les tuiles dont le joueur est sûr.
+     * Une cellule scellée par un indice correctif ne bouge plus :
+     * refus silencieux, sans le son de verrou.
      */
     fun onCellLongPressed(index: Int) {
         // Rien à verrouiller sur une cellule libre (générateur ORIGINAL).
         if (solvedNow || board.isEmpty(index)) return
-        board.toggleLock(index)
+        if (!board.toggleLock(index)) return
         emit(Sound.POP)
         publish()
     }
+
+    /**
+     * Indice à la demande du joueur (bouton « Indice » du menu) :
+     * plafonné au quota de la partie, refusé silencieusement une fois
+     * le plateau résolu ou pendant le passage du solveur. La cible
+     * suit les priorités validées ([Board.hintTarget]).
+     */
+    fun onHint(strategy: HintStrategy) {
+        if (solvedNow || solveQueue != null) return
+        if (hintsAllowed <= 0 || hintsUsed >= hintsAllowed) return
+        val index = board.hintTarget()
+        if (index < 0) return
+        if (strategy == HintStrategy.FIX) {
+            val steps = (4 - board.rotations[index]) % 4
+            if (steps != 0) {
+                board.rotateCell(index, steps)
+                moves += hintMoveCost(steps)
+            }
+            if (board.isHidden(index)) board.reveal(index)
+            board.seal(index)
+        }
+        ++hintsUsed
+        hintFocusIndex = index
+        ++hintPulseId
+        publish()
+    }
+
+    /**
+     * Coût en coups d'une correction d'indice : autant de coups que
+     * quarts de tour joués. PROVISOIRE — comptage à statuer avec
+     * l'utilisateur (dernière étape du chantier).
+     */
+    private fun hintMoveCost(steps: Int): Int = steps
+
+    /**
+     * Tuiles mal orientées d'un plateau, au sens FONCTIONNEL de
+     * Board.isMisplaced (une tuile symétrique bien branchée ne
+     * compte pas) — c'est la mesure du plafond d'indices.
+     */
+    private fun misplacedTiles(b: Board): Int =
+        (0 until b.size).count { b.isMisplaced(it) }
 
     /**
      * Auto-solveur, comme dans l'original : il joue un coup par tick (la
@@ -303,6 +412,10 @@ class GameViewModel : ViewModel() {
             val index = queue.removeFirst()
             val steps = (4 - board.rotations[index]) % 4
             when {
+                board.isSealed(index) -> {
+                    // Cellule scellée par un indice correctif : déjà en
+                    // place et verrouillée pour de bon — au suivant.
+                }
                 board.locked[index] -> {
                     board.toggleLock(index)
                     // Déverrouillée, mais pas encore tournée : la cellule
@@ -355,6 +468,10 @@ class GameViewModel : ViewModel() {
         rotations = board.rotations.copyOf(),
         locked = board.locked.copyOf(),
         revealed = board.revealed.copyOf(),
+        sealedCells = board.sealedCells.copyOf(),
+        touched = board.touched.copyOf(),
+        hintsUsed = hintsUsed,
+        hintsAllowed = hintsAllowed,
         camera = camera
     )
 
@@ -366,7 +483,7 @@ class GameViewModel : ViewModel() {
      * s'appliquent. La restauration est silencieuse : ni son, ni
      * événement de victoire, ni compteur de connexité à comparer.
      */
-    fun restoreIfPending(spec: GameSpec?): Boolean {
+    fun restoreIfPending(spec: GameSpec?, hintPercent: Int = 10): Boolean {
         if (restored) return true
         restored = true
         if (spec == null) return false
@@ -377,12 +494,27 @@ class GameViewModel : ViewModel() {
         moves = spec.moves
         elapsedMs = spec.elapsedMs
         solverUsed = spec.solverUsed
+        hintsUsed = spec.hintsUsed
+        hintsAllowed = spec.hintsAllowed
+        if (hintsAllowed < 0) {
+            // Partie née avant le chantier (v4 ou moins) : le plafond
+            // est recalculé sur le mélange initial du plateau, en le
+            // régénérant proprement depuis la graine — pas sur l'état
+            // courant, qui dépend des coups déjà joués.
+            val pristine = Board.generate(
+                spec.skill, spec.width, spec.height, spec.generator, spec.seed,
+                forcedRoot = spec.root
+            )
+            hintsAllowed = Board.hintAllowance(misplacedTiles(pristine), hintPercent)
+        }
         solveQueue = spec.solveQueue.takeIf { it.isNotEmpty() }
             ?.let { ArrayDeque(it) }
         // Le curseur repart de rien : le premier tick de la file
         // restaurée posera la tuile de son coup (les coups déjà joués
         // ne se rejouent pas, le curseur n'a pas d'historique).
         solverFocusIndex = -1
+        hintFocusIndex = -1
+        ++hintPulseId
         lastConnectedCount = board.connectedCells().count { it }
         _uiState.value = refresh()
         return true
@@ -418,7 +550,8 @@ class GameViewModel : ViewModel() {
                         moves = moves,
                         seconds = (elapsedMs / 1000L).toInt(),
                         solverUsed = solverUsed,
-                        ntiles = board.size
+                        ntiles = board.size,
+                        hints = hintsUsed
                     )
                 )
             }
@@ -437,7 +570,10 @@ class GameViewModel : ViewModel() {
             solved = board.isSolved(),
             solverUsed = solverUsed,
             solving = solveQueue != null,
-            solverFocus = solverFocusIndex
+            solverFocus = solverFocusIndex,
+            hintRemaining = (hintsAllowed - hintsUsed).coerceAtLeast(0),
+            hintIndex = hintFocusIndex,
+            hintRequestId = hintPulseId
         )
     }
 

@@ -4,6 +4,8 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
+import android.widget.PopupMenu
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.edit
@@ -20,6 +22,7 @@ import net.chardons.netscramble2.databinding.ActivityMainBinding
 import net.chardons.netscramble2.game.GameSpec
 import net.chardons.netscramble2.game.Screen
 import net.chardons.netscramble2.game.Skill
+import net.chardons.netscramble2.ui.BoardView
 import net.chardons.netscramble2.ui.EdgeToEdge
 
 /**
@@ -39,6 +42,11 @@ class MainActivity : AppCompatActivity() {
     private var soundMode = SoundMode.FULL
     private var animEnabled = true
     private var lastSolving = false
+    private var lastHintRemaining = -1
+
+    /** Dernière génération de pulsation d'indice rendue (render). */
+    private var lastHintRequestId = 0
+    private var lastSolverFocus = -1
 
     /**
      * Page unique « Réglages » (refonte du 13 nov. 2026) : le niveau
@@ -58,7 +66,7 @@ class MainActivity : AppCompatActivity() {
         val previous = viewModel.uiState.value.skill
         if (skill != previous) {
             val (width, height) = boardSize(skill)
-            viewModel.newGame(skill, width, height)
+            viewModel.newGame(skill, width, height, Settings.loadHintPercent(this))
             showSkillHelpIfNeeded(skill, previous)
         }
     }
@@ -88,14 +96,14 @@ class MainActivity : AppCompatActivity() {
         val savedSpec = getSharedPreferences(Persistence.FILE, MODE_PRIVATE)
             .getString(Persistence.GAME_SPEC_KEY, null)
         val restoredSpec = GameSpec.decode(savedSpec)
-        if (viewModel.restoreIfPending(restoredSpec)) {
+        if (viewModel.restoreIfPending(restoredSpec, Settings.loadHintPercent(this))) {
             // Caméra de la sauvegarde : la vue la posera au premier
             // rendu du plateau restauré (emplacement + zoom d'avant
             // l'arrêt ; une v3 n'en a pas, la vue repose la sienne).
             binding.boardView.restoreCamera(restoredSpec?.camera)
         } else {
             val (width, height) = boardSize(Skill.NORMAL)
-            viewModel.newGame(Skill.NORMAL, width, height)
+            viewModel.newGame(Skill.NORMAL, width, height, Settings.loadHintPercent(this))
         }
 
         // Mode sonore persisté (même clé que l'original), puis lecteur.
@@ -174,7 +182,35 @@ class MainActivity : AppCompatActivity() {
             )[state.skill.ordinal]
         )
         binding.statusTime.text = getString(R.string.status_time, formatTime(state.elapsedMs))
-        // Le menu « Résoudre » devient « Arrêter le solveur » pendant le travail.
+        // Cadre vert de l'indice, (re)armé À LA DEMANDE seulement
+        // (retour UAT du 15 nov. 2026) : la pulsation vivait au rythme
+        // des publications du chrono (250 ms) — elle ne s'expire
+        // jamais, un appui répété ne se voit pas, et le comportement
+        // paraissait aléatoire au toucher. La vue garde maintenant la
+        // main : cinq secondes propres, touche du joueur comprise,
+        // chaque appui relance, le recentrage suit.
+        if (state.hintRequestId != lastHintRequestId) {
+            lastHintRequestId = state.hintRequestId
+            binding.boardView.showHint(state.hintIndex)
+            if (state.hintIndex >= 0) {
+                // VISIBLE, pas CENTER : un plateau entièrement
+                // visible ne bouge pas — la caméra ne recentre que si
+                // la tuile est hors de la vue (retour UAT du
+                // 15 nov. 2026 : le recentrage systématique déplaçait
+                // puis remettait le plateau en place).
+                binding.boardView.followCell(state.hintIndex, BoardView.FollowMode.VISIBLE)
+            }
+        }
+        if (state.solving && state.solverFocus >= 0 && state.solverFocus != lastSolverFocus) {
+            binding.boardView.followCell(state.solverFocus, BoardView.FollowMode.VISIBLE)
+        }
+        // Badge du plafond d'indices : il change à chaque indice
+        // consommé, le menu doit se représenter.
+        if (state.hintRemaining != lastHintRemaining) {
+            lastHintRemaining = state.hintRemaining
+            invalidateOptionsMenu()
+        }
+        // Le popup « Outils » titre son bouton solveur selon l'état.
         if (state.solving != lastSolving) {
             lastSolving = state.solving
             invalidateOptionsMenu()
@@ -243,17 +279,21 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
-        // Titre du solveur selon son état (démarré / arrêté).
-        menu.findItem(R.id.menu_solve)?.setTitle(
-            if (viewModel.uiState.value.solving) R.string.menu_stop_solve
-            else R.string.menu_solve
-        )
+        // Badge de l'indice (chantier Aide à la résolution) : « Indice
+        // (n) », n = plafond restant. Inactif une fois épuisé, ou
+        // résolu, ou pendant le passage du solveur — le bouton reste
+        // visible (always) : le joueur voit toujours son budget.
+        val state = viewModel.uiState.value
+        menu.findItem(R.id.menu_hint)?.title =
+            getString(R.string.menu_hint_count, state.hintRemaining)
+        menu.findItem(R.id.menu_hint)?.isEnabled =
+            !state.solving && !state.solved && state.hintRemaining > 0
         return super.onPrepareOptionsMenu(menu)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when {
-            item.itemId == R.id.menu_new -> {
+        return when (item.itemId) {
+            R.id.menu_new -> {
                 // Confirmation si une partie est en jeu (roadmap du
                 // 10 nov. 2026) : un clic malheureux sur le bouton
                 // « Nouvelle partie » ne doit plus perdre un plateau
@@ -264,11 +304,46 @@ class MainActivity : AppCompatActivity() {
                 ) {
                     val current = viewModel.uiState.value.skill
                     val (width, height) = boardSize(current)
-                    viewModel.newGame(current, width, height)
+                    viewModel.newGame(current, width, height, Settings.loadHintPercent(this))
                 }
                 true
             }
-            item.itemId == R.id.menu_settings -> {
+            R.id.menu_hint -> {
+                // Indice (chantier Aide à la résolution) : SIGNAL ou
+                // FIX selon le réglage. Chaque indice consommé est
+                // compté dans les statistiques de records.
+                val before = viewModel.uiState.value.hintRemaining
+                viewModel.onHint(Settings.loadHintStrategy(this))
+                val after = viewModel.uiState.value.hintRemaining
+                if (after < before) {
+                    scoresStore.addHintTiles(viewModel.uiState.value.skill, 1)
+                }
+                true
+            }
+            R.id.menu_tools -> {
+                // Popup « Outils » : le solveur et la démonstration y
+                // vivent désormais, le menu principal ne garde que le
+                // jeu et ses pages. Le titre du solveur suit son état
+                // (arrêt manuel possible depuis le popup).
+                val anchor = findViewById<View>(R.id.menu_tools) ?: binding.toolbar
+                val popup = PopupMenu(this, anchor)
+                popup.menuInflater.inflate(R.menu.menu_tools, popup.menu)
+                popup.menu.findItem(R.id.menu_solve)?.title =
+                    getString(
+                        if (viewModel.uiState.value.solving) R.string.menu_stop_solve
+                        else R.string.menu_solve
+                    )
+                popup.setOnMenuItemClickListener { picked -> onOptionsItemSelected(picked) }
+                popup.show()
+                true
+            }
+            R.id.menu_demo -> {
+                // Démonstration : plein écran, refermée au moindre
+                // toucher — la partie du joueur n'a pas bougé.
+                startActivity(Intent(this, DemoActivity::class.java))
+                true
+            }
+            R.id.menu_settings -> {
                 // Page unique « Réglages » : l'état courant du jeu
                 // passe à la page (niveau en cours, avancement) pour
                 // ses coches initiales et sa protection de niveau.
@@ -282,7 +357,7 @@ class MainActivity : AppCompatActivity() {
                 )
                 true
             }
-            item.itemId == R.id.menu_solve -> {
+            R.id.menu_solve -> {
                 val starting = !viewModel.uiState.value.solving
                 viewModel.toggleSolver()
                 if (starting) {
@@ -292,15 +367,15 @@ class MainActivity : AppCompatActivity() {
                 }
                 true
             }
-            item.itemId == R.id.menu_scores -> {
+            R.id.menu_scores -> {
                 startActivity(Intent(this, ScoresActivity::class.java))
                 true
             }
-            item.itemId == R.id.menu_help -> {
+            R.id.menu_help -> {
                 startActivity(Intent(this, HelpActivity::class.java))
                 true
             }
-            item.itemId == R.id.menu_about -> {
+            R.id.menu_about -> {
                 // Refonte du 14 nov. 2026 : la fenêtre de
                 // dialogue devient la page autonome
                 // AboutActivity (participation, licence,
@@ -321,7 +396,7 @@ class MainActivity : AppCompatActivity() {
     private fun showWinDialog(event: WinEvent) {
         if (event.solverUsed) return
         val result = scoresStore.register(
-            event.skill, event.ntiles, event.moves, event.seconds
+            event.skill, event.ntiles, event.moves, event.seconds, event.hints
         )
         val recordMessage = when (result) {
             ScoresStore.Result.BEST_MOVES -> R.string.best_moves_text
@@ -341,7 +416,7 @@ class MainActivity : AppCompatActivity() {
             .setPositiveButton(R.string.win_new) { _, _ ->
                 val current = viewModel.uiState.value.skill
                 val (width, height) = boardSize(current)
-                viewModel.newGame(current, width, height)
+                viewModel.newGame(current, width, height, Settings.loadHintPercent(this))
             }
             .setNegativeButton(R.string.win_continue, null)
             .show()
