@@ -394,13 +394,13 @@ check("SettingsActivity : radios 5–50 portées au runtime via hint_limit_value
       and "hintPercentFor" in sc)
 check("SettingsActivity : la radio 0 porte hint_limit_zero, pas les autres",
       layout_settings.count('@string/hint_limit_zero') == 1)
-check("Layout réglages : 56 radios MaterialRadioButton maxWidth 320dp",
-      layout_settings.count('android:maxWidth="320dp"') == 56,
+check("Layout réglages : 55 radios MaterialRadioButton maxWidth 320dp",
+      layout_settings.count('android:maxWidth="320dp"') == 55,
       f"trouvé {layout_settings.count('android:maxWidth=' + chr(34) + '320dp' + chr(34))}")
 check("Layout réglages : 10 RadioGroups au total",
       layout_settings.count("<RadioGroup") == 10)
 for gid, n in [("hint_strategy_group", 2), ("hint_limit_group", 11), ("demo_diff_group", 3),
-               ("demo_skill_group", 8), ("demo_zoom_group", 4), ("demo_speed_group", 4)]:
+               ("demo_skill_group", 8), ("demo_zoom_group", 4), ("demo_speed_group", 3)]:
     m = re.search(rf'@\+id/{gid}"[\s\S]*?</RadioGroup>', layout_settings)
     check(f"Layout réglages : {gid} porte {n} radios",
           m is not None and m.group(0).count("<com.google.android.material.radiobutton.MaterialRadioButton") == n)
@@ -454,8 +454,9 @@ check("Manifeste : DemoActivity non exportée, étiquette et parent",
 # ---------------------------------------------------------------------------
 check("Demo : DemoDifficulty FIXED/RANDOM/PROGRESSIVE",
       "enum class DemoDifficulty { FIXED, RANDOM, PROGRESSIVE }" in dm)
-check("Demo : DemoSpeed 500/250/100/30 ms",
-      "SLOW(500)" in dm and "NORMAL(250)" in dm and "FAST(100)" in dm and "LIGHTNING(30)" in dm)
+check("Demo : DemoSpeed 500/250/100 ms, Éclair RETIRÉ (v5, retour d'eric)",
+      "SLOW(500)" in dm and "NORMAL(250)" in dm and "FAST(100)" in dm
+      and "LIGHTNING" not in dm and "demo_speed_lightning" not in dm)
 check("Demo : DemoZoom FIT/×1,5/×2/×3 (multiplicateurs 1/1,5/2/3)",
       "FIT(1f)" in dm and "X1_5(1.5f)" in dm and "X2(2f)" in dm and "X3(3f)" in dm)
 check("DemoViewModel : pause victoire 1,5 s",
@@ -501,11 +502,17 @@ hint_keys = ["menu_hint", "menu_hint_count", "menu_tools", "menu_demo",
              "demo_diff_random", "demo_diff_progressive", "demo_skill_title",
              "demo_zoom_title", "demo_zoom_fit", "demo_zoom_x15", "demo_zoom_x2",
              "demo_zoom_x3", "demo_speed_title", "demo_speed_slow",
-             "demo_speed_normal", "demo_speed_fast", "demo_speed_lightning",
+             "demo_speed_normal", "demo_speed_fast",
              "hints_section", "hints_total", "hints_none", "hints_n",
              "hints_column_tiles", "demo_touch_return"]
 for k in hint_keys:
     check(f"Strings EN+FR : {k}", f'name="{k}"' in strings_en and f'name="{k}"' in strings_fr)
+# V5 (retour d'eric du 15 nov. 2026) : la radio Éclair est retirée
+# du layout ET des strings — plus de chaîne orpheline.
+check("Strings : la radio Éclair est retirée (v5, retour d'eric)",
+      'demo_speed_lightning' not in strings_en
+      and 'demo_speed_lightning' not in strings_fr
+      and 'demo_speed_lightning' not in layout_settings)
 en_keys = set(re.findall(r'<string name="([a-z_0-9]+)"', strings_en))
 fr_keys = set(re.findall(r'<string name="([a-z_0-9]+)"', strings_fr))
 check("Strings : EN et FR portent exactement les mêmes clés", en_keys == fr_keys,
@@ -522,7 +529,8 @@ check("Strings EN : apostrophes droites échappées dans les éléments",
 # ---------------------------------------------------------------------------
 check("HintTest : présent, porte priorités, plafond, scellement, démo",
       "hintTarget" in hint_test and "hintAllowance" in hint_test
-      and "sealed" in hint_test.lower() and "DemoSpeed" in hint_test)
+      and "sealed" in hint_test.lower() and "DemoSpeed" in hint_test
+      and "LIGHTNING" not in hint_test)
 check("HintTest : au moins 10 tests",
       count(hint_test, "@Test") >= 10)
 check("GameSpecTest : format v5 (22 champs, préfixe v5)",

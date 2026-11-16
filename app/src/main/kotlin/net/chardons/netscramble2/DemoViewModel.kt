@@ -88,6 +88,9 @@ class DemoViewModel : ViewModel() {
     /** Départ de la pause de célébration, 0 si pas en célébration. */
     private var celebrateStartMs = 0L
 
+    /** Effet d'intermède autorisé : le réglage Animation en décide. */
+    private var effectsEnabled = true
+
     /** Démonstration gelée quand l'app n'est plus visible. */
     private var paused = false
 
@@ -131,6 +134,11 @@ class DemoViewModel : ViewModel() {
         paused = p
     }
 
+    /** L'activité annonce le réglage Animation : avec ou sans intermède. */
+    fun setEffectsEnabled(enabled: Boolean) {
+        effectsEnabled = enabled
+    }
+
     /**
      * Un pas de la boucle : la célébration attend sa fin puis passe
      * au plateau suivant ; sinon UN coup de solveur — déverrouiller
@@ -140,7 +148,11 @@ class DemoViewModel : ViewModel() {
     private fun step() {
         val b = board ?: return
         if (celebrateStartMs != 0L) {
-            if (System.currentTimeMillis() - celebrateStartMs >= WIN_PAUSE_MS) {
+            // Intermède (chantier « Effets spéciaux de réussite ») :
+            // la pause vaut l'effet tiré au sort — 4,5 s — quand les
+            // animations vivent ; repli sur la pause seule sinon.
+            val pauseMs = if (effectsEnabled) VictoryEffects.EFFECT_MS else WIN_PAUSE_MS
+            if (System.currentTimeMillis() - celebrateStartMs >= pauseMs) {
                 celebrateStartMs = 0L
                 nextBoard()
             }

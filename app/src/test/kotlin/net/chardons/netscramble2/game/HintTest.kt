@@ -175,7 +175,8 @@ class HintTest {
         assertEquals(500, DemoSpeed.SLOW.delayMs)
         assertEquals(250, DemoSpeed.NORMAL.delayMs)
         assertEquals(100, DemoSpeed.FAST.delayMs)
-        assertEquals(30, DemoSpeed.LIGHTNING.delayMs)
+        // V5 (retour d'eric du 15 nov. 2026) : le rythme Éclair
+        // (30 ms) est retiré du jeu — plus d'assertion ici.
         // Zoom : multiplicateur du plancher (1 = ajusté à l'écran).
         assertEquals(1f, DemoZoom.FIT.multiplier)
         assertEquals(1.5f, DemoZoom.X1_5.multiplier)

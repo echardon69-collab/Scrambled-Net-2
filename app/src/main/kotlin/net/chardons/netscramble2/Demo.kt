@@ -25,13 +25,14 @@ enum class DemoDifficulty { FIXED, RANDOM, PROGRESSIVE }
 /**
  * Rythme de la démonstration : délai entre deux coups du solveur,
  * en millisecondes. NORMAL reprend le tick du solveur du jeu
- * (250 ms) ; LIGHTNING défile presque sans s'arrêter.
+ * (250 ms). V5 (retour d'eric du 15 nov. 2026) : le rythme Éclair
+ * (30 ms) est retiré — défilement illisible ; une sauvegarde qui le
+ * désigne encore retombe sur NORMAL sans crash (Settings, repli).
  */
 enum class DemoSpeed(val delayMs: Long) {
     SLOW(500),
     NORMAL(250),
-    FAST(100),
-    LIGHTNING(30)
+    FAST(100)
 }
 
 /**

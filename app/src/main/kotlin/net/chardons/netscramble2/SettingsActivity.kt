@@ -152,7 +152,9 @@ class SettingsActivity : AppCompatActivity() {
                 DemoSpeed.SLOW -> R.id.demo_speed_slow
                 DemoSpeed.NORMAL -> R.id.demo_speed_normal
                 DemoSpeed.FAST -> R.id.demo_speed_fast
-                DemoSpeed.LIGHTNING -> R.id.demo_speed_lightning
+                // V5 (retour d'eric) : Éclair retiré — une sauvegarde
+                // ancienne qui le désigne retombe sur la coche NORMAL.
+                else -> R.id.demo_speed_normal
             }
         )
 
@@ -229,7 +231,6 @@ class SettingsActivity : AppCompatActivity() {
                 when (checkedId) {
                     R.id.demo_speed_slow -> DemoSpeed.SLOW
                     R.id.demo_speed_fast -> DemoSpeed.FAST
-                    R.id.demo_speed_lightning -> DemoSpeed.LIGHTNING
                     else -> DemoSpeed.NORMAL
                 }
             )

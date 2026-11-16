@@ -145,7 +145,6 @@
     <string name="demo_speed_slow">Slow</string>
     <string name="demo_speed_normal">Normal</string>
     <string name="demo_speed_fast">Fast</string>
-    <string name="demo_speed_lightning">Lightning</string>
     <string name="hints_section">Hints</string>
     <string name="hints_total">Hint tiles used: %1$d</string>
     <string name="hints_none">no hint</string>

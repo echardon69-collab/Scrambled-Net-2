@@ -48,6 +48,10 @@ class MainActivity : AppCompatActivity() {
     private var lastHintRequestId = 0
     private var lastSolverFocus = -1
 
+    // Chantier « Effets spéciaux de réussite » : victoire sans aide
+    // en attente de la fin de l'effet (le dialogue arrive ensuite).
+    private var pendingWinEvent: WinEvent? = null
+
     /**
      * Page unique « Réglages » (refonte du 13 nov. 2026) : le niveau
      * de difficulté CHOISI revient ici en résultat — même circuit que
@@ -117,6 +121,12 @@ class MainActivity : AppCompatActivity() {
 
         binding.boardView.onCellTapped = { viewModel.onCellTapped(it) }
         binding.boardView.onCellLongPressed = { viewModel.onCellLongPressed(it) }
+        binding.boardView.onVictoryEffectFinished = {
+            pendingWinEvent?.let { event ->
+                pendingWinEvent = null
+                showWinDialog(event)
+            }
+        }
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -134,7 +144,7 @@ class MainActivity : AppCompatActivity() {
         // Victoire : enregistre les records et montre le dialogue.
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.winEvents.collect { event -> showWinDialog(event) }
+                viewModel.winEvents.collect { event -> onVictory(event) }
             }
         }
     }
@@ -385,6 +395,22 @@ class MainActivity : AppCompatActivity() {
             }
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    /**
+     * Gâchette des effets de réussite (chantier « Effets spéciaux de
+     * réussite », spec validée par eric) : victoire SANS aide — zéro
+     * indice et solveur non utilisé — ET réglage Animation actif :
+     * un effet tiré au sort célèbre, le dialogue attend sa fin.
+     * Sinon, comportement d'origine : le dialogue arrive direct.
+     */
+    private fun onVictory(event: WinEvent) {
+        if (event.solverUsed || event.hints > 0 || !animEnabled) {
+            showWinDialog(event)
+            return
+        }
+        pendingWinEvent = event
+        binding.boardView.playVictoryEffect(VictoryEffects.pick())
     }
 
     /**

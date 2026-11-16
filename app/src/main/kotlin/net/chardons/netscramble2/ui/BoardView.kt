@@ -14,6 +14,9 @@ import android.view.ScaleGestureDetector
 import android.view.View
 import androidx.core.content.ContextCompat
 import net.chardons.netscramble2.R
+import net.chardons.netscramble2.VictoryEffect
+import net.chardons.netscramble2.VictoryEffects
+import net.chardons.netscramble2.VictoryFirework
 import net.chardons.netscramble2.game.BlipField
 import net.chardons.netscramble2.game.Board
 import net.chardons.netscramble2.game.CameraSpec
@@ -26,6 +29,7 @@ import net.chardons.netscramble2.game.Skill
 import kotlin.math.ceil
 import kotlin.math.cos
 import kotlin.math.floor
+import kotlin.math.hypot
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
@@ -334,11 +338,28 @@ class BoardView @JvmOverloads constructor(
     private var panTargetY = 0f
     private var panAnimStartMs = 0L
 
+    // --- Chantier « Effets spéciaux de réussite » (15 nov. 2026) ---
+    /** Effet en cours, null aucun : victoire sans aide ou intermède de la démo. */
+    private var victoryEffect: VictoryEffect? = null
+    /** Départ de l'effet (elapsedRealtime) : 4,5 s, skip au toucher. */
+    private var victoryStartMs = 0L
+    /** Origine de la vague, HORS de la zone visible (côté tiré au sort). */
+    private var waveOriginX = 0f
+    private var waveOriginY = 0f
+    /** Vitesse du front, posée depuis le modèle pur. */
+    private var waveSpeedPx = 0f
+    /** Feu d'artifice en cours (simulation pure, jamais sérialisée). */
+    private var firework: VictoryFirework? = null
+    /** Prévenu à la fin de l'effet : le dialogue de victoire attendait. */
+    var onVictoryEffectFinished: (() -> Unit)? = null
+
     // --- Peintures (allouées une seule fois, jamais dans onDraw) ---
     private val boardPaint = Paint()
     private val fogPaint = Paint()
     private val blipPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val termPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val victoryShadowPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val victorySparkPaint = Paint(Paint.ANTI_ALIAS_FLAG)
 
     // --- Drawables câbles : 5 formes de base seulement (droit, coude,
     //     T, croix, bout — le masque 0 n'a pas de forme : une cellule
@@ -414,6 +435,10 @@ class BoardView @JvmOverloads constructor(
     init {
         boardPaint.style = Paint.Style.FILL
         fogPaint.style = Paint.Style.FILL
+        // Effet de réussite : ombre au sol de la vague, opaque —
+        // l'alpha suit le soulèvement, à chaque dessin.
+        victoryShadowPaint.style = Paint.Style.FILL
+        victoryShadowPaint.color = 0xFF101820.toInt()
         // Les drawables de formes (normales et grises) sont déjà
         // chargés au moment de leur déclaration ; ils ne portent plus
         // de filtre de couleur, la variante grise est un drawable
@@ -549,6 +574,11 @@ class BoardView @JvmOverloads constructor(
             // Plateau neuf : aucune tuile manipulée à cligner.
             lastTurnedCell = -1
             freshBoard = true
+            // L'effet de réussite ne survit PAS au plateau suivant :
+            // annulation MUETTE, sans prévenir l'écouteur — le
+            // dialogue éventuel suivra la victoire suivante.
+            victoryEffect = null
+            firework = null
         } else {
             // Détection des rotations survenues depuis le dernier rendu :
             // chaque delta devient une animation de delta × 90°, et fait
@@ -945,6 +975,12 @@ class BoardView @JvmOverloads constructor(
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
+        // Effet de réussite en cours : tout toucher le termine (skip,
+        // décision d'eric) — un plateau résolu n'a rien à perdre.
+        if (victoryEffect != null) {
+            endVictoryEffect()
+            return true
+        }
         zoomDetector.onTouchEvent(event)
         if (!zoomDetector.isInProgress) tapDetector.onTouchEvent(event)
         return true
@@ -1095,7 +1131,7 @@ class BoardView @JvmOverloads constructor(
                         if (fog != null && !fog[index] && index != hintIndex) {
                             drawFogCell(wx * cellPx, wy * cellPx)
                         } else {
-                            drawBoardCell(
+                            drawVictoryCell(
                                 b, connected, appearanceFrozen, serverWired,
                                 solved, now, index, wx * cellPx, wy * cellPx
                             )
@@ -1105,7 +1141,7 @@ class BoardView @JvmOverloads constructor(
             } else {
                 for (y in 0 until b.height) {
                     for (x in 0 until b.width) {
-                        drawBoardCell(
+                        drawVictoryCell(
                             b, connected, appearanceFrozen, serverWired,
                             solved, now,
                             y * b.width + x, x * cellPx, y * cellPx
@@ -1180,6 +1216,16 @@ class BoardView @JvmOverloads constructor(
             }
         }
 
+        // Chantier « Effets spéciaux de réussite » : le feu d'artifice
+        // vit AU-DESSUS du plateau (repère écran, monde + pan) — la
+        // vague, elle, agit dans la passe cellulaire. Puis la fin du
+        // temps : profil partout nul, étincelles mortes — l'effet
+        // s'arrête net et prévient l'activité (dialogue en attente).
+        canvas.drawFireworkOverlay(now)
+        if (victoryEffect != null && now - victoryStartMs >= VictoryEffects.EFFECT_MS) {
+            endVictoryEffect()
+        }
+
         // M2 : tant que la vue est affichée, demander la trame suivante
         // (rotations en cours, blips). C'est l'équivalent de la boucle
         // permanente de l'original (setDelay(30)), mais arrêté
@@ -1198,6 +1244,164 @@ class BoardView @JvmOverloads constructor(
         }
         if (panAnimating) {
             postInvalidateOnAnimation()
+        }
+        // Chantier « Effets spéciaux de réussite » : l'effet vit
+        // jusqu'à son terme — ou son skip au toucher.
+        if (victoryEffect != null) {
+            postInvalidateOnAnimation()
+        }
+    }
+
+    /**
+     * Joue l'effet de réussite [effect], tiré au sort par l'activité
+     * (spec validée par eric : 4,5 s, skip au toucher, dialogue en
+     * attente de la fin). La vague part d'un point HORS de la zone
+     * visible — côté tiré au sort, marge de 0,2 fois le petit côté —
+     * et traverse la fenêtre en soulevant TOUT le plateau visible
+     * (onde de choc) ; le feu d'artifice tire ses fusées du bas de
+     * la zone. L'effet vit dans le repère du pan (monde), borné à
+     * la fenêtre visible : la famille Infini ne paie que l'écran.
+     */
+    fun playVictoryEffect(effect: VictoryEffect) {
+        if (board == null) return
+        victoryEffect = effect
+        victoryStartMs = SystemClock.elapsedRealtime()
+        firework = null
+        val worldLeft = -panX
+        val worldTop = -panY
+        val worldW = width.toFloat()
+        val worldH = height.toFloat()
+        if (effect == VictoryEffect.WAVE) {
+            val margin = 0.2f * minOf(width, height)
+            when (rng.nextInt(4)) {
+                0 -> {
+                    waveOriginX = worldLeft + rng.nextFloat() * worldW
+                    waveOriginY = worldTop - margin
+                }
+                1 -> {
+                    waveOriginX = worldLeft + worldW + margin
+                    waveOriginY = worldTop + rng.nextFloat() * worldH
+                }
+                2 -> {
+                    waveOriginX = worldLeft + rng.nextFloat() * worldW
+                    waveOriginY = worldTop + worldH + margin
+                }
+                else -> {
+                    waveOriginX = worldLeft - margin
+                    waveOriginY = worldTop + rng.nextFloat() * worldH
+                }
+            }
+            waveSpeedPx = VictoryEffects.waveSpeed(worldW, worldH)
+        } else {
+            waveSpeedPx = 0f
+            firework = VictoryFirework(victoryStartMs, worldW, worldH)
+        }
+        postInvalidateOnAnimation()
+    }
+
+    /**
+     * Termine l'effet en cours — temps écoulé ou contact (skip au
+     * toucher, décision d'eric) — et prévient l'écouteur : le
+     * dialogue de victoire attendait cette fin. L'annulation par un
+     * plateau NOUVEAU (update) ne passe pas ici : elle est muette,
+     * le dialogue éventuel suivra la victoire suivante.
+     */
+    private fun endVictoryEffect() {
+        if (victoryEffect == null) return
+        victoryEffect = null
+        firework = null
+        postInvalidateOnAnimation()
+        onVictoryEffectFinished?.invoke()
+    }
+
+    /**
+     * Soulèvement de la tuile par la vague, en pixels de monde :
+     * cloche du profil autour du front, ramenée à une fraction de
+     * la taille de case. Nul hors vague, nul une fois le front
+     * passé — la fin de l'effet ne saute jamais.
+     */
+    private fun waveLiftPx(now: Long, left: Float, top: Float): Float {
+        if (victoryEffect != VictoryEffect.WAVE) return 0f
+        val front = waveSpeedPx * ((now - victoryStartMs).coerceAtLeast(0L) / 1000f)
+        val dx = (left + cellPx / 2f) - waveOriginX
+        val dy = (top + cellPx / 2f) - waveOriginY
+        return VictoryEffects.waveProfile(hypot(dx, dy) - front, cellPx) *
+            VictoryEffects.WAVE_LIFT_CELLS * cellPx
+    }
+
+    /**
+     * Passe cellulaire des effets de réussite : pendant la vague, la
+     * tuile se lève au passage du front — translation, léger
+     * grossissement, ombre au sol à l'emplacement de base — et le
+     * corps du dessin ([drawBoardCell]) n'y change pas d'un iota ;
+     * sans soulèvement, dessin direct. Les deux régimes d'itération
+     * (fenêtre visible modulo, plateau entier) passent ici.
+     */
+    private fun Canvas.drawVictoryCell(
+        b: Board,
+        connected: BooleanArray,
+        appearanceFrozen: Boolean,
+        serverWired: Boolean,
+        solved: Boolean,
+        now: Long,
+        index: Int,
+        left: Float,
+        top: Float
+    ) {
+        val lift = waveLiftPx(now, left, top)
+        if (lift <= 0f) {
+            drawBoardCell(b, connected, appearanceFrozen, serverWired, solved, now, index, left, top)
+            return
+        }
+        val t = (lift / (VictoryEffects.WAVE_LIFT_CELLS * cellPx)).coerceIn(0f, 1f)
+        victoryShadowPaint.alpha = (t * 130f).toInt()
+        drawRect(left, top, left + cellPx, top + cellPx, victoryShadowPaint)
+        withTranslation(0f, -lift) {
+            withSave {
+                val cx = left + cellPx / 2f
+                val cy = top + cellPx / 2f
+                val scale = 1f + VictoryEffects.WAVE_SCALE_FRACTION * t
+                translate(cx, cy)
+                scale(scale, scale)
+                translate(-cx, -cy)
+                drawBoardCell(b, connected, appearanceFrozen, serverWired, solved, now, index, left, top)
+            }
+        }
+    }
+
+    /**
+     * Feu d'artifice : fusées (trace claire) puis gerbes d'étincelles
+     * colorées, AU-DESSUS du plateau, dessinées dans le repère ÉCRAN
+     * — positions monde + pan. La simulation avance ici, une fois
+     * par trame ; peintures et pool pré-alloués : zéro allocation
+     * par trame, jamais de lambda dans la boucle.
+     */
+    private fun Canvas.drawFireworkOverlay(now: Long) {
+        val fw = firework ?: return
+        if (victoryEffect != VictoryEffect.FIREWORK) return
+        fw.step(now)
+        victorySparkPaint.style = Paint.Style.STROKE
+        victorySparkPaint.strokeWidth = FIREWORK_STROKE_DP * screenDensity
+        victorySparkPaint.strokeCap = Paint.Cap.ROUND
+        for (i in 0 until fw.rocketCount()) {
+            if (!fw.rocketVisible(i, now)) continue
+            victorySparkPaint.color = ROCKET_COLOR
+            victorySparkPaint.alpha = 230
+            drawLine(
+                fw.rocketX(i) + panX, fw.rocketY(i, now) + panY,
+                fw.rocketX(i) + panX, fw.rocketTrailY(i, now) + panY,
+                victorySparkPaint
+            )
+        }
+        for (j in 0 until fw.sparkSlots()) {
+            if (!fw.isAlive(j)) continue
+            victorySparkPaint.color = fw.sparkColor(j)
+            victorySparkPaint.alpha = fw.sparkAlpha(j, now)
+            drawLine(
+                fw.sparkX(j) + panX, fw.sparkY(j) + panY,
+                fw.sparkTrailX(j) + panX, fw.sparkTrailY(j) + panY,
+                victorySparkPaint
+            )
         }
     }
 
@@ -1537,6 +1741,13 @@ class BoardView @JvmOverloads constructor(
 
         /** Rouge translucide du curseur de focus : 38 pour cent d'opacité. */
         private const val FOCUS_RED = 0x60FF0000
+
+        // --- Effets spéciaux de réussite (15 nov. 2026) ---
+        /** Trait des étincelles et fusées du feu d'artifice : 4 dp. */
+        private const val FIREWORK_STROKE_DP = 4f
+
+        /** Trace des fusées, plus vive que les étincelles. */
+        private const val ROCKET_COLOR = 0xFFF6F0D8.toInt()
 
         /** Tuiles grises encadrant le plateau (au moins une, et le pan
          *  s'arrête dessus : la limite du plateau est toujours visible). */

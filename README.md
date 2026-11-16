@@ -117,4 +117,14 @@ Feuille de route (validée)
 - Aide à la résolution : Indice (plafond paramétrable, informatif ou
   correctif) + Résoudre sous Outils + Démonstration en boucle
   (difficulté, zoom, rythme) (livré le 15 nov. 2026)
+- Effets spéciaux de réussite : animation de récompense à la
+  victoire d'un plateau résolu sans aide — vague 2.5D (onde de choc
+  qui soulève les tuiles, origine hors de la zone visible) ou
+  feu d'artifice (fusées depuis le bas de la zone), tirés au sort, 4,5 s,
+  dialogue de victoire en attente, skip au toucher — et intermède
+  entre les plateaux de la démonstration (il remplace la pause de
+  1,5 s ; repli sur la pause si l'animation est coupée). Absorbe
+  l'ancien sujet « animation vague de tuiles à la victoire »
+  (nouveauté SN2, liberté totale de design) ; l'explosion du plateau est reportée
+  en V2 (livré le 15 nov. 2026)
 - Phase bonus : seed partageable, undo, tailles custom, thèmes daltoniens

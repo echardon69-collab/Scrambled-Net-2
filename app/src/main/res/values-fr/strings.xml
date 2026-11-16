@@ -146,7 +146,6 @@
     <string name="demo_speed_slow">Lent</string>
     <string name="demo_speed_normal">Normal</string>
     <string name="demo_speed_fast">Rapide</string>
-    <string name="demo_speed_lightning">Éclair</string>
     <string name="hints_section">Indices</string>
     <string name="hints_total">Tuiles traitées par l\'indice : %1$d</string>
     <string name="hints_none">sans indice</string>

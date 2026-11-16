@@ -45,6 +45,12 @@ class DemoActivity : AppCompatActivity() {
     /** Indication « Touchez pour revenir » : ~4 secondes puis fondu. */
     private var hintShown = false
 
+    /** Effets de réussite : le réglage Animation décide de l'intermède. */
+    private var effectsEnabled = true
+
+    /** Dernier état résolu rendu : le passage à résolu déclenche l'effet. */
+    private var lastSolved = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         EdgeToEdge.apply(window)
@@ -53,7 +59,13 @@ class DemoActivity : AppCompatActivity() {
         EdgeToEdge.padSystemBars(binding.demoBoard, top = true, bottom = true)
 
         viewModel = ViewModelProvider(this)[DemoViewModel::class.java]
-        binding.demoBoard.blipsEnabled = Settings.loadAnimEnabled(this)
+        // Réglage « Animation », lu UNE fois : il porte les blips ET
+        // l'intermède de victoire — repli sur la pause seule (1,5 s)
+        // quand il est coupé ; le modèle en est averti.
+        val anim = Settings.loadAnimEnabled(this)
+        binding.demoBoard.blipsEnabled = anim
+        effectsEnabled = anim
+        viewModel.setEffectsEnabled(anim)
 
         // Les dimensions viennent de la même matrice Screen que le
         // jeu (la famille Infini y est fixe 40 x 40).
@@ -132,6 +144,8 @@ class DemoActivity : AppCompatActivity() {
             binding.demoBoard.applyZoomPreset(
                 Settings.loadDemoZoom(this).multiplier
             )
+            // Plateau neuf : le suivi de victoire repart de zéro.
+            lastSolved = false
         }
         binding.demoBoard.solverFocus = state.focus
         binding.demoBoard.update(board, state.connected ?: return, state.solved)
@@ -140,6 +154,15 @@ class DemoActivity : AppCompatActivity() {
         if (state.focus >= 0) {
             binding.demoBoard.followCell(state.focus, BoardView.FollowMode.VISIBLE)
         }
+        // Intermède (chantier « Effets spéciaux de réussite ») : la
+        // victoire d'un plateau de la démo — toujours sans aide —
+        // célèbre d'un effet tiré au sort ; la pause du modèle vaut
+        // l'effet (4,5 s) quand les animations vivent, 1,5 s sinon.
+        // Toucher l'écran referme déjà la démo : skip naturel.
+        if (state.solved && !lastSolved && effectsEnabled) {
+            binding.demoBoard.playVictoryEffect(VictoryEffects.pick())
+        }
+        lastSolved = state.solved
     }
 
     /**
