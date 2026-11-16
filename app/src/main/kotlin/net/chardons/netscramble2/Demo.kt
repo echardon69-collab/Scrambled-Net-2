@@ -36,18 +36,6 @@ enum class DemoSpeed(val delayMs: Long) {
 }
 
 /**
- * Zoom de la démonstration : multiplicateur du plancher de dézoom.
- * FIT (1f) ajuste le plateau à la vue ; au-delà, la vue cadre plus
- * serré et suit le solveur (caméra à hystérésis).
- */
-enum class DemoZoom(val multiplier: Float) {
-    FIT(1f),
-    X1_5(1.5f),
-    X2(2f),
-    X3(3f)
-}
-
-/**
  * Prochain coup JOUABLE de la démonstration (retours utilisateurs
  * du 16 nov. 2026, lot 2) : la TÊTE de la file si elle est visible,
  * sinon la file tourne — chaque tuile invisible repasse en FIN de

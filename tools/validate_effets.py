@@ -166,6 +166,13 @@ check("BoardView : ni SurfaceView, ni OpenGL — Canvas 2D et faux relief",
       and "GLSurface" not in bv)
 check("BoardView : aucune ressource ajoutée pour les effets",
       "R.drawable.victory" not in bv and "R.color.victory" not in bv)
+# V10 (retour utilisateur du 16 nov. 2026) : pendant la vague, les
+# billes restaient au sol pendant que les tuiles se soulevaient —
+# affichées hors des connecteurs. La passe des blips reçoit le même
+# lift que la passe des cellules.
+check("BoardView : vague — les billes suivent les tuiles soulevées (v10)",
+      count(bv, "top - waveLiftPx(now, left, top)") == 2
+      and count(bv, "drawCellBlips(") == 3)
 
 print()
 print("=== MainActivity : gâchette, dialogue en attente ===")

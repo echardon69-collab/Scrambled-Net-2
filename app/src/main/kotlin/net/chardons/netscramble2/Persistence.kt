@@ -53,9 +53,6 @@ object Persistence {
      */
     const val DEMO_SKILL_SET_KEY = "demoSkillSet"
 
-    /** Clé du zoom de la démonstration (multiplicateur du plancher). */
-    const val DEMO_ZOOM_KEY = "demoZoom"
-
     /** Clé du rythme de la démonstration (délai par coup du solveur). */
     const val DEMO_SPEED_KEY = "demoSpeed"
 }

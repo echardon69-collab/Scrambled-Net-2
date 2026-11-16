@@ -154,7 +154,13 @@ Feuille de route (validée)
   correctif ; les niveaux de la démonstration se cochent
   (plusieurs niveaux possibles, Novice par défaut, toujours au
   moins une coche, radios Aléatoire/Progressif grisées à coche
-  unique, Progressif par défaut) (livré le 16 nov. 2026)
+  unique, Progressif par défaut) ; quatrième lot — le réglage de
+  zoom de la démonstration est retiré (cadrage TOUJOURS ajusté,
+  appliqué dès le PREMIER plateau : le préréglage posé avant la
+  première mesure attend le premier layout) et les billes de la
+  vague de victoire suivent les tuiles soulevées (même soulèvement
+  que la passe des cellules, plus de billes hors des connecteurs)
+  (livré le 16 nov. 2026)
 - ID unique par plateau : identifiant généré par plateau, porte
   le partage de la graine (absorbe l'ancien sujet « seed
   partageable ») ; utilisation exacte à préciser : partage,

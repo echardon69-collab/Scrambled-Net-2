@@ -135,11 +135,6 @@
     <string name="demo_diff_random">Random</string>
     <string name="demo_diff_progressive">Progressive</string>
     <string name="demo_skill_title">Levels</string>
-    <string name="demo_zoom_title">Zoom</string>
-    <string name="demo_zoom_fit">Fit</string>
-    <string name="demo_zoom_x15">1.5×</string>
-    <string name="demo_zoom_x2">2×</string>
-    <string name="demo_zoom_x3">3×</string>
     <string name="demo_speed_title">Speed</string>
     <string name="demo_speed_slow">Slow</string>
     <string name="demo_speed_normal">Normal</string>

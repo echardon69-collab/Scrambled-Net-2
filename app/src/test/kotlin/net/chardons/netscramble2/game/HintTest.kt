@@ -1,7 +1,6 @@
 package net.chardons.netscramble2.game
 
 import net.chardons.netscramble2.DemoSpeed
-import net.chardons.netscramble2.DemoZoom
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -177,11 +176,8 @@ class HintTest {
         assertEquals(100, DemoSpeed.FAST.delayMs)
         // V5 (retour d'eric du 15 nov. 2026) : le rythme Éclair
         // (30 ms) est retiré du jeu — plus d'assertion ici.
-        // Zoom : multiplicateur du plancher (1 = ajusté à l'écran).
-        assertEquals(1f, DemoZoom.FIT.multiplier)
-        assertEquals(1.5f, DemoZoom.X1_5.multiplier)
-        assertEquals(2f, DemoZoom.X2.multiplier)
-        assertEquals(3f, DemoZoom.X3.multiplier)
+        // V10 (retour utilisateur du 16 nov. 2026) : le réglage de
+        // zoom de la démo est retiré — cadrage TOUJOURS ajusté.
     }
 
     @Test

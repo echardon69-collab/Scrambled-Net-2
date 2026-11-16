@@ -290,6 +290,16 @@ class BoardView @JvmOverloads constructor(
     private var arrivalCameraPending = false
 
     /**
+     * Préréglage de zoom de la démo posé AVANT la première mesure
+     * (v10) : la vue n'a pas encore de dimensions, le cadrage attend
+     * le premier onSizeChanged — même mécanique que la caméra
+     * d'arrivée ci-dessus. Sans lui, le cadrage posé au démarrage de
+     * la démo était perdu au premier plateau (retour utilisateur du
+     * 16 nov. 2026).
+     */
+    private var zoomPresetPending = 0f
+
+    /**
      * Photographie de la caméra COURANTE (position du centre de la
      * vue en cellules + zoom), pour la persistance : la partie
      * reprendra là où le joueur regardait, au zoom qu'il avait
@@ -713,6 +723,15 @@ class BoardView @JvmOverloads constructor(
             arrivalCameraPending = false
             applyArrivalCamera(solved)
         }
+        if (zoomPresetPending > 0f) {
+            // Premier layout terminé : le préréglage de zoom de la
+            // démo posé avant mesure se pose MAINTENANT, après le
+            // fitBoard ET la caméra d'arrivée (le Néant garde sa
+            // zone révélée cadrée, comme en cours de partie).
+            val pending = zoomPresetPending
+            zoomPresetPending = 0f
+            applyZoomPreset(pending)
+        }
     }
 
     /**
@@ -960,11 +979,25 @@ class BoardView @JvmOverloads constructor(
      * son cadrage juste avant ([update]) : ce préréglage la
      * survole, la caméra de suivi prend ensuite le relais au fil
      * du réseau.
+     *
+     * V10 (retours utilisateurs du 16 nov. 2026) : le réglage de
+     * zoom de la démo est retiré — la démo appelle toujours FIT.
+     * Si la vue n'a pas encore de dimensions (premier rendu AVANT
+     * le layout), le préréglage attend la première mesure via
+     * [zoomPresetPending] au lieu d'être perdu : le cadrage
+     * s'applique au PREMIER plateau, pas seulement au deuxième.
      */
     fun applyZoomPreset(multiplier: Float) {
         val b = board ?: return
+        if (width == 0 || height == 0) {
+            // Premier rendu AVANT le layout : le préréglage attend la
+            // première mesure (il n'était appliqué qu'au deuxième
+            // plateau, retour utilisateur du 16 nov. 2026).
+            zoomPresetPending = multiplier
+            return
+        }
+        zoomPresetPending = 0f
         if (b.skill == Skill.VOID && !solved) {
-            if (width == 0 || height == 0) return
             cellPx = ((minOf(width, height) /
                 (2f * (2f * Board.FOG_RADIUS_CELLS + 1f))) * multiplier)
                 .coerceIn(floorCellPx(b), maxCellPx)
@@ -1255,20 +1288,30 @@ class BoardView @JvmOverloads constructor(
                                 Math.floorMod(wy, b.height) * b.width +
                                     Math.floorMod(wx, b.width)
                             if (fog != null && !fog[index]) continue
+                            // Vague de victoire (v10) : les billes
+                            // suivent la tuile SOULEVÉE, même lift que
+                            // la passe des cellules — sans cela elles
+                            // restaient au sol, hors des connecteurs.
+                            val left = wx * cellPx
+                            val top = wy * cellPx
                             drawCellBlips(
                                 field, b, connected, solved,
                                 index,
-                                wx * cellPx, wy * cellPx,
+                                left, top - waveLiftPx(now, left, top),
                                 frac, activeColor, idleColor, half, radius
                             )
                         }
                     }
                 } else {
                     for (index in 0 until b.size) {
+                        // Vague de victoire (v10) : même lift que la
+                        // passe des cellules — les billes suivent la
+                        // tuile soulevée.
+                        val left = (index % b.width) * cellPx
+                        val top = (index / b.width) * cellPx
                         drawCellBlips(
                             field, b, connected, solved, index,
-                            (index % b.width) * cellPx,
-                            (index / b.width) * cellPx,
+                            left, top - waveLiftPx(now, left, top),
                             frac, activeColor, idleColor, half, radius
                         )
                     }

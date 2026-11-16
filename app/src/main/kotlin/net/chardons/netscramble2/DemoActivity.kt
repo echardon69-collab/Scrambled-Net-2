@@ -25,9 +25,11 @@ import net.chardons.netscramble2.ui.EdgeToEdge
  * Réglages (page « Réglages », persistés par [Settings]) : niveaux
  * COCHÉS (v8 : au moins une case, Novice par défaut ; une seule
  * case revient à un niveau fixe), difficulté ALÉATOIRE / PROGRESSIVE
- * parmi ces niveaux (radios grisées à coche unique), zoom
- * (multiplicateur du plancher), rythme (délai par coup). Les blips
- * suivent le réglage « Animation » du jeu.
+ * parmi ces niveaux (radios grisées à coche unique), rythme
+ * (délai par coup). Les blips suivent le réglage « Animation » du
+ * jeu. V10 : le réglage de zoom est RETIRÉ — la démo cadre TOUJOURS
+ * ajusté (FIT), y compris au PREMIER plateau (préréglage posé avant
+ * la première mesure, appliqué au premier layout par la vue).
  *
  * Retours utilisateurs du 16 nov. 2026 (lot 2) : la mention
  * « Démonstration niveau X » vit en bas de l'écran, posée à
@@ -48,7 +50,9 @@ import net.chardons.netscramble2.ui.EdgeToEdge
  * rotation) ; le voile vit sur un containeur INTERNE — l'inset de
  * la barre de navigation est un padding de la pile, il resterait
  * sinon DANS la zone colorée — à 80 % d'opacité, interligne
- * resserré à 5 dp.
+ * resserré à 5 dp. V10 : les billes de la vague de victoire
+ * suivent les tuiles SOULEVÉES (même lift que la passe des
+ * cellules), plus de billes affichées hors des connecteurs.
  *
  * Écarts assumés : AUCUN son (à statuer avec eric) ; la caméra ne
  * recentre que si la tuile du coup sort de la zone visible de la
@@ -151,12 +155,14 @@ class DemoActivity : AppCompatActivity() {
         if (newBoard) {
             shownBoard = board
             // Préréglage APRÈS update : la vue connaît le plateau du
-            // coup, et son zoom GAGNE sur la caméra d'arrivée — au
-            // Néant, la démo cadre la zone révélée au lieu du
-            // plateau entier (retours utilisateurs du 16 nov. 2026).
-            binding.demoBoard.applyZoomPreset(
-                Settings.loadDemoZoom(this).multiplier
-            )
+            // coup, et son cadrage GAGNE sur la caméra d'arrivée — au
+            // Néant, la démo cadre la zone révélée au lieu du plateau
+            // entier. V10 (retours utilisateurs du 16 nov. 2026) : le
+            // réglage de zoom est retiré — cadrage TOUJOURS ajusté
+            // (FIT). Posé AVANT la première mesure, le préréglage
+            // attend le premier layout dans la vue : il s'applique
+            // au PREMIER plateau, pas seulement au deuxième.
+            binding.demoBoard.applyZoomPreset(1f)
             // Mention du niveau en bas de l'écran (retour
             // utilisateurs du 16 nov. 2026) : la démonstration
             // annonce ce qu'elle montre.

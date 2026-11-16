@@ -145,14 +145,6 @@ class SettingsActivity : AppCompatActivity() {
             cb.isChecked = demoSkills.contains(cb.skill())
         }
         refreshDemoDifficultyAvailability()
-        binding.demoZoomGroup.check(
-            when (Settings.loadDemoZoom(this)) {
-                DemoZoom.FIT -> R.id.demo_zoom_fit
-                DemoZoom.X1_5 -> R.id.demo_zoom_x15
-                DemoZoom.X2 -> R.id.demo_zoom_x2
-                DemoZoom.X3 -> R.id.demo_zoom_x3
-            }
-        )
         binding.demoSpeedGroup.check(
             when (Settings.loadDemoSpeed(this)) {
                 DemoSpeed.SLOW -> R.id.demo_speed_slow
@@ -218,17 +210,6 @@ class SettingsActivity : AppCompatActivity() {
         }
         for (cb in demoSkillCheckBoxes()) {
             cb.setOnCheckedChangeListener { _, _ -> persistDemoSkillSet(cb) }
-        }
-        binding.demoZoomGroup.setOnCheckedChangeListener { _, checkedId ->
-            Settings.saveDemoZoom(
-                this,
-                when (checkedId) {
-                    R.id.demo_zoom_x15 -> DemoZoom.X1_5
-                    R.id.demo_zoom_x2 -> DemoZoom.X2
-                    R.id.demo_zoom_x3 -> DemoZoom.X3
-                    else -> DemoZoom.FIT
-                }
-            )
         }
         binding.demoSpeedGroup.setOnCheckedChangeListener { _, checkedId ->
             Settings.saveDemoSpeed(

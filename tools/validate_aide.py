@@ -25,10 +25,12 @@ Trois fonctionnalités actées avec eric :
      résolution → victoire (blink) → pause 1,5 s → suivant. Niveaux
      COCHÉS (v8 : cases à cocher, minima une), difficulté
      RANDOM/PROGRESSIVE parmi ces niveaux,
-     zoom FIT/×1,5/×2/×3 (multiplicateur du plancher), rythme 500/250
-     (défaut)/100/30 ms, caméra à hystérésis (recentrer seulement si
-     la tuile sort du rectangle central 30–70 %). AUCUN son — écart
-     voulu, à valider avec eric. Tout contact referme la page.
+     rythme 500/250 (défaut)/100/30 ms, caméra à hystérésis (recentrer
+     seulement si la tuile sort du rectangle central 30–70 %). V10
+     (retour utilisateur du 16 nov. 2026) : le réglage de zoom est
+     retiré — cadrage TOUJOURS ajusté, y compris au PREMIER plateau.
+     AUCUN son — écart voulu, à valider avec eric. Tout contact
+     referme la page.
 
 Deux parties, comme les validateurs précédents :
   1. Vérification statique : les sources sont PARSÉES (jamais de
@@ -372,23 +374,24 @@ check("BoardView : curseur solveur toujours publié par l'activité",
 # ---------------------------------------------------------------------------
 for key, val in [("HINT_STRATEGY_KEY", "hintStrategy"), ("HINT_PERCENT_KEY", "hintPercent"),
                  ("DEMO_DIFFICULTY_KEY", "demoDifficulty"), ("DEMO_SKILL_SET_KEY", "demoSkillSet"),
-                 ("DEMO_ZOOM_KEY", "demoZoom"), ("DEMO_SPEED_KEY", "demoSpeed")]:
+                 ("DEMO_SPEED_KEY", "demoSpeed")]:
     check(f"Persistence : clé {key} = \"{val}\"", f'const val {key} = "{val}"' in pe)
 check("Persistence/Settings : jamais le mot interdit (épingle réglages)",
       "LANGUAGE" not in st and "LANGUAGE" not in pe)
 for fn in ["loadHintStrategy", "saveHintStrategy", "loadHintPercent", "saveHintPercent",
            "loadDemoDifficulty", "saveDemoDifficulty",
            "loadDemoSkillSet", "saveDemoSkillSet",
-           "loadDemoZoom", "saveDemoZoom", "loadDemoSpeed", "saveDemoSpeed"]:
+           "loadDemoSkillSet", "saveDemoSkillSet", "loadDemoSpeed", "saveDemoSpeed"]:
     check(f"Settings : {fn} présent", f"fun {fn}(" in st)
 check("Settings : hintPercent coercé 0–50 aux deux sens",
       count(st, "coerceIn(0, 50)") >= 2)
-check("Settings : défauts SIGNAL/10/PROGRESSIVE/NOVICE/FIT/NORMAL",
+check("Settings : défauts SIGNAL/10/PROGRESSIVE/NOVICE/NORMAL (v10 : sans zoom)",
       "HintStrategy.SIGNAL" in st and "10" in st and "DemoDifficulty.PROGRESSIVE" in st
-      and "Skill.NOVICE" in st and "DemoZoom.FIT" in st and "DemoSpeed.NORMAL" in st)
+      and "Skill.NOVICE" in st and "DemoSpeed.NORMAL" in st
+      and "loadDemoZoom" not in st and "saveDemoZoom" not in st)
 
 groups = ["hintStrategyGroup", "hintLimitGroup", "demoDiffGroup",
-          "demoZoomGroup", "demoSpeedGroup"]
+          "demoSpeedGroup"]
 for g in groups:
     check(f"SettingsActivity : groupe {g} coché AVANT l'écoute",
           0 < sc.find(f"binding.{g}.check(") < sc.find(f"binding.{g}.setOnCheckedChangeListener"))
@@ -397,14 +400,15 @@ check("SettingsActivity : radios 5–50 portées au runtime via hint_limit_value
       and "hintPercentFor" in sc)
 check("SettingsActivity : la radio 0 porte hint_limit_zero, pas les autres",
       layout_settings.count('@string/hint_limit_zero') == 1)
-check("Layout réglages : 38 radios + 8 cases, maxWidth 320dp (v8)",
-      layout_settings.count("<com.google.android.material.radiobutton.MaterialRadioButton") == 38
+check("Layout réglages : 34 radios + 8 cases, maxWidth 320dp (v10 : radios de zoom retirées)",
+      layout_settings.count("<com.google.android.material.radiobutton.MaterialRadioButton") == 34
       and layout_settings.count("<com.google.android.material.checkbox.MaterialCheckBox") == 8
-      and layout_settings.count('android:maxWidth="320dp"') == 54)
-check("Layout réglages : 9 RadioGroups au total (v8 : les niveaux de la démo ne sont plus un groupe)",
-      layout_settings.count("<RadioGroup") == 9)
+      and layout_settings.count('android:maxWidth="320dp"') == 50
+      and "demo_zoom" not in layout_settings)
+check("Layout réglages : 8 RadioGroups au total (v10 : le groupe de zoom est retiré)",
+      layout_settings.count("<RadioGroup") == 8)
 for gid, n in [("hint_strategy_group", 2), ("hint_limit_group", 11), ("demo_diff_group", 2),
-               ("demo_zoom_group", 4), ("demo_speed_group", 3)]:
+               ("demo_speed_group", 3)]:
     m = re.search(rf'@\+id/{gid}"[\s\S]*?</RadioGroup>', layout_settings)
     check(f"Layout réglages : {gid} porte {n} radios",
           m is not None and m.group(0).count("<com.google.android.material.radiobutton.MaterialRadioButton") == n)
@@ -474,8 +478,8 @@ check("Demo : DemoDifficulty RANDOM/PROGRESSIVE, FIXED retiré (v8)",
 check("Demo : DemoSpeed 500/250/100 ms, Éclair RETIRÉ (v5, retour d'eric)",
       "SLOW(500)" in dm and "NORMAL(250)" in dm and "FAST(100)" in dm
       and "LIGHTNING" not in dm and "demo_speed_lightning" not in dm)
-check("Demo : DemoZoom FIT/×1,5/×2/×3 (multiplicateurs 1/1,5/2/3)",
-      "FIT(1f)" in dm and "X1_5(1.5f)" in dm and "X2(2f)" in dm and "X3(3f)" in dm)
+check("Demo : le réglage de zoom est RETIRÉ (v10, retour utilisateur)",
+      "DemoZoom" not in dm and "demo_zoom" not in dm)
 check("DemoViewModel : pause victoire 1,5 s",
       "WIN_PAUSE_MS = 1_500L" in dvm)
 check("DemoViewModel : progressive = les niveaux COCHÉS en ordre croissant (v8)",
@@ -498,8 +502,9 @@ check("DemoActivity : tout contact referme la page (dispatch, pas de listener)",
       and "setOnTouchListener" not in da)
 check("DemoActivity : blips selon le réglage Animation",
       "Settings.loadAnimEnabled(this)" in da)
-check("DemoActivity : zoom du réglage appliqué à chaque nouveau plateau",
-      "applyZoomPreset" in da and "loadDemoZoom" in da and "board !== shownBoard" in da)
+check("DemoActivity : cadrage TOUJOURS ajusté à chaque nouveau plateau (v10)",
+      "applyZoomPreset(1f)" in da and "loadDemoZoom" not in da
+      and "board !== shownBoard" in da)
 check("DemoActivity : caméra ne recentre que si la tuile sort de la vue (UAT)",
       "BoardView.FollowMode.VISIBLE" in da
       and "BoardView.FollowMode.HYSTERESIS" not in da)
@@ -553,6 +558,11 @@ preset = bv[bv.find("fun applyZoomPreset"):bv.find("fun applyZoomPreset") + 1800
 check("BoardView : préréglage démo — le Néant cadre la zone révélée",
       "Skill.VOID" in preset and "centerOnVisibleZone()" in preset
       and "maxCellPx" in preset and "Board.FOG_RADIUS_CELLS" in preset)
+check("BoardView : le préréglage posé avant mesure attend le premier layout (v10)",
+      "private var zoomPresetPending = 0f" in bv
+      and "zoomPresetPending = multiplier" in bv
+      and count(bv, "applyZoomPreset(pending)") == 1
+      and bv.find("zoomPresetPending") < bv.find("applyArrivalCamera(solved)"))
 
 # ---------------------------------------------------------------------------
 # 10. Chaînes EN + FR.
@@ -561,8 +571,7 @@ hint_keys = ["menu_hint", "menu_hint_count", "menu_tools", "menu_demo",
              "hint_strategy_signal", "hint_strategy_fix", "hint_limit_title",
              "hint_limit_zero", "hint_limit_value",
              "demo_diff_random", "demo_diff_progressive", "demo_skill_title",
-             "demo_zoom_title", "demo_zoom_fit", "demo_zoom_x15", "demo_zoom_x2",
-             "demo_zoom_x3", "demo_speed_title", "demo_speed_slow",
+             "demo_speed_title", "demo_speed_slow",
              "demo_speed_normal", "demo_speed_fast", "demo_level_banner",
              "hints_section", "hints_total", "hints_none", "hints_n",
              "hints_column_tiles", "demo_touch_return"]

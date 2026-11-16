@@ -112,18 +112,6 @@ object Settings {
         }
     }
 
-    /** Zoom de la démonstration (multiplicateur du plancher), FIT par défaut. */
-    fun loadDemoZoom(context: Context): DemoZoom {
-        val stored = prefs(context).getString(Persistence.DEMO_ZOOM_KEY, null)
-        return DemoZoom.entries.firstOrNull { it.name == stored } ?: DemoZoom.FIT
-    }
-
-    fun saveDemoZoom(context: Context, zoom: DemoZoom) {
-        prefs(context).edit {
-            putString(Persistence.DEMO_ZOOM_KEY, zoom.name)
-        }
-    }
-
     /** Rythme de la démonstration (délai par coup), NORMAL par défaut. */
     fun loadDemoSpeed(context: Context): DemoSpeed {
         val stored = prefs(context).getString(Persistence.DEMO_SPEED_KEY, null)
