@@ -119,10 +119,20 @@ Feuille de route (validée)
   delta) et validateur de langues (parité des clés 98 + 26,
   paramètres, apostrophes échappées, XML bien formé) ; processus B
   acté : GitHub PR + relecture IA (back-traduction) ; premier
-  traducteur (corse) à trouver
+  traduction corse menée par l'IA le 16 nov. 2026 (première
+  passe livrée dans values-co, relecture par le locuteur corse
+  d'eric à venir)
 - Langue corse : traduction du jeu en corse, ajoutée à la roadmap
   le 16 nov. 2026 ; portée par le processus de traduction ci-dessus
-  (kit, relecture, complétion par delta, contrôles CI) (à venir)
+  (kit, relecture, complétion par delta, contrôles CI). Première
+  passe IA LIVRÉE le 16 nov. 2026 (values-co complet, 98 chaînes +
+  26 textes, locales_config) : pas de traducteur trouvé, eric a
+  confié la traduction à l'IA ; RELECTURE par le testeur/relecteur
+  corse d'eric à venir, ses corrections réintègrent par le même
+  canal. Le sélecteur de langue dynamique (rendre le corse
+  sélectionnable dans la page Réglages, en plus du réglage système
+  « langue par application » qui le propose dès à présent) reste à
+  venir
 - Aide à la résolution : Indice (plafond paramétrable, informatif ou
   correctif) + Résoudre sous Outils + Démonstration en boucle
   (difficulté, zoom, rythme) (livré le 15 nov. 2026)

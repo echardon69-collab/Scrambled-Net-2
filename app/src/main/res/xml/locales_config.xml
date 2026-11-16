@@ -1,11 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Langues de l'application (page Réglages, v3 du 14 nov. 2026).
-     Déclaré au manifeste par android:localeConfig : sur Android 13+,
-     le réglage système « langue par application » propose exactement
-     ces deux langues. La base est l'anglais (values), le français
-     la traduction (values-fr) ; la page Réglages force l'une ou
-     l'autre via appcompat, ou suit le système. -->
+<!-- Langues de l'application (page Réglages, v3 du 14 nov. 2026 ;
+     corse ajouté le 16 nov. 2026, chantier traduction). Déclaré au
+     manifeste par android:localeConfig : sur Android 13+, le réglage
+     système « langue par application » propose exactement ces
+     trois langues. La base est l'anglais (values), le français et
+     le corse sont les traductions (values-fr, values-co) ; la page
+     Réglages force en ou fr via appcompat, ou suit le système —
+     c'est ainsi que le corse s'active jusqu'au chantier « sélecteur
+     de langue dynamique ». -->
 <locale-config xmlns:android="http://schemas.android.com/apk/res/android">
     <locale android:name="en" />
     <locale android:name="fr" />
+    <locale android:name="co" />
 </locale-config>

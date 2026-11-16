@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Traduction corse de l'aide et de l'À propos (première passe IA
+     du 16 nov. 2026, à faire valider par le relecteur corse
+     d'eric). Mêmes tableaux, mêmes comptes d'items que
+     values/arrays.xml (parité contrôlée par
+     tools/validate_langues.py). Glossariu : vedi
+     values-co/strings.xml.
+-->
+<resources>
+
+    <!-- Titres des sections de l'aide. -->
+    <string-array name="help_titles">
+        <item>U ghjocu</item>
+        <item>Cuntrolli</item>
+        <item>Livelli di difficultà</item>
+        <item>Rècord</item>
+        <item>Indizii</item>
+    </string-array>
+
+    <!-- Textes des sections de l'aide. -->
+    <string-array name="help_texts">
+        <item>Scrambled Net 2 hè un ghjocu di riflessione simplice: si tratta di mette in ordini i cunnessioni d\'una reta infurmatica, per chì tutti i terminali fussini cunnetti à u servitore. A reta hè fatta di caselli; sò tutti à u postu ghjustu, ma sò stati vultati à u casu in un caos inutile.\n\nFate girà i caselli unu à unu pè riconnette a reta. I caselli cunnetti à u servitore sò musciati in evidenza. Quandu ogni terminale hè cunnettatu, avete vintu.</item>
+        <item>Tuccate un casellu pè fà lu girà in sensu orariu. Appughjate longu un casellu pè bluccà lu quandu site sicuru chì hè ghjustu, o pè sbluccà lu; i caselli bluccati rispondenu cù un clicchju cortu.\n\nStrascinate cù un dettu pè fà girà a scacchera, pizzicate cù dui detti pè fà u zoom.</item>
+        <item>Ci sò cinque livelli di difficultà. I livelli più alti anu scacchere più larghe, è i più avanzati anu guisecci speziali:\n\n• Principianti: una piccula scacchera.\n\n• Nurmale: una scacchera un pocu più larga.\n\n• Espertu: una grande scacchera.\n\n• Maestru: una grande scacchera chì i so bordi si ricollighjani — una cunnessione chì esce da u bordu dirittu entre in quiddi di u bordu mancu, è listessu pè i bordi di sopra è di sottu.\n\n• Pazzia: cum\'è Maestru, ma tutti i caselli à trè è quattru vie sò invisibili. Vi ci vulerà un novu inseme di deduzzioni pè compie un ghjiduzzu di pazzia.</item>
+        <item>Ogni vittoria cunta e vostre mosse è u vostru tempu, è i vostri rècord persunali sò cunservati pè ogni livellu di difficultà — ma solu s\'è avete risoltu u ghjiduzzu da voi stessu: una partita ind\'a quale u risolutore automaticu hè statu impiegatu ùn hè mai cuntata.\n\nVede « Rècord » in u listinu.</item>
+        <item>Prucedite da u servitore versu u fora: i caselli cunfirmati sò e vostre ancore, bluccate li à misura chì andate.\n\nI caselli cù una sola cunnessione sò terminali — strade senza sboccu; orizzunate li versu u vicinu chì ni hà bisognu.\n\nS\'è vo priferite una scacchera calma, pudete spenghje l\'animazione di a reta in u listinu.</item>
+    </string-array>
+
+    <!-- Titres des sections de la page « À propos ». -->
+    <string-array name="about_titles">
+        <item>U ghjocu</item>
+        <item>L\'autore</item>
+        <item>Orìgine è licenza</item>
+        <item>Partecipà</item>
+        <item>Novità in stu rifacimentu</item>
+        <item>Cambiatu rispettu à l\'uriginale</item>
+        <item>Incambiatu rispettu à l\'uriginale</item>
+        <item>Ritiratu da l\'uriginale</item>
+    </string-array>
+
+    <!-- Textes des sections de la page « À propos ». -->
+    <string-array name="about_texts">
+        <item>Scrambled Net 2 hè un rifacimentu mudernu è à fonte aperta di Scrambled Net, un adattamentu Android di u ghjocu KDE KNetWalk. Sdrughjate una reta infurmatica scumpigliata per chì ogni terminale fussi cunnettatu à u servitore: tutti i caselli sò à u postu ghjustu, ma vultati à u casu. Girateli unu à unu pè ricustruì a reta.</item>
+        <item>Scrambled Net 2 hè l\'opara d\'Éric Chardon, un passiunatu di gistu di logica è di ghjiduzzi. À u principiu di u 2010 scuprì a celebre appiecazione d\'Ian Cameron Smith, cunsignata cù u so còdice fonte, è in u 2014 a so ripresa da Michael Mueller — aspittendu chì quess\'ultimu purtasse più evoluzione à u ghjocu è tenessi i ghjucatori interessati. L\'anni passendu senza chì ste speranze si realizenu, dicise di scrive da ellu stessu u siguitu aspettatu: stu rifacimentu mudernu à fonte aperta, fidele à l\'uriginale.</item>
+        <item>KNetWalk, u ghjocu KDE d\'orìgine: © 2004–2007 Andi Peredri, Thomas Nagy è Fela Winkelmolen.\n\nScrambled Net, l\'adattamentu Android: © 2007–2010 Ian Cameron Smith, © 2014 Michael Mueller.\n\nStu rifacimentu, Scrambled Net 2: © 2026 Éric Chardon.\n\nTutti distribuiti sottu a licenza GPL-2.0 — stu ghjocu hè un prugramma liberu.\n\nCòdice fonte: https://github.com/echardon69-collab/Scrambled-Net-2</item>
+        <item>Pudete aiutà à megliurà u ghjocu:\n\n• Signalà un prublema — lianu à vene.\n\n• Cuntattà l\'autore — lianu à vene.\n\n• Prupone una traduzzione in una nova lingua — lianu à vene.\n\n• Prupone un novu aspettu di caselli — lianu à vene.</item>
+        <item>Rispettu à u ghjocu d\'urìgine, stu rifacimentu aghjusta:\n\n• A famiglia Infinitu: trè novi livelli di difficultà (Infinitu, Abissu, Votu) annantu à una scacchera gigante 40 × 40 chì i so bordi si ricollighjani — a vista gira nantu à ella stessu, a navigazione ùn muscia mai alcunu bordu; Abissu piatta i cavi, Votu aghjusta una nebbia nantu à a reta.\n\n• Un screnu di titulu cù actualizazioni autumàtiche da GitHub, in dui versioni di distribuzione: l\'APK GitHub cù l\'actualizadore integratu, l\'APK Play Store senza.\n\n• Una signatura d\'eletricità: e luci di u servitore è i blips di dati battenu cù un ritimu sfarente sientendu chì generatore hà custruitu a scacchera.\n\n• A discrizzione d\'ogni livellu di difficultà — diminsioni reali di a scacchera è regule — in a pagina Preferenze.\n\n• Un reglaghju di lingua (inglese, francese, o seguità di u sistema).</item>
+        <item>Funzioni chì l\'uriginale avia, avà fatte d\'un\'altra manera:\n\n• Còdice fonte: Java è Ant sò stati rimpiazzati da Kotlin è Gradle.\n\n• Grafica: e imaghjine bitmap di l\'uriginale sò avà VectorDrawables — listessu aspettu, perfettamente netti à ogni zoom, un schedariu pè tutte e densità di screnu.\n\n• Sonu: nisunu campiò di l\'uriginale hè riimpiegatu; sei corti effetti sò sintetizati inveci.\n\n• Rendimentu: inveci d\'una ballottera d\'animazione custente, a scacchera hè ridisegnata solu quandu qualcosa cambia — menu sbattersi pè a batteria.\n\n• A scacchera ùn s\'allarga più pè piene u screnu: hè una finestra di vista chì si pò trascinà è zumbà cù i detti, è u zoom stà ancoratu sottu elli.\n\n• Generazione di a scacchera: a mità di e scacchere vene da un generatore alternativu d\'arburi cuprenti chì cunnette ogni casellu (u generatore d\'urìgine custruisce sempre l\'altra mità — a signatura d\'eletricità li distingui).\n\n• Listini: una barra d\'azzioni di testu senza titulu, e preferenze annantu à una pagina unica inveci di sottulistini in cascata, è a finestra À prupositu hè diventata sta pagina.</item>
+        <item>Funzioni di l\'uriginale, cunservate cum\'ellu erani:\n\n• I cinque livelli d\'urìgine (da Principianti à Pazzia) cù e so regule esatte — i bordi ricollighjanti di Maestru, i cavi piattati di Pazzia.\n\n• U generatore di scacchera d\'urìgine: ogni ghjiduzzu pò esse vintu, è a partita hè vinta quandu ogni terminale hè cunnettatu.\n\n• E diminsioni di a scacchera s\'adattanu à u vostru screnu è à u vostru orientamentu, esattamente cum\'è a matrice Screen di l\'uriginale.\n\n• Tuccate un casellu pè fà lu girà, appughjate longu pè bluccà lu o sbluccà lu.\n\n• U risolutore autumaticu — una partita risolta cù ellu ùn hè mai cuntata.\n\n• Rècord persunali (mosse è tempu) pè ogni livellu di difficultà.\n\n• A partita arregistrata sopravvive à a chjusura di l\'appiecazione o à u so assopimentu; u cronommetru si gela in fondu.\n\n• I ricordi di regule à l\'intrata in Maestru o Pazzia.\n\n• I trè modi di sonu è u reglaghju d\'animazione.\n\n• L\'aiutu in ghjocu.</item>
+        <item>Funzioni di l\'uriginale chì sò sparite, è perchì:\n\n• I cuntrolli D-pad, trackball è tastera: stu rifacimentu hè solu tattile, custruitu pè i telefuni è e tavulette muderne.\n\n• U cursore rossu fisu, cuncipitu pè l\'epica di u D-pad: cù u tuccamentu direttu era morechju chì un aiutu — u batteolu d\'alerta è u cursore mubbile di u risolutore autumaticu coprenu ciò chì ellu servia.\n\n• Tuttu dipendenza di l\'uriginale (e bibbiutiche HermitAndroid è HermitLibrary, cumpresu u generatore aleatoriu MTRandom, rimpiazzatu da u generatore stiddardu di Kotlin): u mutore hè statu riscrittu da zeru in Kotlin cum\'è mutore di ghjocu puru, pruvatu da unità di testi — nisunu còdice di l\'uriginale hè riimpiegatu.</item>
+    </string-array>
+</resources>

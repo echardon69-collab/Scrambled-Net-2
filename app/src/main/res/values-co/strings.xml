@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Traduction corse de l'interface (première passe IA du 16 nov.
+     2026, à faire valider par le relecteur corse d'eric — le
+     processus B du chantier traduction : IA traduit, locuteur
+     relit et corrige, les corrections réintègrent par le même
+     canal). Mêmes clés que values/strings.xml (parité contrôlée
+     par tools/validate_langues.py).
+
+     Glossariu (EN → corsu) :
+       board → scacchera ; tile → casellu ; server → servitore ;
+       terminal → terminale ; network → reta ; wiring → cavi ;
+       torus (edges wrap around) → i bordi si ricollighjani ;
+       hidden wiring → cavi invisibili ; fog → nebbia ;
+       hint → indiziu ; hint allowance → tettu d'indizii ;
+       moves → mosse ; puzzle → ghjiduzzu ; settings → Preferenze ;
+       menu → listinu ; skills : Novice → Principianti,
+       Normal → Nurmale, Expert → Espertu, Master → Maestru,
+       Insane → Pazzia, Endless → Infinitu, Abyss → Abissu,
+       Void → Votu. « blips » è i nomi prupii restanu tali è quali.
+-->
+<resources>
+    <!-- Nom de l'application -->
+    <string name="app_name">Scrambled Net 2</string>
+
+    <!-- Menu -->
+    <string name="menu_new">Nova partita</string>
+    <string name="menu_solve">Risolve</string>
+    <string name="menu_settings">Preferenze</string>
+    <string name="menu_stop_solve">Arrestà a risoluzione</string>
+    <string name="solver_used">Risolutore automaticu impiegatu — sta partita ùn serà micca cuntata.</string>
+    <string name="menu_skill">Livellu di difficultà</string>
+    <string name="menu_sounds">Soni</string>
+    <string name="sounds_off">Senzu sonu</string>
+    <string name="sounds_quiet">Discreti</string>
+    <string name="sounds_full">Cumpleti</string>
+    <string name="menu_anim">Animazione</string>
+    <string name="anim_off">Senza animazione</string>
+    <string name="anim_on">Animazione</string>
+
+    <!-- Langue (page Réglages) : noms propres identiques dans
+         toute langue, la liste suit le système. -->
+    <string name="menu_lang">Lingua</string>
+    <string name="lang_system">Seguita u sistema</string>
+    <string name="lang_fr">Français</string>
+    <string name="lang_en">English</string>
+
+    <!-- Descriptions des niveaux (page Réglages) -->
+    <string name="skill_novice_desc">Scacchera %1$d × %2$d — dui rami, bordi aperti</string>
+    <string name="skill_normal_desc">Scacchera %1$d × %2$d — dui rami, bordi aperti</string>
+    <string name="skill_expert_desc">Scacchera %1$d × %2$d — dui rami, bordi aperti</string>
+    <string name="skill_master_desc">Scacchera %1$d × %2$d — toru: i bordi si ricollighjani, trè rami</string>
+    <string name="skill_insane_desc">Scacchera %1$d × %2$d — toru, trè rami, cavi invisibili à l\'intersizzioni</string>
+    <string name="skill_endless_desc">Scacchera %1$d × %2$d — toru, a navigazione ùn muscia mai alcunu bordu</string>
+    <string name="skill_abyss_desc">Scacchera %1$d × %2$d — toru, cavi invisibili à l\'intersizzioni</string>
+    <string name="skill_void_desc">Scacchera %1$d × %2$d — toru, cavi invisibili, nebbia nantu à a reta</string>
+
+    <!-- Aide (niveaux spéciaux) -->
+    <string name="help_master">À u livellu Maestru, i bordi di a scacchera si ricollighjani: i caselli di u bordu dirittu si cunnettini à quiddi di u bordu mancu, è viceversa. Listessu pè i bordi di sopra è di sottu.</string>
+    <string name="help_insane">À u livellu Pazzia, i bordi di a scacchera si ricollighjani: i caselli di u bordu dirittu si cunnettini à quiddi di u bordu mancu, è viceversa. Listessu pè i bordi di sopra è di sottu. Ma in più, in i caselli cù trè o quattru cunnessioni, i cavi sò invisibili. Bona furtuna!</string>
+    <string name="help_abyss">À u livellu Abissu, a scacchera hè senza fine: copre 40 caselli per 40 è i so bordi si ricollighjani, cusì a navigazione ùn rivela mai alcuna fine. In più, in i caselli cù trè o quattru cunnessioni, i cavi sò invisibili. Bona furtuna!</string>
+    <string name="help_void">À u livellu Votu, a scacchera hè senza fine: copre 40 caselli per 40 è i so bordi si ricollighjani. In i caselli cù trè o quattru cunnessioni, i cavi sò invisibili. È in più, una nebbia piatta i caselli luntani da a reta cunnetta à u servitore: solu l\'intornu di i caselli cunnetti stà visibile. Bona furtuna!</string>
+    <string name="menu_scores">Rècord</string>
+    <string name="menu_help">Aiutu</string>
+    <string name="menu_about">À prupositu</string>
+
+    <!-- Niveaux de difficulté -->
+    <string name="skill_novice">Principianti</string>
+    <string name="skill_normal">Nurmale</string>
+    <string name="skill_expert">Espertu</string>
+    <string name="skill_master">Maestru</string>
+    <string name="skill_insane">Pazzia</string>
+    <string name="skill_endless">Infinitu</string>
+    <string name="skill_abyss">Abissu</string>
+    <string name="skill_void">Votu</string>
+
+    <!-- Barre d'état -->
+    <string name="status_moves">Mosse: %1$d</string>
+    <string name="status_time">Tempu: %1$s</string>
+
+    <!-- Jeu -->
+    <string name="win_title">Avete vintu!</string>
+    <string name="win_pbest_title">Novu rècord persunale!</string>
+    <string name="win_text">Cungratulazioni! Avete risoltu u ghjiduzzu in %1$s cù %2$d mosse.</string>
+    <string name="best_moves_text">Hè u vostru rècord di mosse à stu livellu!</string>
+    <string name="best_time_text">Hè u vostru tempu u più rapidu à stu livellu!</string>
+    <string name="best_both_text">Hè u vostru rècord di mosse è u vostru tempu u più rapidu à stu livellu!</string>
+    <string name="win_new">Nova partita</string>
+    <string name="win_continue">Cuntinuà</string>
+
+    <!-- Page titre (TitleActivity) -->
+    <string name="title_version">Versione %1$s</string>
+    <string name="title_license">Basatu annantu à Scrambled Net (© 2007–2010 Ian Cameron Smith,\n© 2014 Michael Mueller), un adattamentu Android di u ghjocu KDE KNetWalk.\nSta versione: © 2026 Eric Chardon — GPL-2.0.</string>
+    <string name="title_loading">Caricamentu di a partita arregistrata…</string>
+    <string name="title_checking">Ricerca d\'actualizazioni…</string>
+    <string name="title_update_available">A versione %1$s hè dispunibule.</string>
+    <string name="title_update_button">Actualizà</string>
+    <string name="title_play_button">Ghjucà</string>
+    <string name="title_download_status">Scaricamentu di a versione %1$s…</string>
+    <string name="title_install_status">Installazione…</string>
+    <string name="title_install_permission">Permettite l\'installazione d\'appi scanusciute ind\'e Preferenze Android, poì appughjà torna nantu à Actualizà.</string>
+    <string name="title_install_failed">L\'actualizazione hè fallita (%1$s). Pudete cuntinuà à ghjucà.</string>
+
+    <!-- Confirmation avant d'ecraser une partie en cours -->
+    <string name="confirm_new_title">Nova partita?</string>
+    <string name="confirm_change_title">Cambià livellu?</string>
+    <string name="confirm_change_ok">Cambià livellu</string>
+    <string name="confirm_progress_message">Una partita hè in corsu (%1$d mosse, %2$s). Serà persa.</string>
+
+    <!-- Records personnels -->
+    <string name="scores_title">Rècord persunali</string>
+    <string name="scores_movestitle">Menu mosse</string>
+    <string name="scores_timestitle">U tempu u più rapidu</string>
+    <string name="scores_skill">Livellu di difficultà</string>
+    <string name="scores_moves">Mosse</string>
+    <string name="scores_time">Tempu</string>
+    <string name="scores_when">Quandu</string>
+    <string name="menu_scores_reset">Rimette tutti i rècord à zeru</string>
+    <string name="scores_reset_confirm">Squassà tutti i vostri rècord persunali?</string>
+
+    <!-- Aide à la résolution : Indice (cadre vert pulsé en mode
+         Signaler, rotation + tuile scellée en mode Corriger,
+         plafond paramétrable), popup Outils (Résoudre,
+         Démonstration), records enrichis d'indices. -->
+    <string name="menu_hint">Indiziu</string>
+    <string name="menu_hint_count">Indiziu (%1$d)</string>
+    <string name="menu_tools">Attrezzi</string>
+    <string name="menu_demo">Dimustrazione</string>
+    <string name="hint_strategy_signal">Signalà l\'errore</string>
+    <string name="hint_strategy_fix">Currege l\'errore</string>
+    <string name="hint_limit_title">Tettu d\'indizii</string>
+    <string name="hint_limit_zero">Disattivatu</string>
+    <string name="hint_limit_value">%1$d%%</string>
+    <string name="demo_diff_random">Aliatoriu</string>
+    <string name="demo_diff_progressive">Prugrissivu</string>
+    <string name="demo_skill_title">Livelli</string>
+    <string name="demo_speed_title">Vitezza</string>
+    <string name="demo_speed_slow">Lentu</string>
+    <string name="demo_speed_normal">Nurmale</string>
+    <string name="demo_speed_fast">Rapidu</string>
+    <string name="hints_section">Indizii</string>
+    <string name="hints_total">Caselli d\'indiziu impiegati: %1$d</string>
+    <string name="hints_none">nisunu indiziu</string>
+    <string name="hints_n">%1$d indizii</string>
+    <string name="hints_column_tiles">Indizii</string>
+    <string name="demo_touch_return">Tuccate pè vultà à u ghjocu</string>
+    <string name="demo_level_banner">Dimustrazione livellu %1$s</string>
+</resources>
