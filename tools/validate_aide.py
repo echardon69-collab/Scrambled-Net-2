@@ -22,8 +22,9 @@ Trois fonctionnalités actées avec eric :
      solveur lui-même est inchangé, mais il ne touche plus jamais une
      tuile scellée (garde isSealed avant le bloc locked).
   3. DÉMONSTRATION — DemoActivity plein écran, boucle plateau →
-     résolution → victoire (blink) → pause 1,5 s → suivant. Difficulté
-     FIXED/RANDOM/PROGRESSIVE (modulo les 8 niveaux, Infini incluse),
+     résolution → victoire (blink) → pause 1,5 s → suivant. Niveaux
+     COCHÉS (v8 : cases à cocher, minima une), difficulté
+     RANDOM/PROGRESSIVE parmi ces niveaux,
      zoom FIT/×1,5/×2/×3 (multiplicateur du plancher), rythme 500/250
      (défaut)/100/30 ms, caméra à hystérésis (recentrer seulement si
      la tuile sort du rectangle central 30–70 %). AUCUN son — écart
@@ -92,6 +93,7 @@ strings_en = read(RES / "values/strings.xml")
 strings_fr = read(RES / "values-fr/strings.xml")
 hint_test = read(TESTS / "HintTest.kt")
 spec_test = read(TESTS / "GameSpecTest.kt")
+demo_test = read(TESTS / "DemoTest.kt")
 
 # ---------------------------------------------------------------------------
 # 1. Board — scellement, tuiles touchées, cible d'indice, plafond.
@@ -369,13 +371,14 @@ check("BoardView : curseur solveur toujours publié par l'activité",
 # 6. Persistance + réglages.
 # ---------------------------------------------------------------------------
 for key, val in [("HINT_STRATEGY_KEY", "hintStrategy"), ("HINT_PERCENT_KEY", "hintPercent"),
-                 ("DEMO_DIFFICULTY_KEY", "demoDifficulty"), ("DEMO_SKILL_KEY", "demoSkill"),
+                 ("DEMO_DIFFICULTY_KEY", "demoDifficulty"), ("DEMO_SKILL_SET_KEY", "demoSkillSet"),
                  ("DEMO_ZOOM_KEY", "demoZoom"), ("DEMO_SPEED_KEY", "demoSpeed")]:
     check(f"Persistence : clé {key} = \"{val}\"", f'const val {key} = "{val}"' in pe)
 check("Persistence/Settings : jamais le mot interdit (épingle réglages)",
       "LANGUAGE" not in st and "LANGUAGE" not in pe)
 for fn in ["loadHintStrategy", "saveHintStrategy", "loadHintPercent", "saveHintPercent",
-           "loadDemoDifficulty", "saveDemoDifficulty", "loadDemoSkill", "saveDemoSkill",
+           "loadDemoDifficulty", "saveDemoDifficulty",
+           "loadDemoSkillSet", "saveDemoSkillSet",
            "loadDemoZoom", "saveDemoZoom", "loadDemoSpeed", "saveDemoSpeed"]:
     check(f"Settings : {fn} présent", f"fun {fn}(" in st)
 check("Settings : hintPercent coercé 0–50 aux deux sens",
@@ -384,7 +387,7 @@ check("Settings : défauts SIGNAL/10/PROGRESSIVE/NOVICE/FIT/NORMAL",
       "HintStrategy.SIGNAL" in st and "10" in st and "DemoDifficulty.PROGRESSIVE" in st
       and "Skill.NOVICE" in st and "DemoZoom.FIT" in st and "DemoSpeed.NORMAL" in st)
 
-groups = ["hintStrategyGroup", "hintLimitGroup", "demoDiffGroup", "demoSkillGroup",
+groups = ["hintStrategyGroup", "hintLimitGroup", "demoDiffGroup",
           "demoZoomGroup", "demoSpeedGroup"]
 for g in groups:
     check(f"SettingsActivity : groupe {g} coché AVANT l'écoute",
@@ -394,18 +397,31 @@ check("SettingsActivity : radios 5–50 portées au runtime via hint_limit_value
       and "hintPercentFor" in sc)
 check("SettingsActivity : la radio 0 porte hint_limit_zero, pas les autres",
       layout_settings.count('@string/hint_limit_zero') == 1)
-check("Layout réglages : 55 radios MaterialRadioButton maxWidth 320dp",
-      layout_settings.count('android:maxWidth="320dp"') == 55,
-      f"trouvé {layout_settings.count('android:maxWidth=' + chr(34) + '320dp' + chr(34))}")
-check("Layout réglages : 10 RadioGroups au total",
-      layout_settings.count("<RadioGroup") == 10)
-for gid, n in [("hint_strategy_group", 2), ("hint_limit_group", 11), ("demo_diff_group", 3),
-               ("demo_skill_group", 8), ("demo_zoom_group", 4), ("demo_speed_group", 3)]:
+check("Layout réglages : 38 radios + 8 cases, maxWidth 320dp (v8)",
+      layout_settings.count("<com.google.android.material.radiobutton.MaterialRadioButton") == 38
+      and layout_settings.count("<com.google.android.material.checkbox.MaterialCheckBox") == 8
+      and layout_settings.count('android:maxWidth="320dp"') == 54)
+check("Layout réglages : 9 RadioGroups au total (v8 : les niveaux de la démo ne sont plus un groupe)",
+      layout_settings.count("<RadioGroup") == 9)
+for gid, n in [("hint_strategy_group", 2), ("hint_limit_group", 11), ("demo_diff_group", 2),
+               ("demo_zoom_group", 4), ("demo_speed_group", 3)]:
     m = re.search(rf'@\+id/{gid}"[\s\S]*?</RadioGroup>', layout_settings)
     check(f"Layout réglages : {gid} porte {n} radios",
           m is not None and m.group(0).count("<com.google.android.material.radiobutton.MaterialRadioButton") == n)
-check("Layout réglages : les 8 radios de niveau réutilisent skill_*",
-      re.search(r'@\+id/demo_skill_group"[\s\S]*?</RadioGroup>', layout_settings).group(0).count("@string/skill_") == 8)
+check("Layout réglages : les 8 CASES de niveau réutilisent skill_* (v8)",
+      re.search(r'@\+id/demo_skill_checks"[\s\S]*?</LinearLayout>', layout_settings).group(0).count("@string/skill_") == 8)
+# V8 (retours du 16 nov. 2026) : niveaux de la démo en cases à
+# cocher — cochées avant l'écoute, la dernière jamais décochable,
+# radios Aléatoire/Progressif grisées à coche unique.
+check("SettingsActivity : niveaux démo cochés AVANT l'écoute (v8)",
+      0 < sc.find("Settings.loadDemoSkillSet(this)")
+      < sc.find("cb.setOnCheckedChangeListener"))
+check("SettingsActivity : la dernière coche ne se décoche jamais (v8)",
+      "if (checked.isEmpty()) {" in sc and "changed.isChecked = true" in sc)
+check("SettingsActivity : radios de difficulté grisées à coche unique (v8)",
+      "refreshDemoDifficultyAvailability" in sc and "isEnabled = multi" in sc
+      and sc.count("binding.demoDiffRandom.isEnabled") == 1
+      and sc.count("binding.demoDiffProgressive.isEnabled") == 1)
 
 # ---------------------------------------------------------------------------
 # 7. ScoresStore + page Records.
@@ -452,8 +468,9 @@ check("Manifeste : DemoActivity non exportée, étiquette et parent",
 # ---------------------------------------------------------------------------
 # 9. Démonstration.
 # ---------------------------------------------------------------------------
-check("Demo : DemoDifficulty FIXED/RANDOM/PROGRESSIVE",
-      "enum class DemoDifficulty { FIXED, RANDOM, PROGRESSIVE }" in dm)
+check("Demo : DemoDifficulty RANDOM/PROGRESSIVE, FIXED retiré (v8)",
+      "enum class DemoDifficulty { RANDOM, PROGRESSIVE }" in dm
+      and "FIXED" not in dm)
 check("Demo : DemoSpeed 500/250/100 ms, Éclair RETIRÉ (v5, retour d'eric)",
       "SLOW(500)" in dm and "NORMAL(250)" in dm and "FAST(100)" in dm
       and "LIGHTNING" not in dm and "demo_speed_lightning" not in dm)
@@ -461,8 +478,11 @@ check("Demo : DemoZoom FIT/×1,5/×2/×3 (multiplicateurs 1/1,5/2/3)",
       "FIT(1f)" in dm and "X1_5(1.5f)" in dm and "X2(2f)" in dm and "X3(3f)" in dm)
 check("DemoViewModel : pause victoire 1,5 s",
       "WIN_PAUSE_MS = 1_500L" in dvm)
-check("DemoViewModel : progressive = ordinal qui monte, modulo les 8 niveaux",
-      "progressiveOrdinal % Skill.entries.size" in dvm)
+check("DemoViewModel : progressive = les niveaux COCHÉS en ordre croissant (v8)",
+      "progressiveOrdinal % skillSet.size" in dvm
+      and "skillSet[Random.nextInt(skillSet.size)]" in dvm)
+check("DemoActivity : la démo démarre sur les niveaux COCHÉS (v8)",
+      "Settings.loadDemoSkillSet(this)" in da)
 check("DemoViewModel : générateur comme le jeu (Infini → ORIGINAL, sinon bit de graine)",
       "skill.endless" in dvm and "(seed and 1L) == 0L" in dvm)
 check("DemoViewModel : ordre épingle Infini avant le bit de graine",
@@ -483,32 +503,82 @@ check("DemoActivity : zoom du réglage appliqué à chaque nouveau plateau",
 check("DemoActivity : caméra ne recentre que si la tuile sort de la vue (UAT)",
       "BoardView.FollowMode.VISIBLE" in da
       and "BoardView.FollowMode.HYSTERESIS" not in da)
-check("DemoActivity : indication « Touchez pour revenir » 4 s puis fondu 1 s",
-      "TOUCH_HINT_MS = 4_000L" in da and "FADE_MS = 1_000L" in da
-      and "fadeTouchHint" in da)
-check("DemoActivity : délai en Duration, pas l'overload Long (règle CI)",
-      "delay(TOUCH_HINT_MS.milliseconds)" in da
-      and "kotlin.time.Duration.Companion.milliseconds" in da)
+# V7 (retours utilisateurs du 16 nov. 2026 au soir) : le hint vit
+# SOUS le bandeau de niveau, en PERMANENCE — le fondu est retiré
+# (il ne réapparaissait qu'à la première partie de la session).
+check("DemoActivity : indication « Touchez pour revenir » permanente (v7)",
+      "fadeTouchHint" not in da and "TOUCH_HINT_MS" not in da
+      and "FADE_MS" not in da)
+check("Layout démo : le hint vit SOUS le bandeau, pile du bas",
+      "@+id/demo_bottom_stack" in layout_demo
+      and layout_demo.find("@+id/demo_level_banner")
+      < layout_demo.find("@+id/demo_touch_hint"))
+check("DemoActivity : pile du bas dégagée de la barre de navigation",
+      "EdgeToEdge.padSystemBars(binding.demoBottomStack, bottom = true)" in da)
+check("Demo : gel d'apparence UN SEUL chemin BoardView, coupure v7 retirée (v8)",
+      "appearanceFreezeEnabled" not in bv and "appearanceFreezeEnabled" not in da
+      and "val appearanceFrozen = animDurationMs.any { it > 0L }" in bv)
 check("Layout démo : demo_root/demo_board/demo_touch_hint",
       "@+id/demo_root" in layout_demo and "@+id/demo_board" in layout_demo
       and "@+id/demo_touch_hint" in layout_demo)
+
+# Lot 2 — retours utilisateurs du 16 nov. 2026 (mention de niveau,
+# tuiles invisibles, brouillard du Néant).
+check("Demo : nextPlayableMove — tête visible, invisibles en fin de file",
+      "fun nextPlayableMove(queue: ArrayDeque<Int>, visible: BooleanArray?)" in dm
+      and "queue.addLast(index)" in dm and "queue.addFirst(index)" in dm)
+check("DemoViewModel : la démo ne révèle plus les tuiles masquées (UAT)",
+      "reveal(" not in dvm)
+check("DemoViewModel : au Néant, seules les tuiles VISIBLES sont jouées",
+      "b.fogVisibility(b.connectedCells())" in dvm
+      and "nextPlayableMove(queue, fog)" in dvm
+      and "Demo.nextPlayableMove" not in dvm)
+check("DemoActivity : mention « Démonstration niveau X » en bas de l'écran",
+      "@+id/demo_level_banner" in layout_demo
+      and "binding.demoLevelBanner.text" in da
+      and "R.string.demo_level_banner" in da and "skillName" in da)
+check("DemoActivity : le préréglage de zoom est posé APRÈS update",
+      da.find("binding.demoBoard.applyZoomPreset(") > da.find("binding.demoBoard.update("))
+solve_block = vm[vm.find("fun playOneSolveMoveIfNeeded"):vm.find("fun playOneSolveMoveIfNeeded") + 1600]
+check("VM : le solveur ne révèle plus les tuiles masquées (décision d'eric)",
+      "reveal(" not in solve_block
+      and "board.rotateCell(index, steps)" in solve_block)
+check("VM : l'indice correctif révèle toujours (coup montré, pas joué)",
+      "if (board.isHidden(index)) board.reveal(index)" in vm)
+check("DemoViewModel : le coup déjà en place CONSOMME la tête (plantage corrigé)",
+      "queue.removeFirst()" in dvm and count(dvm, "queue.removeFirst()") == 1
+      and "queue.addFirst(index)" not in dvm
+      and "else -> queue.removeFirst()" in dvm)
+preset = bv[bv.find("fun applyZoomPreset"):bv.find("fun applyZoomPreset") + 1800]
+check("BoardView : préréglage démo — le Néant cadre la zone révélée",
+      "Skill.VOID" in preset and "centerOnVisibleZone()" in preset
+      and "maxCellPx" in preset and "Board.FOG_RADIUS_CELLS" in preset)
 
 # ---------------------------------------------------------------------------
 # 10. Chaînes EN + FR.
 # ---------------------------------------------------------------------------
 hint_keys = ["menu_hint", "menu_hint_count", "menu_tools", "menu_demo",
              "hint_strategy_signal", "hint_strategy_fix", "hint_limit_title",
-             "hint_limit_zero", "hint_limit_value", "demo_diff_fixed",
+             "hint_limit_zero", "hint_limit_value",
              "demo_diff_random", "demo_diff_progressive", "demo_skill_title",
              "demo_zoom_title", "demo_zoom_fit", "demo_zoom_x15", "demo_zoom_x2",
              "demo_zoom_x3", "demo_speed_title", "demo_speed_slow",
-             "demo_speed_normal", "demo_speed_fast",
+             "demo_speed_normal", "demo_speed_fast", "demo_level_banner",
              "hints_section", "hints_total", "hints_none", "hints_n",
              "hints_column_tiles", "demo_touch_return"]
 for k in hint_keys:
     check(f"Strings EN+FR : {k}", f'name="{k}"' in strings_en and f'name="{k}"' in strings_fr)
 # V5 (retour d'eric du 15 nov. 2026) : la radio Éclair est retirée
 # du layout ET des strings — plus de chaîne orpheline.
+# V8 : la radio « Niveau fixe » est retirée du layout ET des
+# strings (cocher une seule case la remplace) ; le français dit
+# « Progressif », pas « Progressive » (retour d'eric).
+check("Strings : la radio Niveau fixe est retirée (v8)",
+      'demo_diff_fixed' not in strings_en
+      and 'demo_diff_fixed' not in strings_fr
+      and 'demo_diff_fixed' not in layout_settings)
+check("Strings FR : le mode se nomme Progressif (v8)",
+      '<string name="demo_diff_progressive">Progressif</string>' in strings_fr)
 check("Strings : la radio Éclair est retirée (v5, retour d'eric)",
       'demo_speed_lightning' not in strings_en
       and 'demo_speed_lightning' not in strings_fr
@@ -533,6 +603,13 @@ check("HintTest : présent, porte priorités, plafond, scellement, démo",
       and "LIGHTNING" not in hint_test)
 check("HintTest : au moins 10 tests",
       count(hint_test, "@Test") >= 10)
+check("DemoTest : présent — file jouable, brouillard du Néant, résolution",
+      "class DemoTest" in demo_test and "nextPlayableMove" in demo_test
+      and "fogVisibility" in demo_test and "isSolved" in demo_test
+      and count(demo_test, "@Test") >= 5)
+check("DemoTest : régression du plantage — la boucle vide sa file",
+      "the step loop consumes its queue and finishes the board" in demo_test
+      and "queue.removeFirst()" in demo_test)
 check("GameSpecTest : format v5 (22 champs, préfixe v5)",
       'camera round trips through the v5 format' in spec_test
       and '22, encoded.split(\u0027|\u0027).size' in spec_test

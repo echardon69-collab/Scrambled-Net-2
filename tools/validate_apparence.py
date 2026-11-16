@@ -18,6 +18,15 @@ toutes les tuiles gardent l'apparence d'avant le coup (câbles gris ou
 énergisés, écrans, DEL du serveur, blips), et tout bascule au même
 moment quand la rotation s'achève.
 
+V8b (retest du 16 nov. 2026 : « la connexion se met encore en
+évidence PENDANT la rotation, en démonstration ») : le snap v8 ne
+terminait que la rotation de la cellule du NOUVEAU coup ; les
+rotations en vol sur d'AUTRES cellules continuaient d'animer, et
+le gel — recapturé à chaque coup — relâchait l'énergie du coup
+précédent pendant que SA rotation volait encore. Désormais, à
+l'arrivée d'un coup, TOUTE rotation en vol est finie d'un coup,
+AVANT de lancer les nouvelles rotations.
+
 Ce script PARSE les sources (aucun littéral retapé à la main) et
 SIMULE la logique d'affichage image par image.
 """
@@ -50,22 +59,20 @@ vm_src = read(f"{BASE}/GameViewModel.kt")
 # 1. Vérification statique : BoardView.kt.
 # ---------------------------------------------------------------------------
 
-check("BoardView : les 4 états d'apparence gelée sont déclarés",
+check("BoardView : les 2 états d'apparence gelée sont déclarés (v8)",
       "private var animFromConnected = BooleanArray(0)" in view_src
-      and "private var lastDrawnConnected = BooleanArray(0)" in view_src
       and "private var animFromServerWired = false" in view_src
-      and "private var lastDrawnServerWired = false" in view_src)
+      and "lastDrawnConnected" not in view_src
+      and "lastDrawnServerWired" not in view_src)
 
-check("BoardView : le gel est réinitialisé à chaque nouveau plateau",
+check("BoardView : le gel est réinitialisé à chaque nouveau plateau (v8)",
       view_src.count("animFromConnected = BooleanArray(board.size)") == 1
-      and view_src.count("lastDrawnConnected = BooleanArray(board.size)") == 1
-      and "animFromServerWired = false" in view_src
-      and "lastDrawnServerWired = false" in view_src)
+      and "animFromServerWired = false" in view_src)
 
 check("BoardView : la détection de rotation fige l'apparence "
-      "du PLATEAU ENTIER d'avant le coup",
-      "animFromConnected = lastDrawnConnected.copyOf()" in view_src
-      and "animFromServerWired = lastDrawnServerWired" in view_src
+      "du PLATEAU ENTIER sur l'état publié du coup PRÉCÉDENT (v8)",
+      "animFromConnected = prev.copyOf()" in view_src
+      and "animFromServerWired = serverIsFullyWired(board, prev)" in view_src
       and "var rotating = false" in view_src
       and "if (rotating) {" in view_src)
 
@@ -76,21 +83,33 @@ check("BoardView : plus de gel limité à la seule cellule qui tourne",
 check("BoardView : le drapeau de gel couvre TOUTE rotation en cours",
       "val appearanceFrozen = animDurationMs.any { it > 0L }" in view_src)
 
+# V8 (retours du 16 nov. 2026) : l'énergie doit apparaître APRÈS la fin
+# de la rotation, jamais PENDANT. Une rotation en vol est snappée à sa
+# fin (angle final + rabot des tours complets) quand un nouveau coup
+# arrive ; la coupure v7 (flag appearanceFreezeEnabled) est retirée —
+# un seul chemin de gel, dans BoardView.
+# V8b : le snap porte sur TOUTE rotation en vol (pas seulement la
+# cellule du nouveau coup) et PRÉCÈDE la boucle des nouvelles
+# rotations — sans quoi le gel recapturé relâche l'énergie du coup
+# précédent pendant que sa rotation vole encore.
+check("BoardView : TOUTE rotation en vol snappée à l'arrivée d'un coup, avant les nouvelles rotations (v8b)",
+      view_src.count("visualCurrent[i] = visualTarget[i]") == 1
+      and "appearanceFreezeEnabled" not in view_src
+      and 0 < view_src.find("animDurationMs[i] = 0L")
+      < view_src.find("if (delta != 0) {"))
+
 check("BoardView : l'apparence dessinée passe par l'état gelé "
       "pendant une rotation",
       "if (appearanceFrozen) animFromConnected[index]" in view_src
       and "else connected[index]" in view_src)
 
-check("BoardView : l'état dessiné est mémorisé pour le prochain gel",
-      "lastDrawnConnected[index] = isConnected" in view_src)
-
 check("BoardView : plus de lecture directe de l'état relié "
       "pour l'apparence",
       "val isConnected = connected[index]" not in view_src)
 
-check("BoardView : l'icône du serveur est gelée pendant une rotation",
+check("BoardView : l'icône du serveur est gelée pendant une rotation (v8)",
       "if (appearanceFrozen) animFromServerWired" in view_src
-      and "lastDrawnServerWired = serverWired" in view_src)
+      and "lastDrawnServerWired" not in view_src)
 
 check("BoardView : aucune passe de blips pendant une rotation",
       "blipsEnabled && !appearanceFrozen" in view_src
@@ -125,9 +144,10 @@ ROTATE_MS = 250  # par quart de tour (ROTATE_MS_PER_QUARTER)
 
 class Plateau:
     """Miroir du plateau : rotation en cours (une à la fois), état
-    modèle instantané, gel de TOUTES les apparences sur celles
-    d'avant le coup (celles réellement dessinées à la trame
-    précédente)."""
+    modèle instantané, gel de TOUTES les apparences sur l'état
+    PUBLIÉ d'avant le coup — celui du coup précédent (v8) : une
+    rotation en vol est finie d'un coup au coup suivant, donc
+    l'énergie du coup N apparaît quand SA rotation finit."""
 
     def __init__(self, connected):
         self.anim_ms = 0
@@ -137,10 +157,11 @@ class Plateau:
 
     def tap(self, new_model):
         """Début de coup : le modèle tourne aussitôt, le plateau ENTIER
-        est gelé sur l'apparence d'avant le coup."""
+        est gelé sur l'état publié d'avant ce coup (snap v8 de la
+        rotation en vol, s'il y en avait une)."""
         self.anim_ms = ROTATE_MS
+        self.frozen = list(self.model)
         self.model = list(new_model)
-        self.frozen = list(self.drawn)
 
     def frame(self, dt_ms):
         """Avance de dt_ms puis rendu : renvoie les apparences
@@ -199,18 +220,20 @@ appearances = [p.frame(50) for _ in range(6)]
 check("Miroir : une tuile épargnée par le coup ne clignote pas",
       appearances == [[True, True]] * 4 + [[True, False]] * 2)
 
-# Cas 6 : deux coups enchaînés sur la même cellule (180 degrés). Le gel
-# doit se poursuivre sans jamais laisser voir un état intermédiaire.
+# Cas 6 : deux coups enchaînés sur la même cellule (180 degrés). En
+# v8, le snap termine la 1re rotation d'un coup au 2e coup : le gel
+# du 2e coup part de l'état publié du 1er (déjà alimenté), jamais
+# d'état intermédiaire visible.
 p = Plateau([False])
 p.tap([True])            # 1er quart de tour
 seen = [p.frame(100)]    # trame à 100 ms : apparence d'avant le coup
 p.tap([True])            # 2e quart de tour avant la fin du 1er :
-seen.append(p.frame(100))  # le gel repart de l'état réellement vu
+seen.append(p.frame(100))  # snap : le gel part de l'état du 1er coup
 seen.append(p.frame(100))  # trame à 300 ms du 2e coup : encore gelée
 seen.append(p.frame(100))  # trame à 400 ms : bascule enfin
-check("Miroir : coups enchaînés, l'apparence d'avant le coup tient "
-      "jusqu'au bout",
-      seen == [[False]] * 3 + [[True]])
+check("Miroir : coups enchaînés (v8), le snap laisse voir l'état "
+      "du coup précédent, jamais un intermédiaire",
+      seen == [[False]] + [[True]] * 3)
 
 # Cas 7 : après la bascule, l'état dessiné rattrape le modèle (les
 # coups suivants gèlent sur la VRAIE apparence vue à l'écran).
@@ -231,6 +254,21 @@ p.tap([False])
 appearances = [p.frame(50) for _ in range(6)]
 check("Miroir : les DEL du serveur basculent aussi après la rotation",
       appearances == [[True]] * 4 + [[False]] * 2)
+
+# Cas 9 (v8b, retest) : coups enchaînés sur deux cellules
+# DIFFÉRENTES, plus vite que la rotation (démo rapide). Le snap
+# termine la 1re rotation au coup suivant : l'énergie du 1er coup
+# apparaît à CET instant (fin de SA rotation), jamais pendant ; et
+# l'énergie du 2e coup n'apparaît qu'à la fin de la sienne.
+p = Plateau([False, False])
+p.tap([True, False])    # coup 1 : cellule a reliée, rotation en vol
+seen = [p.frame(100)]   # pendant SA rotation : rien ne s'allume
+p.tap([True, True])     # coup 2 : snap de la rotation 1, gel sur l'état publié
+seen.append(p.frame(100))  # a allumé (rotation 1 finie), b pas encore
+seen.append(p.frame(100))  # rotation 2 en vol : b encore gris
+seen.append(p.frame(100))  # fin de la rotation 2 : b allumé
+check("Miroir : cellules différentes, l'énergie suit la FIN de chaque rotation (v8b)",
+      seen == [[False, False], [True, False], [True, False], [True, True]])
 
 # ---------------------------------------------------------------------------
 # Bilan.

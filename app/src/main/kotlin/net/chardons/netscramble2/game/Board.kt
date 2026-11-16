@@ -355,7 +355,12 @@ class Board(
     /** Cellule scellée par un indice correctif. */
     fun isSealed(index: Int): Boolean = sealedCells[index]
 
-    /** Révèle les câbles d'une cellule cachée (solveur, fin de partie). */
+    /**
+     * Révèle les câbles d'une cellule cachée (indice correctif).
+     * Décision d'eric du 16 nov. 2026 : le solveur ne révèle plus —
+     * une tuile masquée reste masquée, la victoire seule dévoile
+     * le plateau (voir [isHidden]).
+     */
     fun reveal(index: Int) {
         revealed[index] = true
     }

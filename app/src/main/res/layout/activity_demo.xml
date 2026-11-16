@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Démonstration (chantier Aide à la résolution) : plein écran, la
      vue du plateau occupe tout, sans toolbar ni barre d'état du jeu.
-     L'indication « Touchez pour revenir » s'affiche ~4 secondes puis
-     fond (DemoActivity.fadeTouchHint) ; TOUTE interaction referme
-     l'activité — la partie du joueur n'a pas bougé. -->
+     TOUTE interaction referme l'activité — la partie du joueur n'a
+     pas bougé. La pile du bas porte le bandeau « Démonstration
+     niveau X » puis, SOUS lui, l'indication « Touchez pour revenir »
+     — permanente (v7, retours du 16 nov. 2026) ; son inset bas
+     (posé dans DemoActivity.onCreate) la dégage de la barre de
+     navigation. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/demo_root"
     android:layout_width="match_parent"
@@ -14,17 +17,54 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <TextView
-        android:id="@+id/demo_touch_hint"
+    <!-- Pile du bas (retours du 16 nov. 2026, v8 puis v9) : mention
+         permanente du niveau, indication de sortie SOUS elle — le
+         texte est posé par DemoActivity à chaque nouveau plateau.
+         L'inset de la barre de navigation est posé en PADDING par
+         EdgeToEdge.padSystemBars sur la pile : le VOILE vit donc sur
+         un containeur INTERNE (v9), sinon la zone colorée déborde sur
+         la barre de navigation — même espacement en haut de la
+         première ligne qu'en bas de la seconde. Voile à 80 %
+         d'opacité (v9 : 10 % de plus de transparence), interligne
+         réduit encore d'un tiers (8 → 5 dp), texte plein. -->
+    <LinearLayout
+        android:id="@+id/demo_bottom_stack"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="top|center_horizontal"
-        android:layout_marginTop="32dp"
-        android:background="@android:color/transparent"
-        android:paddingHorizontal="16dp"
-        android:paddingVertical="8dp"
-        android:text="@string/demo_touch_return"
-        android:textAppearance="?attr/textAppearanceTitleMedium"
-        android:textColor="?attr/colorOnSurface"
-        android:alpha="0.8" />
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="24dp"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:id="@+id/demo_hint_panel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:background="@color/demo_hint_scrim"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/demo_level_banner"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:paddingHorizontal="16dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="3dp"
+                android:textAppearance="?attr/textAppearanceTitleMedium"
+                android:textColor="?attr/colorOnSurface" />
+
+            <TextView
+                android:id="@+id/demo_touch_hint"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:paddingHorizontal="16dp"
+                android:paddingTop="2dp"
+                android:paddingBottom="8dp"
+                android:text="@string/demo_touch_return"
+                android:textAppearance="?attr/textAppearanceTitleMedium"
+                android:textColor="?attr/colorOnSurface" />
+        </LinearLayout>
+    </LinearLayout>
 </FrameLayout>

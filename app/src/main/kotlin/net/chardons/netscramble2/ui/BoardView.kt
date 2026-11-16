@@ -106,6 +106,12 @@ class BoardView @JvmOverloads constructor(
 
     private var board: Board? = null
     private var connected: BooleanArray? = null
+
+    // État publié par l'update PRÉCÉDENT : le gel v8 (retours du
+    // 16 nov. 2026) fige le plateau ENTIER sur lui pendant la
+    // rotation du coup courant — l'énergie du coup apparaît quand
+    // sa rotation finit, jamais pendant.
+    private var prevConnected: BooleanArray? = null
     private var solved = false
 
     // --- M2 : animations de rotation. Le modèle tourne d'un coup ; la vue
@@ -129,16 +135,14 @@ class BoardView @JvmOverloads constructor(
     //     cellule qui tourne : un coup peut alimenter ou priver d'énergie
     //     une branche entière. Tant qu'une rotation est en cours
     //     quelque part, TOUT le plateau garde l'apparence d'avant le
-    //     coup (l'état effectivement dessiné à la trame précédente) :
-    //     toutes les tuiles concernées basculent au même moment quand
-    //     la rotation s'achève. Sans cela, les autres tuiles changeaient
-    //     d'apparence immédiatement au tap, la tuile pivot gardant
-    //     encore son ancien état — le réseau paraissait à moitié à
-    //     jour pendant l'animation. ---
+    //     coup (l'état publié par l'update PRÉCÉDENT, capturé avant
+    //     l'écrasement) : toutes les tuiles concernées basculent au
+    //     même moment quand la rotation s'achève. Sans cela, les
+    //     autres tuiles changeaient d'apparence immédiatement au tap,
+    //     la tuile pivot gardant encore son ancien état — le réseau
+    //     paraissait à moitié à jour pendant l'animation. ---
     private var animFromConnected = BooleanArray(0)
-    private var lastDrawnConnected = BooleanArray(0)
     private var animFromServerWired = false
-    private var lastDrawnServerWired = false
 
     // --- M2 : blips de données (modèle pur, voir BlipField) ---
     private var blips: BlipField? = null
@@ -346,6 +350,9 @@ class BoardView @JvmOverloads constructor(
     /** Origine de la vague, HORS de la zone visible (côté tiré au sort). */
     private var waveOriginX = 0f
     private var waveOriginY = 0f
+    /** Origine de la SECONDE vague (retour UAT : elle suit la première). */
+    private var wave2OriginX = 0f
+    private var wave2OriginY = 0f
     /** Vitesse du front, posée depuis le modèle pur. */
     private var waveSpeedPx = 0f
     /** Feu d'artifice en cours (simulation pure, jamais sérialisée). */
@@ -533,6 +540,9 @@ class BoardView @JvmOverloads constructor(
     /** Rafraîchit l'état du plateau affiché et redessine. */
     fun update(board: Board, connected: BooleanArray, solved: Boolean) {
         this.board = board
+        // Le gel v8 fige sur l'état publié par l'update PRÉCÉDENT :
+        // capturé en local avant l'écrasement par l'état courant.
+        prevConnected = this.connected
         this.connected = connected
         // Clignement de victoire : il porte sur la DERNIÈRE tuile
         // manipulée (joueur ou solveur) — capturée avant que la
@@ -566,9 +576,7 @@ class BoardView @JvmOverloads constructor(
             animDurationMs = LongArray(board.size)
             lastRotations = board.rotations.copyOf()
             animFromConnected = BooleanArray(board.size)
-            lastDrawnConnected = BooleanArray(board.size)
             animFromServerWired = false
-            lastDrawnServerWired = false
             blips = BlipField(board)
             blipsLastAdvanceMs = now
             // Plateau neuf : aucune tuile manipulée à cligner.
@@ -587,6 +595,35 @@ class BoardView @JvmOverloads constructor(
             val field = blips
             var rotating = false
             for (i in visualTarget.indices) {
+                if (((board.rotations[i] - lastRotations[i]) % 4 + 4) % 4 != 0) {
+                    rotating = true
+                    break
+                }
+            }
+            if (rotating) {
+                // Un coup arrive pendant que des rotations animent
+                // (démo rapide, solveur du jeu) : TOUTE rotation en
+                // vol est FINIE d’un coup — la cellule du nouveau coup
+                // comme les AUTRES encore en vol. Sans cela (v8), le
+                // gel — recapturé à chaque coup — relâchait l’énergie
+                // du coup précédent pendant que SA rotation volait
+                // encore : l’anomalie « mise en évidence PENDANT la
+                // rotation » (retour du 16 nov. 2026). Même rabot des
+                // tours complets qu’à la fin naturelle : les angles
+                // restent dans le rabot du rendu ci-dessous.
+                for (i in visualTarget.indices) {
+                    if (animDurationMs[i] > 0L) {
+                        animDurationMs[i] = 0L
+                        visualCurrent[i] = visualTarget[i]
+                        if (visualTarget[i] >= 360f || visualTarget[i] <= -360f) {
+                            val whole = 360f * (visualTarget[i] / 360f).toInt()
+                            visualTarget[i] -= whole
+                            visualCurrent[i] -= whole
+                        }
+                    }
+                }
+            }
+            for (i in visualTarget.indices) {
                 val delta = ((board.rotations[i] - lastRotations[i]) % 4 + 4) % 4
                 if (delta != 0) {
                     visualTarget[i] += delta * 90f
@@ -601,14 +638,19 @@ class BoardView @JvmOverloads constructor(
                 }
             }
             if (rotating) {
-                // Un coup peut changer l'énergie d'une branche entière :
-                // c'est le PLATEAU ENTIER qui est gelé sur l'apparence
-                // d'avant le coup (état effectivement dessiné à la
-                // trame précédente). L'énergie — câbles énergisés,
-                // écrans de terminaux, DEL du serveur, blips — bascule
-                // partout au même moment, une fois la rotation finie.
-                animFromConnected = lastDrawnConnected.copyOf()
-                animFromServerWired = lastDrawnServerWired
+                // Un coup peut changer l’énergie d’une branche entière :
+                // c’est le PLATEAU ENTIER qui est gelé sur l’état
+                // publié d’AVANT ce coup — celui du coup précédent,
+                // dont la rotation en vol vient d’être finie
+                // ci-dessus. L’énergie — câbles énergisés, écrans de
+                // terminaux, DEL du serveur, blips — bascule partout
+                // au même moment, une fois la rotation finie : jamais
+                // PENDANT la rotation du coup qui la provoque.
+                val prev = prevConnected
+                if (prev != null) {
+                    animFromConnected = prev.copyOf()
+                    animFromServerWired = serverIsFullyWired(board, prev)
+                }
             }
             lastRotations = board.rotations.copyOf()
         }
@@ -907,9 +949,28 @@ class BoardView @JvmOverloads constructor(
      * au-delà, la case vaut le plancher multiplié, bornée au maximum,
      * et la vue se recentre : la caméra de la démo suit les coups du
      * solveur (followCell), pas un pan hérité.
+     *
+     * Retours utilisateurs du 16 nov. 2026 (lot 2) : au Néant,
+     * ajuster le plateau ENTIER ne montrait presque que du
+     * brouillard. La démo cadre la ZONE RÉVÉLÉE : la case vaut le
+     * zoom confort du Néant (le carré révélé occupe la moitié du
+     * petit côté, spec validée par eric) MULTIPLIÉ par le réglage,
+     * bornée au plancher et au maximum — à ×2 le carré révélé
+     * remplit le petit côté de la vue. La caméra d'arrivée a posé
+     * son cadrage juste avant ([update]) : ce préréglage la
+     * survole, la caméra de suivi prend ensuite le relais au fil
+     * du réseau.
      */
     fun applyZoomPreset(multiplier: Float) {
         val b = board ?: return
+        if (b.skill == Skill.VOID && !solved) {
+            if (width == 0 || height == 0) return
+            cellPx = ((minOf(width, height) /
+                (2f * (2f * Board.FOG_RADIUS_CELLS + 1f))) * multiplier)
+                .coerceIn(floorCellPx(b), maxCellPx)
+            centerOnVisibleZone()
+            return
+        }
         if (multiplier <= 1f || width == 0 || height == 0) {
             fitBoard()
             return
@@ -1093,7 +1154,7 @@ class BoardView @JvmOverloads constructor(
                             val inBoardRow = y in 0 until b.height
                             for (x in minX until maxX) {
                                 if (inBoardRow && x in 0 until b.width) continue
-                                drawBitmap(decor, x * cellPx, top, null)
+                                drawVictoryDecor(decor, now, x * cellPx, top)
                             }
                         }
                     }
@@ -1107,7 +1168,6 @@ class BoardView @JvmOverloads constructor(
             val serverWired =
                 if (appearanceFrozen) animFromServerWired
                 else serverWiredNow
-            lastDrawnServerWired = serverWired
 
             // --- Passe des cellules. Deux régimes d'itération, un seul
             //     corps (drawBoardCell) : les niveaux encadrés parcourent
@@ -1261,6 +1321,14 @@ class BoardView @JvmOverloads constructor(
      * (onde de choc) ; le feu d'artifice tire ses fusées du bas de
      * la zone. L'effet vit dans le repère du pan (monde), borné à
      * la fenêtre visible : la famille Infini ne paie que l'écran.
+     *
+     * Retour UAT d'eric (16 nov. 2026) : l'effet couvre désormais
+     * l'ENSEMBLE de l'écran du téléphone — la vague soulève aussi
+     * le décor autour du plateau et devient DEUX vagues successives
+     * sur des côtés différents, plus amples ; le feu d'artifice vit
+     * en repère ÉCRAN, toute la vue, sans pan de centrage. Le chrome
+     * autour de la vue (barre d'outils, barre d'état) reste hors
+     * effet : l'animation appartient au jeu.
      */
     fun playVictoryEffect(effect: VictoryEffect) {
         if (board == null) return
@@ -1273,30 +1341,58 @@ class BoardView @JvmOverloads constructor(
         val worldH = height.toFloat()
         if (effect == VictoryEffect.WAVE) {
             val margin = 0.2f * minOf(width, height)
-            when (rng.nextInt(4)) {
-                0 -> {
-                    waveOriginX = worldLeft + rng.nextFloat() * worldW
-                    waveOriginY = worldTop - margin
-                }
-                1 -> {
-                    waveOriginX = worldLeft + worldW + margin
-                    waveOriginY = worldTop + rng.nextFloat() * worldH
-                }
-                2 -> {
-                    waveOriginX = worldLeft + rng.nextFloat() * worldW
-                    waveOriginY = worldTop + worldH + margin
-                }
-                else -> {
-                    waveOriginX = worldLeft - margin
-                    waveOriginY = worldTop + rng.nextFloat() * worldH
-                }
-            }
+            // Retour UAT d'eric (16 nov. 2026) : DEUX vagues — la
+            // seconde sur un AUTRE côté (jamais le même), lancée à
+            // mi-effet une fois la première passée. La seconde est
+            // posée d'abord puis recopiée : l'outil de placement
+            // écrit dans les champs de la première origine.
+            val first = rng.nextInt(4)
+            val second = (first + 1 + rng.nextInt(3)) % 4
+            placeWaveOrigin(second, worldLeft, worldTop, worldW, worldH, margin)
+            wave2OriginX = waveOriginX
+            wave2OriginY = waveOriginY
+            placeWaveOrigin(first, worldLeft, worldTop, worldW, worldH, margin)
             waveSpeedPx = VictoryEffects.waveSpeed(worldW, worldH)
         } else {
             waveSpeedPx = 0f
-            firework = VictoryFirework(victoryStartMs, worldW, worldH)
+            // Retour UAT : le feu d'artifice vit en repère ÉCRAN —
+            // toute la vue, PAS la seule zone du plateau (le pan de
+            // centrage ne le décale plus).
+            firework = VictoryFirework(victoryStartMs, width.toFloat(), height.toFloat())
         }
         postInvalidateOnAnimation()
+    }
+
+    /**
+     * Pose l'origine d'une vague sur le côté [side], HORS de la
+     * zone visible — marge de 0,2 fois le petit côté (spec eric).
+     */
+    private fun placeWaveOrigin(
+        side: Int,
+        worldLeft: Float,
+        worldTop: Float,
+        worldW: Float,
+        worldH: Float,
+        margin: Float
+    ) {
+        when (side) {
+            0 -> {
+                waveOriginX = worldLeft + rng.nextFloat() * worldW
+                waveOriginY = worldTop - margin
+            }
+            1 -> {
+                waveOriginX = worldLeft + worldW + margin
+                waveOriginY = worldTop + rng.nextFloat() * worldH
+            }
+            2 -> {
+                waveOriginX = worldLeft + rng.nextFloat() * worldW
+                waveOriginY = worldTop + worldH + margin
+            }
+            else -> {
+                waveOriginX = worldLeft - margin
+                waveOriginY = worldTop + rng.nextFloat() * worldH
+            }
+        }
     }
 
     /**
@@ -1315,18 +1411,32 @@ class BoardView @JvmOverloads constructor(
     }
 
     /**
-     * Soulèvement de la tuile par la vague, en pixels de monde :
-     * cloche du profil autour du front, ramenée à une fraction de
-     * la taille de case. Nul hors vague, nul une fois le front
-     * passé — la fin de l'effet ne saute jamais.
+     * Soulèvement par la vague, en pixels de monde : cloche du
+     * profil autour du front, ramenée à une fraction de la taille
+     * de case. Retour UAT d'eric : DEUX vagues par animation — la
+     * seconde part à mi-effet d'un autre côté, et une tuile prend
+     * le MAX des deux fronts (jamais la somme : l'ampleur reste
+     * bornée). Nul hors vagues, nul une fois le front passé — la
+     * fin de l'effet ne saute jamais.
      */
     private fun waveLiftPx(now: Long, left: Float, top: Float): Float {
         if (victoryEffect != VictoryEffect.WAVE) return 0f
-        val front = waveSpeedPx * ((now - victoryStartMs).coerceAtLeast(0L) / 1000f)
-        val dx = (left + cellPx / 2f) - waveOriginX
-        val dy = (top + cellPx / 2f) - waveOriginY
-        return VictoryEffects.waveProfile(hypot(dx, dy) - front, cellPx) *
-            VictoryEffects.WAVE_LIFT_CELLS * cellPx
+        val elapsedMs = (now - victoryStartMs).coerceAtLeast(0L)
+        val cx = left + cellPx / 2f
+        val cy = top + cellPx / 2f
+        val front1 = waveSpeedPx * (elapsedMs / 1000f)
+        val p1 = VictoryEffects.waveProfile(
+            hypot(cx - waveOriginX, cy - waveOriginY) - front1, cellPx
+        )
+        var p = p1
+        if (elapsedMs >= VictoryEffects.WAVE2_DELAY_MS) {
+            val front2 = waveSpeedPx * ((elapsedMs - VictoryEffects.WAVE2_DELAY_MS) / 1000f)
+            val p2 = VictoryEffects.waveProfile(
+                hypot(cx - wave2OriginX, cy - wave2OriginY) - front2, cellPx
+            )
+            if (p2 > p) p = p2
+        }
+        return p * VictoryEffects.WAVE_LIFT_CELLS * cellPx
     }
 
     /**
@@ -1370,11 +1480,43 @@ class BoardView @JvmOverloads constructor(
     }
 
     /**
+     * Décor soulevé par la vague — même traitement que les tuiles
+     * ([drawVictoryCell]) : ombre au sol, translation, léger
+     * grossissement, dessin direct hors vague. Retour UAT : la
+     * vague balaye TOUT l'écran, le décor autour du plateau
+     * bouge avec les tuiles.
+     */
+    private fun Canvas.drawVictoryDecor(bitmap: Bitmap, now: Long, left: Float, top: Float) {
+        val lift = waveLiftPx(now, left, top)
+        if (lift <= 0f) {
+            drawBitmap(bitmap, left, top, null)
+            return
+        }
+        val t = (lift / (VictoryEffects.WAVE_LIFT_CELLS * cellPx)).coerceIn(0f, 1f)
+        victoryShadowPaint.alpha = (t * 130f).toInt()
+        drawRect(left, top, left + cellPx, top + cellPx, victoryShadowPaint)
+        withTranslation(0f, -lift) {
+            withSave {
+                val cx = left + cellPx / 2f
+                val cy = top + cellPx / 2f
+                val scale = 1f + VictoryEffects.WAVE_SCALE_FRACTION * t
+                translate(cx, cy)
+                scale(scale, scale)
+                translate(-cx, -cy)
+                drawBitmap(bitmap, left, top, null)
+            }
+        }
+    }
+
+    /**
      * Feu d'artifice : fusées (trace claire) puis gerbes d'étincelles
-     * colorées, AU-DESSUS du plateau, dessinées dans le repère ÉCRAN
-     * — positions monde + pan. La simulation avance ici, une fois
-     * par trame ; peintures et pool pré-alloués : zéro allocation
-     * par trame, jamais de lambda dans la boucle.
+     * colorées, AU-DESSUS du plateau. Retour UAT d'eric : l'effet
+     * couvre TOUT l'écran du téléphone — la simulation vit en
+     * repère ÉCRAN (toute la vue, sans pan) : le centrage du
+     * plateau ne le confine ni ne le décale plus. La simulation
+     * avance ici, une fois par trame ; peintures et pool
+     * pré-alloués : zéro allocation par trame, jamais de lambda
+     * dans la boucle.
      */
     private fun Canvas.drawFireworkOverlay(now: Long) {
         val fw = firework ?: return
@@ -1388,8 +1530,8 @@ class BoardView @JvmOverloads constructor(
             victorySparkPaint.color = ROCKET_COLOR
             victorySparkPaint.alpha = 230
             drawLine(
-                fw.rocketX(i) + panX, fw.rocketY(i, now) + panY,
-                fw.rocketX(i) + panX, fw.rocketTrailY(i, now) + panY,
+                fw.rocketX(i), fw.rocketY(i, now),
+                fw.rocketX(i), fw.rocketTrailY(i, now),
                 victorySparkPaint
             )
         }
@@ -1398,8 +1540,8 @@ class BoardView @JvmOverloads constructor(
             victorySparkPaint.color = fw.sparkColor(j)
             victorySparkPaint.alpha = fw.sparkAlpha(j, now)
             drawLine(
-                fw.sparkX(j) + panX, fw.sparkY(j) + panY,
-                fw.sparkTrailX(j) + panX, fw.sparkTrailY(j) + panY,
+                fw.sparkX(j), fw.sparkY(j),
+                fw.sparkTrailX(j), fw.sparkTrailY(j),
                 victorySparkPaint
             )
         }
@@ -1445,7 +1587,6 @@ class BoardView @JvmOverloads constructor(
         val isConnected =
             if (appearanceFrozen) animFromConnected[index]
             else connected[index]
-        lastDrawnConnected[index] = isConnected
 
         // Cellule cachée (Insane) : câbles masqués tant que la
         // partie n'est pas gagnée et que le solveur ne les a pas

@@ -45,8 +45,13 @@ object Persistence {
     /** Clé de la difficulté de la démonstration (FIXED, RANDOM, PROGRESSIVE). */
     const val DEMO_DIFFICULTY_KEY = "demoDifficulty"
 
-    /** Clé du niveau de départ de la démonstration. */
-    const val DEMO_SKILL_KEY = "demoSkill"
+    /**
+     * Clé du MASQUE des niveaux cochés de la démonstration (v8) :
+     * un bit par niveau (1 shl Skill.ordinal), Novice seul par
+     * défaut. L'ancienne clé demoSkill (un seul niveau) est
+     * ignorée : ancien « FIXED » introuvable → défaut PROGRESSIVE.
+     */
+    const val DEMO_SKILL_SET_KEY = "demoSkillSet"
 
     /** Clé du zoom de la démonstration (multiplicateur du plancher). */
     const val DEMO_ZOOM_KEY = "demoZoom"

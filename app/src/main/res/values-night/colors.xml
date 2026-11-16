@@ -16,4 +16,8 @@
     <color name="blink_band">#FFFFFFFF</color>
     <!-- Cadre vert de l'indice la nuit : vert clair sur fond sombre. -->
     <color name="hint_frame">#FF69F0AE</color>
+
+    <!-- Voile de la pile du bas de la démonstration, la nuit
+         (v8 ; v9 : 10 % de transparence en plus, ~80 % opaque). -->
+    <color name="demo_hint_scrim">#CC1C1B1F</color>
 </resources>

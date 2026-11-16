@@ -11,6 +11,15 @@ ET solveur non utilisé (WinEvent porte déjà les deux champs) — et
 réglage Animation actif ; la victoire aidée garde la fenêtre
 actuelle, le solveur reste muet comme dans l'original.
 
+Mise à jour du 16 nov. 2026 (retours UAT d'eric, chantier
+« Modifications diverses ») : les effets couvrent l'ENSEMBLE de
+l'écran — le feu d'artifice vit en repère écran (toute la vue,
+sans pan), la vague soulève aussi le décor autour du plateau ;
+la vague est amplifiée (0,70 case, largeur 3 cases, +8 %) et
+devient DEUX vagues successives sur des côtés différents, la
+seconde partant à mi-effet (2 250 ms), chaque front couvrant
+l'écran en 2,25 s ; durée totale inchangée (4,5 s).
+
 Deux parties, comme les validateurs précédents :
   1. Vérification statique : les sources sont PARSÉES.
   2. Miroirs Python : profil de vague, vitesse du front, tirage.
@@ -70,11 +79,15 @@ check("Effets : tirage uniforme borné (floorMod, testable)",
 check("Effets : profil gaussien, exactement nul aux bornes",
       "fun waveProfile(" in ve and "exp(-d * d)" in ve
       and "d <= -3f || d >= 3f" in ve)
-check("Effets : le front couvre la diagonale en 4,5 s",
+check("Effets : le front couvre l'écran en 2,25 s (par vague)",
       "hypot(visibleW, visibleH) * 1.25f" in ve)
-check("Effets : amplitudes validées (0,45 case, +6 % de tuile)",
-      "WAVE_LIFT_CELLS = 0.45f" in ve
-      and "WAVE_SCALE_FRACTION = 0.06f" in ve)
+check("Effets : amplitudes UAT (0,70 case, +8 % de tuile, largeur 3)",
+      "WAVE_LIFT_CELLS = 0.70f" in ve
+      and "WAVE_SCALE_FRACTION = 0.08f" in ve
+      and "WAVE_WIDTH_CELLS = 3f" in ve)
+check("Effets : DEUX vagues, la seconde part à mi-durée (retour UAT)",
+      "WAVE_COUNT = 2" in ve
+      and "WAVE2_DELAY_MS = EFFECT_MS / WAVE_COUNT" in ve)
 check("Feu d'artifice : pools PRÉ-ALLOUÉS, zéro allocation par trame",
       "private val px = FloatArray(VictoryEffects.FIREWORK_MAX_SPARKS)" in ve
       and count(ve, "inline fun") == 0)
@@ -100,10 +113,13 @@ check("BoardView : la vague part HORS de la zone visible (4 côtés)",
       "worldTop - margin" in bv and "worldLeft - margin" in bv
       and "worldLeft + worldW + margin" in bv
       and "worldTop + worldH + margin" in bv)
+check("BoardView : DEUX origines de vague (la seconde autre côté)",
+      "wave2OriginX" in bv and "wave2OriginY" in bv
+      and "placeWaveOrigin(" in bv)
 check("BoardView : vitesse du front posée depuis le modèle",
       "VictoryEffects.waveSpeed(worldW, worldH)" in bv)
-check("BoardView : feu d'artifice posé sur la zone visible (monde)",
-      "VictoryFirework(victoryStartMs, worldW, worldH)" in bv)
+check("BoardView : feu d'artifice en repère ÉCRAN (toute la vue, retour UAT)",
+      "VictoryFirework(victoryStartMs, width.toFloat(), height.toFloat())" in bv)
 check("BoardView : passe cellulaire drawVictoryCell (les deux régimes)",
       "private fun Canvas.drawVictoryCell(" in bv
       and count(bv, "drawVictoryCell(") == 3)
@@ -117,6 +133,10 @@ check("BoardView : ombre au sol + translation, léger grossissement",
 check("BoardView : le soulèvement lit le profil pur du modèle",
       "VictoryEffects.waveProfile(" in bv
       and "VictoryEffects.WAVE_LIFT_CELLS * cellPx" in bv)
+check("BoardView : le décor autour du plateau suit la vague (retour UAT)",
+      "private fun Canvas.drawVictoryDecor(" in bv
+      and count(bv, "drawVictoryDecor(") >= 2
+      and "drawVictoryDecor(decor, now, x * cellPx, top)" in bv)
 check("BoardView : skip au toucher (avant tout le reste du geste)",
       "override fun onTouchEvent(event: MotionEvent): Boolean {" in bv
       and count(bv, "endVictoryEffect()") == 3
@@ -125,9 +145,12 @@ check("BoardView : l'effet ne survit pas au plateau suivant",
       "L'effet de réussite ne survit PAS au plateau suivant" in bv)
 check("BoardView : fin du temps à 4,5 s, écouteur prévenu",
       "now - victoryStartMs >= VictoryEffects.EFFECT_MS" in bv)
-check("BoardView : feu d'artifice au-dessus, repère écran (+ pan)",
-      "fun Canvas.drawFireworkOverlay" in bv
-      and "+ panX" in bv and "+ panY" in bv)
+check("BoardView : feu d'artifice AU-DESSUS, plein écran SANS pan (UAT)",
+      "fun Canvas.drawFireworkOverlay" in bv)
+overlay = bv[bv.find("fun Canvas.drawFireworkOverlay"):bv.find("private fun Canvas.drawFogCell")]
+check("BoardView : l'overlay vit en repère écran (zéro pan)",
+      "+ panX" not in overlay and "+ panY" not in overlay
+      and "drawLine(" in overlay and len(overlay) > 400)
 check("BoardView : driver d'effet APRÈS les conducteurs épinglés",
       "if (blipsEnabled || animDurationMs.any { it > 0L } || blinkIndex >= 0) {" in bv
       and bv.find("if (panAnimating) {") < bv.rfind("if (victoryEffect != null) {"))
@@ -184,13 +207,16 @@ check("VictoryEffectTest : présent, budget, reproductibilité, profil",
       and "waveProfile(" in vt)
 
 print()
-print("=== README : l'entrée de la feuille de route est livrée ===")
+print("=== README : feuille de route à jour ===")
 
 check("README : « Effets spéciaux de réussite » livré le 15 nov. 2026",
       "Effets spéciaux de réussite" in readme
       and "vague 2.5D" in readme and "feu d'artifice" in readme
       and "livré le 15 nov. 2026" in readme
       and "explosion du plateau est reportée" in readme)
+check("README : « Modifications diverses » livré le 16 nov. 2026 (UAT)",
+      "Modifications diverses" in readme
+      and "livré le 16 nov. 2026" in readme)
 
 print()
 print("=== Miroirs Python ===")
@@ -199,7 +225,7 @@ print("=== Miroirs Python ===")
 def profile(delta, cell):
     if cell <= 0.0:
         return 0.0
-    d = delta / (2.0 * cell)
+    d = delta / (3.0 * cell)
     if d <= -3.0 or d >= 3.0:
         return 0.0
     return math.exp(-d * d)
@@ -207,17 +233,17 @@ def profile(delta, cell):
 
 check("Miroir profil : pic au front, bornes nettes, symétrie",
       abs(profile(0.0, 40.0) - 1.0) < 1e-9
-      and profile(240.0, 40.0) == 0.0
-      and profile(-240.0, 40.0) == 0.0
+      and profile(360.0, 40.0) == 0.0
+      and profile(-360.0, 40.0) == 0.0
       and abs(profile(-40.0, 40.0) - profile(40.0, 40.0)) < 1e-12
       and 0.0 <= profile(123.0, 40.0) <= 1.0)
 
 
-def front(visible_w, visible_h, duration_ms=4500):
+def front(visible_w, visible_h, duration_ms=2250):
     return math.hypot(visible_w, visible_h) * 1.25 * duration_ms / 1000.0
 
 
-check("Miroir vitesse : le front dépasse la diagonale à la fin",
+check("Miroir vitesse : CHAQUE front dépasse la diagonale en 2,25 s",
       front(1080.0, 1920.0) > math.hypot(1080.0, 1920.0)
       and front(320.0, 240.0) > math.hypot(320.0, 240.0))
 

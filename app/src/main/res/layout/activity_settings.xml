@@ -489,13 +489,6 @@
                 android:orientation="vertical">
 
                 <com.google.android.material.radiobutton.MaterialRadioButton
-                    android:id="@+id/demo_diff_fixed"
-                    android:layout_width="match_parent"
-                    android:maxWidth="320dp"
-                    android:layout_height="wrap_content"
-                    android:text="@string/demo_diff_fixed" />
-
-                <com.google.android.material.radiobutton.MaterialRadioButton
                     android:id="@+id/demo_diff_random"
                     android:layout_width="match_parent"
                     android:maxWidth="320dp"
@@ -517,68 +510,72 @@
                 android:text="@string/demo_skill_title"
                 android:textAppearance="?attr/textAppearanceTitleMedium" />
 
-            <RadioGroup
-                android:id="@+id/demo_skill_group"
+            <!-- V8 (retours du 16 nov. 2026) : les niveaux de la
+                 démonstration se COCHENT — plusieurs niveaux
+                 possibles, Novice seul par défaut, toujours au
+                 moins une (la dernière se recoche d'elle-même). -->
+            <LinearLayout
+                android:id="@+id/demo_skill_checks"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
-                <com.google.android.material.radiobutton.MaterialRadioButton
+                <com.google.android.material.checkbox.MaterialCheckBox
                     android:id="@+id/demo_skill_novice"
                     android:layout_width="match_parent"
                     android:maxWidth="320dp"
                     android:layout_height="wrap_content"
                     android:text="@string/skill_novice" />
 
-                <com.google.android.material.radiobutton.MaterialRadioButton
+                <com.google.android.material.checkbox.MaterialCheckBox
                     android:id="@+id/demo_skill_normal"
                     android:layout_width="match_parent"
                     android:maxWidth="320dp"
                     android:layout_height="wrap_content"
                     android:text="@string/skill_normal" />
 
-                <com.google.android.material.radiobutton.MaterialRadioButton
+                <com.google.android.material.checkbox.MaterialCheckBox
                     android:id="@+id/demo_skill_expert"
                     android:layout_width="match_parent"
                     android:maxWidth="320dp"
                     android:layout_height="wrap_content"
                     android:text="@string/skill_expert" />
 
-                <com.google.android.material.radiobutton.MaterialRadioButton
+                <com.google.android.material.checkbox.MaterialCheckBox
                     android:id="@+id/demo_skill_master"
                     android:layout_width="match_parent"
                     android:maxWidth="320dp"
                     android:layout_height="wrap_content"
                     android:text="@string/skill_master" />
 
-                <com.google.android.material.radiobutton.MaterialRadioButton
+                <com.google.android.material.checkbox.MaterialCheckBox
                     android:id="@+id/demo_skill_insane"
                     android:layout_width="match_parent"
                     android:maxWidth="320dp"
                     android:layout_height="wrap_content"
                     android:text="@string/skill_insane" />
 
-                <com.google.android.material.radiobutton.MaterialRadioButton
+                <com.google.android.material.checkbox.MaterialCheckBox
                     android:id="@+id/demo_skill_endless"
                     android:layout_width="match_parent"
                     android:maxWidth="320dp"
                     android:layout_height="wrap_content"
                     android:text="@string/skill_endless" />
 
-                <com.google.android.material.radiobutton.MaterialRadioButton
+                <com.google.android.material.checkbox.MaterialCheckBox
                     android:id="@+id/demo_skill_abyss"
                     android:layout_width="match_parent"
                     android:maxWidth="320dp"
                     android:layout_height="wrap_content"
                     android:text="@string/skill_abyss" />
 
-                <com.google.android.material.radiobutton.MaterialRadioButton
+                <com.google.android.material.checkbox.MaterialCheckBox
                     android:id="@+id/demo_skill_void"
                     android:layout_width="match_parent"
                     android:maxWidth="320dp"
                     android:layout_height="wrap_content"
                     android:text="@string/skill_void" />
-            </RadioGroup>
+            </LinearLayout>
 
             <TextView
                 android:layout_width="match_parent"

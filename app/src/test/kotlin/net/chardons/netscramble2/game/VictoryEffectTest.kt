@@ -31,18 +31,24 @@ class VictoryEffectTest {
     fun `effect duration and spark budget match eric decisions`() {
         assertEquals(4_500L, VictoryEffects.EFFECT_MS)
         assertEquals(600, VictoryEffects.FIREWORK_MAX_SPARKS)
-        // Amplitude du soulèvement : moins d'une demi-case.
+        // Amplitude du soulèvement : moins d'une case.
         assertTrue(VictoryEffects.WAVE_LIFT_CELLS in 0f..1f)
-        assertEquals(0.06f, VictoryEffects.WAVE_SCALE_FRACTION)
+        assertEquals(0.08f, VictoryEffects.WAVE_SCALE_FRACTION)
+        // Retour UAT (16 nov. 2026) : DEUX vagues dans le même
+        // effet, la seconde part à mi-durée une fois la première
+        // passée ; la durée totale ne change pas.
+        assertEquals(2, VictoryEffects.WAVE_COUNT)
+        assertEquals(2_250L, VictoryEffects.WAVE2_DELAY_MS)
+        assertEquals(3f, VictoryEffects.WAVE_WIDTH_CELLS)
     }
 
     @Test
     fun `wave profile peaks at the front and dies clean at the edges`() {
         // Pic exact au passage du front.
         assertEquals(1f, VictoryEffects.waveProfile(0f, 40f), 1e-6f)
-        // Nul à trois demi-largeurs (2 cases) et au-delà : fin nette.
-        assertEquals(0f, VictoryEffects.waveProfile(3f * 2f * 40f, 40f), 0f)
-        assertEquals(0f, VictoryEffects.waveProfile(-3f * 2f * 40f, 40f), 0f)
+        // Nul à trois demi-largeurs (3 cases) et au-delà : fin nette.
+        assertEquals(0f, VictoryEffects.waveProfile(3f * VictoryEffects.WAVE_WIDTH_CELLS * 40f, 40f), 0f)
+        assertEquals(0f, VictoryEffects.waveProfile(-3f * VictoryEffects.WAVE_WIDTH_CELLS * 40f, 40f), 0f)
         assertEquals(0f, VictoryEffects.waveProfile(1_000f, 40f), 0f)
         // Décroissance derrière le front, symétrie autour du pic.
         assertTrue(VictoryEffects.waveProfile(-40f, 40f) < VictoryEffects.waveProfile(0f, 40f))
@@ -51,9 +57,9 @@ class VictoryEffectTest {
             VictoryEffects.waveProfile(40f, 40f),
             1e-6f
         )
-        // Toujours borné, sur toute la largeur du front.
+        // Toujours borné, sur toute la largeur du front élargi.
         repeat(50) { i ->
-            val v = VictoryEffects.waveProfile(-300f + i * 12f, 40f)
+            val v = VictoryEffects.waveProfile(-400f + i * 16f, 40f)
             assertTrue(v in 0f..1f)
         }
         // Sans taille de case (vue jamais mesurée) : rien du tout.
@@ -61,10 +67,11 @@ class VictoryEffectTest {
     }
 
     @Test
-    fun `wave front covers the whole diagonal within the effect`() {
+    fun `each wave front covers the whole diagonal within its half`() {
+        // Retour UAT : chaque vague couvre l'écran en 2,25 s — la
+        // première, puis la seconde sur un autre côté.
         val front = VictoryEffects.waveSpeed(1_080f, 1_920f) *
-            (VictoryEffects.EFFECT_MS / 1000f)
-        // À la fin de l'effet, le front a dépassé toute tuile visible.
+            (VictoryEffects.EFFECT_MS / VictoryEffects.WAVE_COUNT / 1000f)
         assertTrue(front > hypot(1_080f, 1_920f))
     }
 

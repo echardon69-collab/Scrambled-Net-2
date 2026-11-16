@@ -127,4 +127,37 @@ Feuille de route (validée)
   l'ancien sujet « animation vague de tuiles à la victoire »
   (nouveauté SN2, liberté totale de design) ; l'explosion du plateau est reportée
   en V2 (livré le 15 nov. 2026)
-- Phase bonus : seed partageable, undo, tailles custom, thèmes daltoniens
+- Modifications diverses : premier lot issu des retours UAT —
+  les effets spéciaux couvrent désormais l'ensemble de l'écran du
+  téléphone (le feu d'artifice vit en repère écran pleine vue,
+  la vague soulève aussi le décor autour du plateau) ; la vague
+  est amplifiée et une seconde vague la suit dans la même
+  animation, sur un côté différent (livré le 16 nov. 2026) ;
+  deuxième lot issu des retours utilisateurs — mention
+  « Démonstration niveau X » en bas de l'écran de la démonstration,
+  les tuiles invisibles (Dément, Abîme, Néant) restent invisibles
+  (ni la démonstration, ni l'outil Résoudre ne révèle plus leurs
+  câbles : seule la victoire dévoile le plateau, l'indice
+  correctif révèle toujours), et au Néant la démonstration cadre
+  sa zone révélée en ne touchant que les tuiles visibles, comme
+  un joueur (livré le 16 nov. 2026) ; troisième lot — la pile du
+  bas de la démo (bandeau de niveau + « touchez pour revenir »,
+  affiché en permanence) est dégagée de la barre de navigation
+  Android et repose sur un voile rectangulaire à 80 % d'opacité
+  qui opacifie les tuiles dessous, posé sur un containeur interne
+  (l'inset de la barre reste hors de la zone colorée), interligne
+  resserré à 5 dp ; l'énergie d'un coup — câbles énergisés,
+  écrans, DEL du serveur, blips — n'apparaît jamais PENDANT la
+  rotation du coup qui la provoque, seulement après sa fin (à
+  l'arrivée d'un coup, toute rotation en vol est terminée d'un
+  coup) ; le jeu et son outil Résoudre bénéficient du même
+  correctif ; les niveaux de la démonstration se cochent
+  (plusieurs niveaux possibles, Novice par défaut, toujours au
+  moins une coche, radios Aléatoire/Progressif grisées à coche
+  unique, Progressif par défaut) (livré le 16 nov. 2026)
+- ID unique par plateau : identifiant généré par plateau, porte
+  le partage de la graine (absorbe l'ancien sujet « seed
+  partageable ») ; utilisation exacte à préciser : partage,
+  reprise, records ? (à venir)
+- Thèmes daltoniens : palettes du jeu adaptées aux
+  dyschromatopsies (détails à venir)

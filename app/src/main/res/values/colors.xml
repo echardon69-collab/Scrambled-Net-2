@@ -33,4 +33,9 @@
          la transparence (un fond transparent s'affiche en noir sur
          OxygenOS/OnePlus). Le SVG source reste dessiné sur transparent. -->
     <color name="ic_launcher_background">#FFFFFFFF</color>
+
+    <!-- Voile de la pile du bas de la démonstration (v8, retours du
+         16 nov. 2026 ; v9 : 10 % de transparence en plus) : ~80 %
+         opaque, le texte reste lisible sur les tuiles dessous. -->
+    <color name="demo_hint_scrim">#CCFEF7FF</color>
 </resources>

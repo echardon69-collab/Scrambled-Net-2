@@ -672,7 +672,7 @@ check("BoardView : le corps de cellule est COMMUN aux deux régimes",
 check("BoardView : le gel d'apparence vit dans le corps commun "
       "(validateur apparence)",
       "if (appearanceFrozen) animFromConnected[index]" in vw
-      and "lastDrawnConnected[index] = isConnected" in vw
+      and "animFromConnected = prev.copyOf()" in vw
       and "blipsEnabled && !appearanceFrozen" in vw)
 
 # ---------------------------------------------------------------------------

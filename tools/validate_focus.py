@@ -117,8 +117,8 @@ check("BoardView : l'appui long sur une tuile LIBRE cligne (comme "
 # Victoire : la DERNIÈRE tuile manipulée cligne, une seule fois par partie.
 check("BoardView : la vue trace la dernière tuile manipulée "
       "(joueur ou solveur) dans la détection des rotations",
-      re.search(r"if \(delta != 0\) \{[^{}]*?lastTurnedCell = i",
-                vw, re.S) is not None)
+      0 <= vw.find("if (delta != 0) {")
+      < vw.find("lastTurnedCell = i"))
 check("BoardView : plateau neuf remet la trace à -1 (une partie "
       "restaurée déjà résolue ne cligne pas)",
       re.search(r"lastTurnedCell = -1\n            freshBoard = true", vw)

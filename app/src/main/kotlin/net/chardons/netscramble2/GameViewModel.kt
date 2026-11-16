@@ -383,8 +383,11 @@ class GameViewModel : ViewModel() {
      * progression est visible), un second appel l'arrête. Toute partie où
      * il a servi ne compte pas au score. Une cellule verrouillée sur son
      * passage est d'abord déverrouillée (c'est son coup du tour), puis
-     * tournée au coup suivant ; les cellules cachées qu'il règle sont
-     * révélées.
+     * tournée au coup suivant. Décision d'eric du 16 nov. 2026 : il ne
+     * RÉVÈLE PAS les cellules cachées qu'il règle — une tuile masquée
+     * (Dément, Abîme, Néant) reste masquée, seule la victoire dévoile
+     * le plateau (l'indice correctif, lui, révèle toujours : c'est un
+     * coup montré, pas joué).
      */
     fun toggleSolver() {
         val queue = solveQueue
@@ -405,6 +408,8 @@ class GameViewModel : ViewModel() {
      * verrouillée, soit l'amener à son orientation de solution (rotation
      * recalculée au dernier moment : robuste même si le joueur a touché
      * la cellule entre-temps). Les cellules déjà en place sont sautées.
+     * Pas de révélation ici (décision d'eric du 16 nov. 2026) : le
+     * masque d'une cellule cachée ne lève qu'à la victoire.
      */
     private fun playOneSolveMoveIfNeeded() {
         val queue = solveQueue ?: return
@@ -428,7 +433,6 @@ class GameViewModel : ViewModel() {
                 }
                 steps != 0 -> {
                     board.rotateCell(index, steps)
-                    board.reveal(index)
                     solverFocusIndex = index
                     return
                 }

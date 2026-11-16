@@ -133,10 +133,9 @@
     <string name="hint_limit_title">Plafond d\'indices</string>
     <string name="hint_limit_zero">Désactivé</string>
     <string name="hint_limit_value">%1$d %%</string>
-    <string name="demo_diff_fixed">Niveau fixe</string>
     <string name="demo_diff_random">Aléatoire</string>
-    <string name="demo_diff_progressive">Progressive</string>
-    <string name="demo_skill_title">Niveau</string>
+    <string name="demo_diff_progressive">Progressif</string>
+    <string name="demo_skill_title">Niveaux</string>
     <string name="demo_zoom_title">Zoom</string>
     <string name="demo_zoom_fit">Ajusté</string>
     <string name="demo_zoom_x15">×1,5</string>
@@ -152,6 +151,7 @@
     <string name="hints_n">%1$d indices</string>
     <string name="hints_column_tiles">Indices</string>
     <string name="demo_touch_return">Touchez pour revenir au jeu</string>
+    <string name="demo_level_banner">Démonstration niveau %1$s</string>
 
     <!-- À propos : la fenêtre de dialogue est devenue la page
          autonome AboutActivity (refonte du 14 nov. 2026) — le

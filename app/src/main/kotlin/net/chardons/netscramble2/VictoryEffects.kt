@@ -25,17 +25,32 @@ object VictoryEffects {
     /** Durée de l'effet : 4,5 s (décision d'eric : « plus long »). */
     const val EFFECT_MS = 4_500L
 
+    /**
+     * Deux vagues par effet (retour UAT d'eric du 16 nov. 2026) :
+     * la seconde suit la première, une fois la première passée.
+     */
+    const val WAVE_COUNT = 2
+
+    /** Départ de la seconde vague : à mi-effet, la première est passée. */
+    const val WAVE2_DELAY_MS = EFFECT_MS / WAVE_COUNT
+
     /** Budget d'étincelles vivantes, infranchissable. */
     const val FIREWORK_MAX_SPARKS = 600
 
-    /** Demi-largeur du profil de vague : 2 cases. */
-    const val WAVE_WIDTH_CELLS = 2f
+    /**
+     * Demi-largeur du profil de vague : 3 cases (retour UAT du
+     * 16 nov. 2026 : vague plus large, plus de tuiles en mouvement).
+     */
+    const val WAVE_WIDTH_CELLS = 3f
 
-    /** Amplitude du soulèvement : 0,45 taille de case. */
-    const val WAVE_LIFT_CELLS = 0.45f
+    /**
+     * Amplitude du soulèvement : 0,70 taille de case (retour UAT du
+     * 16 nov. 2026 : les tuiles bougent nettement plus).
+     */
+    const val WAVE_LIFT_CELLS = 0.70f
 
-    /** Léger grossissement de la tuile soulevée : 6 pour cent. */
-    const val WAVE_SCALE_FRACTION = 0.06f
+    /** Grossissement de la tuile soulevée : 8 pour cent. */
+    const val WAVE_SCALE_FRACTION = 0.08f
 
     /**
      * Tirage uniforme parmi les effets, BORNÉ : floorMod, jamais
@@ -46,7 +61,7 @@ object VictoryEffects {
 
     /**
      * Profil de la vague au point [delta] du front : cloche
-     * gaussienne de demi-largeur 2 cases, EXACTEMENT nulle à
+     * gaussienne de demi-largeur 3 cases, EXACTEMENT nulle à
      * trois demi-largeurs — les tuiles se lèvent à l'approche,
      * culminent au passage, se reposent proprement, et la fin de
      * l'effet ne saute jamais d'un cran.
@@ -61,9 +76,15 @@ object VictoryEffects {
     /**
      * Vitesse du front : il couvre la diagonale de la zone visible
      * en [durationMs] — marge de 1,25 : même la tuile de coin la
-     * plus lointaine se soulève avant la fin de l'effet.
+     * plus lointaine se soulève avant la fin de sa vague. Par
+     * défaut, UNE VAGUE traverse l'écran en une moitié d'effet
+     * ([WAVE_COUNT] vagues par effet, retour UAT d'eric).
      */
-    fun waveSpeed(visibleW: Float, visibleH: Float, durationMs: Long = EFFECT_MS): Float =
+    fun waveSpeed(
+        visibleW: Float,
+        visibleH: Float,
+        durationMs: Long = EFFECT_MS / WAVE_COUNT
+    ): Float =
         (hypot(visibleW, visibleH) * 1.25f) / (durationMs / 1000f)
 }
 

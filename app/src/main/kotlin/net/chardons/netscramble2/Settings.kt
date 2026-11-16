@@ -94,15 +94,21 @@ object Settings {
         }
     }
 
-    /** Niveau de départ de la démonstration, NOVICE par défaut. */
-    fun loadDemoSkill(context: Context): Skill {
-        val stored = prefs(context).getString(Persistence.DEMO_SKILL_KEY, null)
-        return Skill.entries.firstOrNull { it.name == stored } ?: Skill.NOVICE
+    /**
+     * Niveaux COCHÉS de la démonstration (v8), NOVICE seul par
+     * défaut. Filet : un masque vide ou incohérent retombe sur
+     * Novice — la démo exige à minima un niveau.
+     */
+    fun loadDemoSkillSet(context: Context): List<Skill> {
+        val mask = prefs(context).getInt(Persistence.DEMO_SKILL_SET_KEY, 1 shl Skill.NOVICE.ordinal)
+        val skills = Skill.entries.filter { (mask shr it.ordinal) and 1 == 1 }
+        return if (skills.isEmpty()) listOf(Skill.NOVICE) else skills
     }
 
-    fun saveDemoSkill(context: Context, skill: Skill) {
+    fun saveDemoSkillSet(context: Context, skills: List<Skill>) {
+        val mask = skills.fold(0) { acc, skill -> acc or (1 shl skill.ordinal) }
         prefs(context).edit {
-            putString(Persistence.DEMO_SKILL_KEY, skill.name)
+            putInt(Persistence.DEMO_SKILL_SET_KEY, mask)
         }
     }
 

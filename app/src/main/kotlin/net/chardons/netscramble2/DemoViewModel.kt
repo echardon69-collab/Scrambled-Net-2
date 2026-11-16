@@ -61,6 +61,15 @@ data class DemoUiState(
  *    d'une partie réelle, un modèle séparé n'a rien à synchroniser ;
  *  - le générateur suit les mêmes règles que le jeu (famille Infini
  *    : ORIGINAL forcé ; sinon tirage à la graine).
+ *
+ * Retours utilisateurs du 16 nov. 2026 (lot 2) : la démonstration
+ * joue comme un JOUEUR — elle ne RÉVÈLE PAS les câbles des
+ * tuiles masquées (Dément, Abîme, Néant : une tuile invisible
+ * reste invisible, la victoire seule révèle tout ; l'outil
+ * Résoudre du jeu ne révèle plus non plus, décision d'eric du
+ * 16 nov. 2026), et au Néant elle ne touche que les tuiles que
+ * le brouillard laisse voir ([nextPlayableMove]) — tourner une
+ * tuile sous le brouillard, un joueur ne le pourrait pas.
  */
 class DemoViewModel : ViewModel() {
 
@@ -69,8 +78,13 @@ class DemoViewModel : ViewModel() {
     /** Difficulté choisie (réglage de la page « Réglages »). */
     private var difficulty = DemoDifficulty.PROGRESSIVE
 
-    /** Niveau de départ (FIXED et PROGRESSIVE). */
-    private var startSkill = Skill.NOVICE
+    /**
+     * Niveaux COCHÉS aux réglages (v8 — retours du 16 nov. 2026),
+     * triés par ordinal : la difficulté pioche dedans. Une seule
+     * case cochée revient à un niveau fixe ; les réglages
+     * garantissent qu'il y en a toujours au moins une.
+     */
+    private var skillSet: List<Skill> = listOf(Skill.NOVICE)
 
     /**
      * Dimensions d'un niveau, fournies par l'activité : la
@@ -79,7 +93,7 @@ class DemoViewModel : ViewModel() {
      */
     private var sizeFor: (Skill) -> Pair<Int, Int> = { _ -> 7 to 7 }
 
-    /** Curseur du cycle progressif (ordinal du prochain niveau). */
+    /** Curseur du cycle progressif (index du prochain niveau coché). */
     private var progressiveOrdinal = 0
 
     /** Délai entre deux coups du solveur (réglage du rythme). */
@@ -110,15 +124,15 @@ class DemoViewModel : ViewModel() {
      */
     fun start(
         difficulty: DemoDifficulty,
-        startSkill: Skill,
+        skills: List<Skill>,
         speed: DemoSpeed,
         sizes: (Skill) -> Pair<Int, Int>
     ) {
         this.difficulty = difficulty
-        this.startSkill = startSkill
+        this.skillSet = skills.sortedBy { it.ordinal }
         this.sizeFor = sizes
         this.tickMs = speed.delayMs
-        this.progressiveOrdinal = startSkill.ordinal
+        this.progressiveOrdinal = 0
         nextBoard()
         paused = false
         viewModelScope.launch {
@@ -144,6 +158,14 @@ class DemoViewModel : ViewModel() {
      * au plateau suivant ; sinon UN coup de solveur — déverrouiller
      * puis tourner, comme le jeu, les cellules déjà en place sautées.
      * File vide : plateau résolu, la célébration commence.
+     *
+     * Retours utilisateurs du 16 nov. 2026 (lot 2) : au Néant, le
+     * coup ne se joue que sur une tuile VISIBLE du brouillard
+     * ([nextPlayableMove], visibilité dérivée recalculée à
+     * chaque coup) ; et la rotation ne RÉVÈLE plus les câbles
+     * masqués — ni la démonstration, ni l'outil Résoudre du jeu
+     * (décision d'eric du 16 nov. 2026) : seule la victoire
+     * dévoile le plateau.
      */
     private fun step() {
         val b = board ?: return
@@ -159,25 +181,38 @@ class DemoViewModel : ViewModel() {
             return
         }
         val queue = solveQueue ?: return
+        val fog = if (b.skill == Skill.VOID) b.fogVisibility(b.connectedCells()) else null
         while (queue.isNotEmpty()) {
-            val index = queue.removeFirst()
+            val index = nextPlayableMove(queue, fog)
             val steps = (4 - b.rotations[index]) % 4
             when {
                 b.locked[index] -> {
                     b.toggleLock(index)
-                    queue.addFirst(index)
+                    // La cellule RESTE EN TÊTE : [nextPlayableMove] ne
+                    // consomme jamais la file, la cellule déverrouillée
+                    // y attend le coup suivant — une fois, pas deux
+                    // (chaque cellule n'y figure qu'une seule fois).
                     focusIndex = index
                     publish()
                     return
                 }
                 steps != 0 -> {
                     b.rotateCell(index, steps)
-                    b.reveal(index)
                     focusIndex = index
                     publish()
                     return
                 }
-                // Déjà en place : au suivant.
+                // Déjà en place : au suivant — la tête se CONSOMME
+                // ici, dans la branche ELSE (un when sans argument
+                // exige une condition par branche : une instruction
+                // nue y est une erreur de syntaxe, build KO relevé
+                // par eric le 16 nov. 2026). Le coup joué, lui,
+                // laisse la tête en place : c'est ce même chemin
+                // qui la retirera au tick suivant, une fois la
+                // tuile résolue — sans ce removeFirst la boucle
+                // tournait à l'infini sur la première tuile en
+                // place, écran figé.
+                else -> queue.removeFirst()
             }
         }
         solveQueue = null
@@ -187,18 +222,17 @@ class DemoViewModel : ViewModel() {
     }
 
     /**
-     * Plateau suivant selon la difficulté : FIXED garde le niveau
-     * choisi ; RANDOM en tire un ; PROGRESSIVE démarre au niveau
-     * choisi, monte d'un cran et boucle sur les huit niveaux — la
-     * famille Infini comprise. Générateur et dimensions comme le
-     * jeu (famille Infini : ORIGINAL forcé).
+     * Plateau suivant selon la difficulté, parmi les niveaux
+     * COCHÉS : RANDOM en tire un au sort ; PROGRESSIVE les
+     * parcourt en ordre croissant et boucle — la famille Infini
+     * comprise. Générateur et dimensions comme le jeu (famille
+     * Infini : ORIGINAL forcé).
      */
     private fun nextBoard() {
         val skill = when (difficulty) {
-            DemoDifficulty.FIXED -> startSkill
-            DemoDifficulty.RANDOM -> Skill.entries[Random.nextInt(Skill.entries.size)]
+            DemoDifficulty.RANDOM -> skillSet[Random.nextInt(skillSet.size)]
             DemoDifficulty.PROGRESSIVE -> {
-                val s = Skill.entries[progressiveOrdinal % Skill.entries.size]
+                val s = skillSet[progressiveOrdinal % skillSet.size]
                 progressiveOrdinal += 1
                 s
             }

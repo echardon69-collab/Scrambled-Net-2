@@ -7,9 +7,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.time.Duration.Companion.milliseconds
 import net.chardons.netscramble2.databinding.ActivityDemoBinding
 import net.chardons.netscramble2.game.Board
 import net.chardons.netscramble2.game.Screen
@@ -24,11 +22,33 @@ import net.chardons.netscramble2.ui.EdgeToEdge
  * clignotée, pause, suivant — indéfiniment. TOUTE interaction la
  * referme : la partie du joueur n'a pas bougé d'un iota.
  *
- * Réglages (page « Réglages », persistés par [Settings]) : difficulté
- * FIXE / ALÉATOIRE / PROGRESSIVE (départ au niveau choisi, montée
- * d'un cran, boucle sur les huit niveaux — la famille Infini
- * comprise), zoom (multiplicateur du plancher), rythme (délai par
- * coup). Les blips suivent le réglage « Animation » du jeu.
+ * Réglages (page « Réglages », persistés par [Settings]) : niveaux
+ * COCHÉS (v8 : au moins une case, Novice par défaut ; une seule
+ * case revient à un niveau fixe), difficulté ALÉATOIRE / PROGRESSIVE
+ * parmi ces niveaux (radios grisées à coche unique), zoom
+ * (multiplicateur du plancher), rythme (délai par coup). Les blips
+ * suivent le réglage « Animation » du jeu.
+ *
+ * Retours utilisateurs du 16 nov. 2026 (lot 2) : la mention
+ * « Démonstration niveau X » vit en bas de l'écran, posée à
+ * chaque nouveau plateau ; au Néant, le préréglage cadre la zone
+ * révélée (voir BoardView.applyZoomPreset).
+ *
+ * Retours du 16 nov. 2026 au soir (v7) : bandeau et indication
+ * « Touchez pour revenir » forment une pile PERMANENTE en bas,
+ * dégagée de la barre de navigation par son inset.
+ *
+ * Retours du 16 nov. 2026, v8 : la pile repose sur un voile
+ * rectangulaire qui opacifie les tuiles dessous ; l'énergie d'un
+ * coup n'apparaît plus PENDANT la rotation du coup qui la
+ * provoque, mais à sa fin (BoardView, un seul chemin — la coupure
+ * v7 est retirée) ; les niveaux de la démonstration se cochent aux
+ * réglages. V9 : toute rotation en vol est finie d'un coup à
+ * l'arrivée d'un coup (l'énergie suit STRICTEMENT la fin de chaque
+ * rotation) ; le voile vit sur un containeur INTERNE — l'inset de
+ * la barre de navigation est un padding de la pile, il resterait
+ * sinon DANS la zone colorée — à 80 % d'opacité, interligne
+ * resserré à 5 dp.
  *
  * Écarts assumés : AUCUN son (à statuer avec eric) ; la caméra ne
  * recentre que si la tuile du coup sort de la zone visible de la
@@ -42,8 +62,6 @@ class DemoActivity : AppCompatActivity() {
     /** Plateau actuellement affiché : le zoom ne se repose qu'à un NOUVEAU plateau. */
     private var shownBoard: Board? = null
 
-    /** Indication « Touchez pour revenir » : ~4 secondes puis fondu. */
-    private var hintShown = false
 
     /** Effets de réussite : le réglage Animation décide de l'intermède. */
     private var effectsEnabled = true
@@ -58,6 +76,13 @@ class DemoActivity : AppCompatActivity() {
         setContentView(binding.root)
         EdgeToEdge.padSystemBars(binding.demoBoard, top = true, bottom = true)
 
+        // Retours utilisateurs du 16 nov. 2026 au soir : la pile du
+        // bas (bandeau de niveau + « Touchez pour revenir ») reçoit
+        // l'inset bas de la barre de navigation — le texte ne se
+        // superpose plus aux boutons virtuels, en gestuelle comme en
+        // trois boutons.
+        EdgeToEdge.padSystemBars(binding.demoBottomStack, bottom = true)
+
         viewModel = ViewModelProvider(this)[DemoViewModel::class.java]
         // Réglage « Animation », lu UNE fois : il porte les blips ET
         // l'intermède de victoire — repli sur la pause seule (1,5 s)
@@ -71,11 +96,9 @@ class DemoActivity : AppCompatActivity() {
         // jeu (la famille Infini y est fixe 40 x 40).
         viewModel.start(
             Settings.loadDemoDifficulty(this),
-            Settings.loadDemoSkill(this),
+            Settings.loadDemoSkillSet(this),
             Settings.loadDemoSpeed(this)
         ) { skill -> boardSize(skill) }
-
-        fadeTouchHint()
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -113,42 +136,34 @@ class DemoActivity : AppCompatActivity() {
         }
         return super.dispatchTouchEvent(ev)
     }
-
-    /**
-     * Indication « Touchez pour revenir » : affichée d'emblée, elle
-     * reste ~[TOUCH_HINT_MS] puis fond sur une seconde — le joueur
-     * qui vient d'ouvrir la démo sait comment en sortir, sans
-     * indication permanente.
-     */
-    private fun fadeTouchHint() {
-        if (hintShown) return
-        hintShown = true
-        binding.demoTouchHint.alpha = 0.8f
-        lifecycleScope.launch {
-            delay(TOUCH_HINT_MS.milliseconds)
-            if (isFinishing || isDestroyed) return@launch
-            binding.demoTouchHint.animate()
-                .alpha(0f)
-                .setDuration(FADE_MS)
-                .start()
-        }
-    }
-
     private fun render(state: DemoUiState) {
         val board = state.board ?: return
-        // Nouveau plateau : le préréglage de zoom se repose une fois,
-        // pas à chaque coup — sinon la caméra se battrait avec le
-        // suivi du solveur.
-        if (board !== shownBoard) {
-            shownBoard = board
-            binding.demoBoard.applyZoomPreset(
-                Settings.loadDemoZoom(this).multiplier
-            )
+        // Nouveau plateau : le préréglage de zoom et la mention de
+        // niveau se posent une fois, pas à chaque coup — sinon la
+        // caméra se battrait avec le suivi du solveur.
+        val newBoard = board !== shownBoard
+        if (newBoard) {
             // Plateau neuf : le suivi de victoire repart de zéro.
             lastSolved = false
         }
         binding.demoBoard.solverFocus = state.focus
         binding.demoBoard.update(board, state.connected ?: return, state.solved)
+        if (newBoard) {
+            shownBoard = board
+            // Préréglage APRÈS update : la vue connaît le plateau du
+            // coup, et son zoom GAGNE sur la caméra d'arrivée — au
+            // Néant, la démo cadre la zone révélée au lieu du
+            // plateau entier (retours utilisateurs du 16 nov. 2026).
+            binding.demoBoard.applyZoomPreset(
+                Settings.loadDemoZoom(this).multiplier
+            )
+            // Mention du niveau en bas de l'écran (retour
+            // utilisateurs du 16 nov. 2026) : la démonstration
+            // annonce ce qu'elle montre.
+            binding.demoLevelBanner.text = getString(
+                R.string.demo_level_banner, skillName(board.skill)
+            )
+        }
         // Caméra discrète : elle ne recentre que si la tuile du coup
         // sort de la zone visible de la vue (retour UAT du 15 nov. 2026).
         if (state.focus >= 0) {
@@ -166,6 +181,22 @@ class DemoActivity : AppCompatActivity() {
     }
 
     /**
+     * Nom AFFICHÉ du niveau, la même chaîne que la page Réglages :
+     * la mention en bas de l'écran parle la langue du joueur, pas
+     * celle de l'enum.
+     */
+    private fun skillName(skill: Skill): String = getString(when (skill) {
+        Skill.NOVICE -> R.string.skill_novice
+        Skill.NORMAL -> R.string.skill_normal
+        Skill.EXPERT -> R.string.skill_expert
+        Skill.MASTER -> R.string.skill_master
+        Skill.INSANE -> R.string.skill_insane
+        Skill.ENDLESS -> R.string.skill_endless
+        Skill.ABYSS -> R.string.skill_abyss
+        Skill.VOID -> R.string.skill_void
+    })
+
+    /**
      * Taille du plateau pour [skill] : la même matrice Screen que
      * MainActivity.boardSize — la démonstration joue les mêmes
      * plateaux que le jeu sur cet écran.
@@ -175,13 +206,5 @@ class DemoActivity : AppCompatActivity() {
         val landscape = metrics.widthPixels > metrics.heightPixels
         return Screen.find(metrics.widthPixels, metrics.heightPixels)
             .boardSize(skill, landscape)
-    }
-
-    companion object {
-        /** Durée d'affichage de l'indication, avant le fondu. */
-        private const val TOUCH_HINT_MS = 4_000L
-
-        /** Durée du fondu de l'indication. */
-        private const val FADE_MS = 1_000L
     }
 }

@@ -13,14 +13,14 @@ package net.chardons.netscramble2
  */
 
 /**
- * Difficulté de la démonstration :
- *  - FIXED : toujours le niveau choisi (réglage « Niveau ») ;
- *  - RANDOM : un niveau tiré au sort à chaque plateau ;
- *  - PROGRESSIVE : départ au niveau choisi, montée d'un cran à
- *    chaque plateau, boucle sur les huit niveaux — la famille Infini
- *    comprise.
+ * Difficulté de la démonstration, parmi les niveaux COCHÉS
+ * (réglages, v8 — retours du 16 nov. 2026) :
+ *  - RANDOM : un niveau coché tiré au sort à chaque plateau ;
+ *  - PROGRESSIVE : les niveaux cochés en ordre croissant,
+ *    boucle sur la liste — la famille Infini comprise. Une
+ *    seule case cochée revient à un niveau fixe.
  */
-enum class DemoDifficulty { FIXED, RANDOM, PROGRESSIVE }
+enum class DemoDifficulty { RANDOM, PROGRESSIVE }
 
 /**
  * Rythme de la démonstration : délai entre deux coups du solveur,
@@ -45,4 +45,48 @@ enum class DemoZoom(val multiplier: Float) {
     X1_5(1.5f),
     X2(2f),
     X3(3f)
+}
+
+/**
+ * Prochain coup JOUABLE de la démonstration (retours utilisateurs
+ * du 16 nov. 2026, lot 2) : la TÊTE de la file si elle est visible,
+ * sinon la file tourne — chaque tuile invisible repasse en FIN de
+ * file — jusqu'à la première visible. Les rotations sont
+ * indépendantes (aucun coup n'en conditionne un autre) : réordonner
+ * la file ne change pas la solution, seulement l'ordre du
+ * spectacle.
+ *
+ * Au Néant, le brouillard est la règle du JOUEUR : la démonstration
+ * ne tourne pas ce qu'un joueur ne pourrait pas voir. La file du
+ * solveur part du serveur en largeur sur la SOLUTION : la prochaine
+ * tuile à jouer touche toujours le réseau déjà en place, donc
+ * NORMALEMENT visible d'office — la garde est un filet de sécurité,
+ * pas un réordonnancement permanent.
+ *
+ * [visible] null : tout est visible (les autres niveaux), la tête
+ * d'origine, file intacte. File VIDE : -1. Après un tour complet
+ * sans AUCUNE tuile visible, la file a retrouvé son ordre d'origine
+ * — la tête est renvoyée telle quelle : la progression passe avant
+ * l'attente, la démonstration ne se fige jamais.
+ *
+ * CONTRAT (plantage du 16 nov. 2026, relevé par eric) : la
+ * fonction CONSULTE, elle ne consomme JAMAIS — la tête reste la
+ * tête, y compris jouable. C'est l'APPELANT qui retire la têke
+ * ([ArrayDeque.removeFirst]) quand le coup est joué ou sauté :
+ * l'oublier fait tourner la boucle de la démonstration à l'infini
+ * sur la première tuile en place, et fige l'écran.
+ */
+fun nextPlayableMove(queue: ArrayDeque<Int>, visible: BooleanArray?): Int {
+    if (queue.isEmpty()) return -1
+    if (visible == null) return queue.first()
+    val n = queue.size
+    repeat(n) {
+        val index = queue.removeFirst()
+        if (visible[index]) {
+            queue.addFirst(index)
+            return index
+        }
+        queue.addLast(index)
+    }
+    return queue.first()
 }

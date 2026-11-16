@@ -2,6 +2,7 @@ package net.chardons.netscramble2
 
 import android.content.Intent
 import android.os.Bundle
+import android.widget.CompoundButton
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.app.AppCompatActivity
@@ -133,12 +134,17 @@ class SettingsActivity : AppCompatActivity() {
         bindHintLimitRadios()
         binding.demoDiffGroup.check(
             when (Settings.loadDemoDifficulty(this)) {
-                DemoDifficulty.FIXED -> R.id.demo_diff_fixed
                 DemoDifficulty.RANDOM -> R.id.demo_diff_random
                 DemoDifficulty.PROGRESSIVE -> R.id.demo_diff_progressive
             }
         )
-        binding.demoSkillGroup.check(demoSkillRadioFor(Settings.loadDemoSkill(this)))
+        // Niveaux COCHÉS (v8) : la coche précède l'écoute ci-dessous,
+        // rien n'est persisté au seul chargement de la page.
+        val demoSkills = Settings.loadDemoSkillSet(this)
+        for (cb in demoSkillCheckBoxes()) {
+            cb.isChecked = demoSkills.contains(cb.skill())
+        }
+        refreshDemoDifficultyAvailability()
         binding.demoZoomGroup.check(
             when (Settings.loadDemoZoom(this)) {
                 DemoZoom.FIT -> R.id.demo_zoom_fit
@@ -152,9 +158,9 @@ class SettingsActivity : AppCompatActivity() {
                 DemoSpeed.SLOW -> R.id.demo_speed_slow
                 DemoSpeed.NORMAL -> R.id.demo_speed_normal
                 DemoSpeed.FAST -> R.id.demo_speed_fast
-                // V5 (retour d'eric) : Éclair retiré — une sauvegarde
-                // ancienne qui le désigne retombe sur la coche NORMAL.
-                else -> R.id.demo_speed_normal
+                // Exhaustif : une sauvegarde ancienne qui désigne
+                // l'Éclair (v5, retiré) retombe sur NORMAL en amont,
+                // dans Settings.loadDemoSpeed — pas de else redondant.
             }
         )
 
@@ -205,14 +211,13 @@ class SettingsActivity : AppCompatActivity() {
             Settings.saveDemoDifficulty(
                 this,
                 when (checkedId) {
-                    R.id.demo_diff_fixed -> DemoDifficulty.FIXED
                     R.id.demo_diff_random -> DemoDifficulty.RANDOM
                     else -> DemoDifficulty.PROGRESSIVE
                 }
             )
         }
-        binding.demoSkillGroup.setOnCheckedChangeListener { _, checkedId ->
-            demoSkillFor(checkedId)?.let { Settings.saveDemoSkill(this, it) }
+        for (cb in demoSkillCheckBoxes()) {
+            cb.setOnCheckedChangeListener { _, _ -> persistDemoSkillSet(cb) }
         }
         binding.demoZoomGroup.setOnCheckedChangeListener { _, checkedId ->
             Settings.saveDemoZoom(
@@ -434,20 +439,16 @@ class SettingsActivity : AppCompatActivity() {
         }
     }
 
-    /** Radio du niveau de départ de la démonstration. */
-    private fun demoSkillRadioFor(skill: Skill): Int = when (skill) {
-        Skill.NOVICE -> R.id.demo_skill_novice
-        Skill.NORMAL -> R.id.demo_skill_normal
-        Skill.EXPERT -> R.id.demo_skill_expert
-        Skill.MASTER -> R.id.demo_skill_master
-        Skill.INSANE -> R.id.demo_skill_insane
-        Skill.ENDLESS -> R.id.demo_skill_endless
-        Skill.ABYSS -> R.id.demo_skill_abyss
-        Skill.VOID -> R.id.demo_skill_void
-    }
+    /** Les 8 CASES de niveaux de la démonstration (v8). */
+    private fun demoSkillCheckBoxes(): List<CompoundButton> = listOf(
+        binding.demoSkillNovice, binding.demoSkillNormal,
+        binding.demoSkillExpert, binding.demoSkillMaster,
+        binding.demoSkillInsane, binding.demoSkillEndless,
+        binding.demoSkillAbyss, binding.demoSkillVoid
+    )
 
-    /** Niveau porté par une radio de la démonstration, null si aucun. */
-    private fun demoSkillFor(checkedId: Int): Skill? = when (checkedId) {
+    /** Niveau porté par une case de la démonstration. */
+    private fun CompoundButton.skill(): Skill = when (id) {
         R.id.demo_skill_novice -> Skill.NOVICE
         R.id.demo_skill_normal -> Skill.NORMAL
         R.id.demo_skill_expert -> Skill.EXPERT
@@ -456,7 +457,33 @@ class SettingsActivity : AppCompatActivity() {
         R.id.demo_skill_endless -> Skill.ENDLESS
         R.id.demo_skill_abyss -> Skill.ABYSS
         R.id.demo_skill_void -> Skill.VOID
-        else -> null
+        else -> Skill.NOVICE
+    }
+
+    /**
+     * Persiste le masque des niveaux cochés. La DERNIÈRE coche ne
+     * se décoche jamais (retour à minima un niveau, v8) : la case
+     * se recoche d'elle-même ; les radios de difficulté suivent.
+     */
+    private fun persistDemoSkillSet(changed: CompoundButton) {
+        val checked = demoSkillCheckBoxes().filter { it.isChecked }.map { it.skill() }
+        if (checked.isEmpty()) {
+            changed.isChecked = true
+            return
+        }
+        Settings.saveDemoSkillSet(this, checked)
+        refreshDemoDifficultyAvailability()
+    }
+
+    /**
+     * Une seule case cochée revient à un niveau fixe : les radios
+     * Aléatoire/Progressif gardent leur valeur visible mais se
+     * grisent (v8).
+     */
+    private fun refreshDemoDifficultyAvailability() {
+        val multi = demoSkillCheckBoxes().count { it.isChecked } >= 2
+        binding.demoDiffRandom.isEnabled = multi
+        binding.demoDiffProgressive.isEnabled = multi
     }
 
     /** Même format de temps que la barre d'état du jeu (mm:ss). */

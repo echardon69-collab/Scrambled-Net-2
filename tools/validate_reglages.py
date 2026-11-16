@@ -213,10 +213,12 @@ check("Layout : chaque radio porte le libellé de son string",
 # Démonstration (3 difficultés + 8 niveaux + 4 zooms + 3 rythmes)
 # naissent bornées de la même façon — 55 au total. La radio
 # Éclair (v5, retour d'eric du 15 nov. 2026) est retirée : plus que
-# 3 rythmes, 55 radios bornées.
-check("Layout : les 55 radios et descriptions sont bornées à "
+# 3 rythmes. V8 (retours du 16 nov. 2026) : les 8 radios de
+# niveaux de la démo deviennent 8 CASES à cocher, bornées pareil —
+# 54 bornes au total.
+check("Layout : les radios, cases et descriptions sont bornées à "
       "320 dp (VisualLintButtonSize — régression bloquée)",
-      layout_src.count('android:maxWidth="320dp"') == 55
+      layout_src.count('android:maxWidth="320dp"') == 54
       and all(f'android:maxWidth="320dp"' in block
               for block in (skill_block.group(1) if skill_block else "",
                             sound_block.group(1) if sound_block else "",
