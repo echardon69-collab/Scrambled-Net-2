@@ -20,12 +20,12 @@
 
     <!-- Language (settings page, v3 of Nov. 14, 2026): appcompat
          stores the choice (autoStoreLocales) and the system carries
-         it on Android 13+ (localeConfig). Proper names identical in
-         every language. -->
+         it on Android 13+ (localeConfig). Since the dynamic
+         selector (v19 of Nov. 16, 2026) the language names are
+         endonyms living in AppLanguages.kt, identical in every
+         language — the former lang_fr/lang_en strings are gone. -->
     <string name="menu_lang">Language</string>
     <string name="lang_system">Follow the system</string>
-    <string name="lang_fr">Français</string>
-    <string name="lang_en">English</string>
 
     <!-- Descriptions des niveaux (page Réglages, v4 du 14 nov. 2026) :
          la taille est RÉELLE, préfixée au runtime depuis la matrice

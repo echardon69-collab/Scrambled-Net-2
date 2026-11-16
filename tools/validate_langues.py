@@ -41,15 +41,21 @@ BASE = RES / "values"
 # Comptes de la base anglaise au jour du chantier : la parité est
 # PINNÉE, un ajout de chaîne au jeu doit la mettre à jour ici en
 # conscience (et régénérer les kits, la complétion par delta suit).
-PINNED_STRINGS = 98
+# v19 (sélecteur de langue dynamique, 16 nov. 2026) : les
+# endonymes lang_fr/lang_en quittent les traductions pour
+# AppLanguages.kt — la base passe de 98 à 96 chaînes, miroirs
+# compris.
+PINNED_STRINGS = 96
 PINNED_ARRAYS = 4
 PINNED_ITEMS = 26
 
 # Noms propres et libellés volontairement identiques dans toute
-# langue : l'application, les langues affichées dans la page
-# Langue, et les trois premiers niveaux (Novice, Normal, Expert
-# portent le même nom en français).
-IDENTICAL_OK = {"app_name", "lang_fr", "lang_en",
+# langue : l'application et les trois premiers niveaux (Novice,
+# Normal, Expert portent le même nom en français). Les endonymes
+# des langues (Français, English, Corsu, Elsässisch) ne sont plus
+# des strings : depuis le sélecteur dynamique (v19) ils vivent
+# dans AppLanguages.kt, identiques en toute langue par nature.
+IDENTICAL_OK = {"app_name",
                 "skill_novice", "skill_normal", "skill_expert"}
 
 # Paramètres de format Android : %1$d, %2$s… et %% littéral.

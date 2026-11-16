@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Une entrée du sélecteur de langue (page Réglages, v19 du
+     16 nov. 2026, chantier « sélecteur de langue dynamique ») :
+     gonflée AU RUNTIME pour chaque langue d'AppLanguages — l'id et
+     le libellé (endonyme) sont posés par SettingsActivity. Née déjà
+     bornée à 320 dp comme toutes les radios de la page
+     (VisualLintButtonSize). Pas d'android:id ni d'android:text :
+     ils viennent du code, une langue ajoutée n'édite rien ici. -->
+<com.google.android.material.radiobutton.MaterialRadioButton
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:maxWidth="320dp"
+    android:layout_height="wrap_content" />

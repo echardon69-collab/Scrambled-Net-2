@@ -76,6 +76,17 @@ niveau de difficulté, dans la page de réglage ».
   - 8 nouvelles strings EN+FR (skill_*_desc), taille en arguments
     de format ; miroir Python de la table Screen (tailles réelles
     par matrice, échange portrait/paysage, Infini toujours 40 x 40).
+
+V19 (chantier « sélecteur de langue dynamique », 16 nov. 2026) :
+  les radios de la section Langue ne sont plus figées dans le
+  layout — elles naissent AU RUNTIME depuis AppLanguages (une par
+  langue du jeu, libellée par son endonyme), seule « Suivre le
+  système » reste statique. Le mécanisme détaillé, les données et
+  leur cohérence avec locales_config et les traductions sont
+  pinnés par validate_selecteur.py, validateur DÉDIÉ du chantier ;
+  ce validateur ne garde que les invariants de la page (appcompat
+  reste l'unique source de vérité du réglage, aucune clé maison,
+  radios bornées à 320 dp — l'item de gonflage l'est aussi).
 """
 
 import re
@@ -186,10 +197,10 @@ lang_block = re.search(
     re.S)
 lang_radios = (re.findall(r'@\+id/(lang_\w+)', lang_block.group(1))
                if lang_block else [])
-check("Layout : section langue avec les 3 choix "
-      "(système / français / anglais)",
-      lang_radios == ["lang_system", "lang_fr", "lang_en"],
-      str(lang_radios))
+check("Layout : section langue — seule la radio système est "
+      "statique, les langues naissent au runtime (v19, "
+      "validate_selecteur.py épingle le mécanisme)",
+      lang_radios == ["lang_system"], str(lang_radios))
 check("Layout : les quatre en-têtes de section existent "
       "(v3 : langue ajoutée)",
       all(f'@string/{key}' in layout_src
@@ -220,9 +231,12 @@ check("Layout : chaque radio porte le libellé de son string",
 # ajusté) — 50 bornes au total. V11 (retour utilisateur du
 # 16 nov. 2026) : les 8 radios du plafond d'indices sont
 # retirées (Désactivé/10/20 seulement) — 42 bornes au total.
+# V19 (sélecteur de langue dynamique) : les radios Français et
+# English quittent le XML pour naître au runtime depuis
+# item_lang_radio.xml, borné pareil — 40 bornes au total.
 check("Layout : les radios, cases et descriptions sont bornées à "
       "320 dp (VisualLintButtonSize — régression bloquée)",
-      layout_src.count('android:maxWidth="320dp"') == 42
+      layout_src.count('android:maxWidth="320dp"') == 40
       and all(f'android:maxWidth="320dp"' in block
               for block in (skill_block.group(1) if skill_block else "",
                             sound_block.group(1) if sound_block else "",
@@ -343,11 +357,9 @@ check("Langue : appcompat importé et appliqué "
       "import androidx.appcompat.app.AppCompatDelegate" in sa_src
       and "import androidx.core.os.LocaleListCompat" in sa_src
       and "AppCompatDelegate.setApplicationLocales(locales)" in sa)
-check("Langue : les 3 choix mènent aux 3 listes "
-      "(fr / en / liste vide = suivre le système)",
-      'R.id.lang_fr -> LocaleListCompat.forLanguageTags("fr")' in sa
-      and 'R.id.lang_en -> LocaleListCompat.forLanguageTags("en")'
-      in sa
+check("Langue : les choix mènent aux locales par le REGISTRE "
+      "dynamique (v19 — données pinnées par validate_selecteur.py)",
+      "LocaleListCompat.forLanguageTags(tag)" in sa
       and "LocaleListCompat.getEmptyLocaleList()" in sa)
 check("Langue : la coche initiale vient de l'état RÉEL d'appcompat "
       "(getApplicationLocales, pas d'une clé maison)",
@@ -355,8 +367,7 @@ check("Langue : la coche initiale vient de l'état RÉEL d'appcompat "
       and "langRadioFor(currentLanguageTag())" in sa
       and re.search(r'private fun currentLanguageTag\(\): String',
                     sa) is not None
-      and re.search(r'"fr" -> R\.id\.lang_fr', sa) is not None
-      and re.search(r'"en" -> R\.id\.lang_en', sa) is not None)
+      and "locales[0]?.toLanguageTag()" in sa)
 check("Langue : AUCUNE clé maison (ni Settings, ni Persistence, ni "
       "préférences de l'activité)",
       "LANGUAGE" not in st and "LANGUAGE" not in pe
@@ -452,17 +463,19 @@ check("Manifest : SettingsActivity déclarée, interne, titrée "
                 r'android:label="@string/menu_settings"[^>]*'
                 r'android:parentActivityName="\.MainActivity"',
                 manifest_src, re.S) is not None)
-# Corse ajouté (chantier traduction, 16 nov. 2026) : localeConfig
-# déclare TROIS langues — en base, fr et co traductions. Le pin
-# exige le compte exact pour qu'une quatrième langue n'entre pas
-# sans que ce check soit relu.
-check("Manifest : localeConfig déclare exactement les trois langues "
-      "de l'app (en base, fr et co traductions)",
+# Corse puis alsacien ajoutés (chantier traduction, 16 nov. 2026) :
+# localeConfig déclare QUATRE langues — en base ; fr, co et
+# gsw-FR (alsacien) traductions. Le pin exige le compte exact
+# pour qu'une cinquième langue n'entre pas sans que ce check
+# soit relu.
+check("Manifest : localeConfig déclare exactement les quatre langues "
+      "de l'app (en base ; fr, co et gsw-FR traductions)",
       'android:localeConfig="@xml/locales_config"' in manifest_src
       and '<locale android:name="en" />' in locales_src
       and '<locale android:name="fr" />' in locales_src
       and '<locale android:name="co" />' in locales_src
-      and locales_src.count("<locale ") == 3)
+      and '<locale android:name="gsw-FR" />' in locales_src
+      and locales_src.count("<locale ") == 4)
 check("Manifest : auto-stockage appcompat de la langue "
       "(AppLocalesMetadataHolderService, marqueur autoStoreLocales, "
       "jamais exporté)",
@@ -472,33 +485,28 @@ check("Manifest : auto-stockage appcompat de la langue "
                 re.S) is not None
       and 'android:name="autoStoreLocales"' in manifest_src
       and 'android:value="true"' in manifest_src)
-check("Strings : les 15 clés attendues existent EN "
+check("Strings : les 13 clés attendues existent EN "
       "(11 d'origine + 4 du chantier langue v3)",
       all(f'name="{key}"' in en_src
           for key in ("menu_settings", "menu_skill", "menu_sounds",
                       "menu_anim", "sounds_off", "sounds_quiet",
                       "sounds_full", "anim_off", "anim_on",
                       "confirm_change_title", "confirm_change_ok",
-                      "menu_lang", "lang_system", "lang_fr",
-                      "lang_en")))
-check("Strings : les 15 clés existent aussi en FR",
+                      "menu_lang", "lang_system")))
+check("Strings : les 13 clés existent aussi en FR",
       all(f'name="{key}"' in fr_src
           for key in ("menu_settings", "menu_skill", "menu_sounds",
                       "menu_anim", "sounds_off", "sounds_quiet",
                       "sounds_full", "anim_off", "anim_on",
                       "confirm_change_title", "confirm_change_ok",
-                      "menu_lang", "lang_system", "lang_fr",
-                      "lang_en")))
-check("Strings : les libellés de langue sont sains (système "
-      "différencié EN/FR, noms propres identiques)",
+                      "menu_lang", "lang_system")))
+check("Strings : le libellé système est sain (différencié "
+      "EN/FR ; les endonymes des langues vivent dans AppLanguages "
+      "depuis la v19 — pinnés par validate_selecteur.py)",
       re.search(r'name="lang_system">Follow the system<', en_src)
       is not None
       and re.search(r'name="lang_system">Selon le système<', fr_src)
-      is not None
-      and re.search(r'name="lang_fr">Français<', en_src) is not None
-      and re.search(r'name="lang_fr">Français<', fr_src) is not None
-      and re.search(r'name="lang_en">English<', en_src) is not None
-      and re.search(r'name="lang_en">English<', fr_src) is not None)
+      is not None)
 check("Strings : le message d'avancement (avec ses deux arguments) "
       "existe EN et FR",
       'name="confirm_progress_message"' in en_src

@@ -377,14 +377,26 @@ def write_vd(out_path, vp, elements, grey, dp=64):
     strokeLineCap (support demandé par tools/graphics/
     generate_graphics.py : les elements a 4 champs restent valides
     et produisent une sortie inchangee, byte pour byte).
+
+    fill = None : tracé SANS remplissage (contour seul, demandé par
+    tools/flags/convert_flags.py : pas d'attribut fillColor émis).
+
+    dp : carré (int/float, défaut 64) OU couple (largeur, hauteur)
+    en dp — les drapeaux du sélecteur de langue sont plus larges
+    que hauts (tools/flags/convert_flags.py) ; le format %g garde
+    "64dp" byte pour byte pour les appels historiques.
     """
     lines = []
     lines.append('<?xml version="1.0" encoding="utf-8"?>')
     lines.append('<vector xmlns:android='
                  '"http://schemas.android.com/apk/res/android"')
     lines.append('    xmlns:aapt="http://schemas.android.com/aapt"')
-    lines.append('    android:width="%ddp"' % dp)
-    lines.append('    android:height="%ddp"' % dp)
+    if isinstance(dp, (tuple, list)):
+        dp_w, dp_h = ('%g' % float(dp[0]), '%g' % float(dp[1]))
+    else:
+        dp_w = dp_h = '%g' % dp
+    lines.append('    android:width="%sdp"' % dp_w)
+    lines.append('    android:height="%sdp"' % dp_h)
     lines.append('    android:viewportWidth="%s"' % vp[0])
     lines.append('    android:viewportHeight="%s"' % vp[1])
     lines.append('>')
@@ -404,7 +416,11 @@ def write_vd(out_path, vp, elements, grey, dp=64):
                 attrs.append('    android:strokeLineJoin="%s"' % s_join)
             if s_cap and s_cap != 'butt':
                 attrs.append('    android:strokeLineCap="%s"' % s_cap)
-        if fill[0] == 'solid':
+        if fill is None:
+            lines.append('  <path')
+            lines.extend(attrs)
+            lines.append('      />')
+        elif fill[0] == 'solid':
             attrs.append('    android:fillColor="%s"'
                          % conv_color(fill[1], fill[2], grey))
             lines.append('  <path')

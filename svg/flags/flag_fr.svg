@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 900 600">
+  <defs>
+    <style>
+      .u83a003dec6-cls-1{fill:#ce1126}
+      .u83a003dec6-cls-2{fill:#ffffff}
+      .u83a003dec6-cls-3{fill:#002654}
+    </style>
+  </defs>
+  <title>Flag_of_France.svg</title>
+  <g id="u83a003dec6-France" data-name="France">
+    <polyline id="u83a003dec6-Rouge" data-name="Rouge" points="0,0 900,0 900,600 0,600" class="u83a003dec6-cls-1"/>
+    <polyline id="u83a003dec6-Blanc" data-name="Blanc" points="0,0 600,0 600,600 0,600" class="u83a003dec6-cls-2"/>
+    <polyline id="u83a003dec6-Bleu" data-name="Bleu" points="0,0 300,0 300,600 0,600" class="u83a003dec6-cls-3"/>
+  </g>
+</svg>

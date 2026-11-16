@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Traduction alsacienne de l'interface (première passe IA du
+     16 nov. 2026, à faire valider par le relecteur alsacien
+     d'eric — processus B du chantier traduction : IA traduit,
+     locuteur relit et corrige). Mêmes clés que values/strings.xml
+     (parité contrôlée par tools/validate_langues.py).
+
+     L'alsacien n'a pas de code Android dédié : il vit sous la
+     locale BCP-47 gsw-FR (alémanique de France), donc le dossier
+     est values-gsw-rFR. Le réglage système « langue par
+     application » peut la proposer quand locale_config la
+     déclare ; le sélecteur interne reste à trois boutons jusqu'au
+     chantier « sélecteur de langue dynamique ».
+
+     Orthographe : l'alsacien est surtout oral et n'a pas de norme
+     unique ; cette passe emploie une orthographe phonétique
+     pratique à l'usage du relecteur, qui normalisera. Les
+     apostrophes sont typographiques (’) pour éviter l'échappement.
+
+     Glossar (EN → elsässisch) :
+       board → Brätt ; tile → Kàchele ; server → Server ;
+       terminal → Terminàl ; network → Nätzwärk ; wiring → Kàbl ;
+       torus (edges wrap around) → d’Ränder gän ìnànànder ;
+       hidden wiring → versteckta Kàbl ; fog → Näwel ;
+       hint → Tipp, allowance → Tipp-Limit ; moves → Züg ;
+       puzzle → Rätsel ; settings → Iistellunga ; menu → Menü ;
+       levels : Novice → Anfänger, Normal → Normal, Expert →
+       Expert, Master → Meister, Insane → Verruckt, Endless →
+       Eedlos, Abyss → Abgrund, Void → Leeri. « blips » et les
+       noms propres restent tels quels.
+-->
+<resources>
+    <!-- Nom de l'application -->
+    <string name="app_name">Scrambled Net 2</string>
+
+    <!-- Menu -->
+    <string name="menu_new">Neis Spiil</string>
+    <string name="menu_solve">Lösa</string>
+    <string name="menu_settings">Iistellunga</string>
+    <string name="menu_stop_solve">Lösa stoppa</string>
+    <string name="solver_used">Auto-Löser brücht — des Spiil wird nitt gwertet.</string>
+    <string name="menu_skill">Niveau</string>
+    <string name="menu_sounds">Sound</string>
+    <string name="sounds_off">Stumm</string>
+    <string name="sounds_quiet">Lìis</string>
+    <string name="sounds_full">Voll</string>
+    <string name="menu_anim">Ànimation</string>
+    <string name="anim_off">Ohni Ànimation</string>
+    <string name="anim_on">Ànimation</string>
+
+    <!-- Langue (page Réglages) : noms propres identiques dans
+         toute langue, la liste suit le système. -->
+    <string name="menu_lang">Spraach</string>
+    <string name="lang_system">Em Süschteem noh</string>
+
+    <!-- Descriptions des niveaux (page Réglages) -->
+    <string name="skill_novice_desc">Brätt %1$d × %2$d — zwài Verzwàigunga, offena Ränder</string>
+    <string name="skill_normal_desc">Brätt %1$d × %2$d — zwài Verzwàigunga, offena Ränder</string>
+    <string name="skill_expert_desc">Brätt %1$d × %2$d — zwài Verzwàigunga, offena Ränder</string>
+    <string name="skill_master_desc">Brätt %1$d × %2$d — Torus: d’Ränder gän ìnànànder, drài Verzwàigunga</string>
+    <string name="skill_insane_desc">Brätt %1$d × %2$d — Torus, drài Verzwàigunga, versteckta Kàbl àn de Verzwàigunga</string>
+    <string name="skill_endless_desc">Brätt %1$d × %2$d — Torus, ma siacht nia a Rand</string>
+    <string name="skill_abyss_desc">Brätt %1$d × %2$d — Torus, versteckta Kàbl àn de Verzwàigunga</string>
+    <string name="skill_void_desc">Brätt %1$d × %2$d — Torus, versteckta Kàbl, Näwel ìwerem Nätzwärk</string>
+
+    <!-- Aide (niveaux spéciaux) -->
+    <string name="help_master">Bim Niveau Meister gän d’Ränder vum Brätt ìnànànder: d’Kàchla àm rächta Rand verbinda sìch mit dana àm lìnka Rand, un umgekert. Eso àui àm owwera un àm untera Rand.</string>
+    <string name="help_insane">Bim Niveau Verruckt gän d’Ränder vum Brätt ìnànànder: d’Kàchla àm rächta Rand verbinda sìch mit dana àm lìnka Rand, un umgekert. Eso àui àm owwera un àm untera Rand. Zuedàm sìn d’Kàbl ìn de Kàchla mit drài oder viar Verbìndunga nìt z’seaha. Vill Gliak!</string>
+    <string name="help_abyss">Bim Niveau Abgrund hàt s’Brätt kai End: s’hät 40 mol 40 Kàchla, un d’Ränder gän ìnànànder, so dàss ma dur s’Schiawa nia a End vum Brätt siacht. Zuedàm sìn d’Kàbl ìn de Kàchla mit drài oder viar Verbìndunga nìt z’seaha. Vill Gliak!</string>
+    <string name="help_void">Bim Niveau Leeri hàt s’Brätt kai End: s’hät 40 mol 40 Kàchla, un d’Ränder gän ìnànànder. D’Kàbl ìn de Kàchla mit drài oder viar Verbìndunga sìn nìt z’seaha. Un zuedàm deckt a Näwel d’Kàchla àb, wo nìt àm Nätzwärk àm Server hànga: numma d’Umgehung vun de verbandana Kàchla blibt sìchtbàr. Vill Gliak!</string>
+    <string name="menu_scores">Rekord</string>
+    <string name="menu_help">Hìlf</string>
+    <string name="menu_about">Üwer</string>
+
+    <!-- Niveaux de difficulté -->
+    <string name="skill_novice">Anfänger</string>
+    <string name="skill_normal">Normal</string>
+    <string name="skill_expert">Expert</string>
+    <string name="skill_master">Meister</string>
+    <string name="skill_insane">Verruckt</string>
+    <string name="skill_endless">Eedlos</string>
+    <string name="skill_abyss">Abgrund</string>
+    <string name="skill_void">Leeri</string>
+
+    <!-- Barre d'état -->
+    <string name="status_moves">Züg: %1$d</string>
+    <string name="status_time">Zitt: %1$s</string>
+
+    <!-- Jeu -->
+    <string name="win_title">Du häsch gwunna!</string>
+    <string name="win_pbest_title">Neier persenliga Rekord!</string>
+    <string name="win_text">Glìckwunsch! Du häsch s’Rätsel ìn %1$s mit %2$d Züg gläast.</string>
+    <string name="best_moves_text">Des sìn dì beschte Züg, wo du bis jetz àn dam Niveau gmàcht häsch!</string>
+    <string name="best_time_text">Des ìst dì schnellschta Zitt, wo du bis jetz àn dam Niveau gmàcht häsch!</string>
+    <string name="best_both_text">Des sìn dì beschte Züg un dì schnellschta Zitt, wo du bis jetz àn dam Niveau gmàcht häsch!</string>
+    <string name="win_new">Neis Spiil</string>
+    <string name="win_continue">Witterschpìla</string>
+
+    <!-- Page titre (TitleActivity) -->
+    <string name="title_version">Version %1$s</string>
+    <string name="title_license">Basiart üf Scrambled Net (© 2007–2010 Ian Cameron Smith,\n© 2014 Michael Mueller), a Android-Portierung vum KDE-Spiil KNetWalk.\nDes Version: © 2026 Eric Chardon — GPL-2.0.</string>
+    <string name="title_loading">S’gspeichart Spiil wird glàda…</string>
+    <string name="title_checking">Süach noch Aktualisierunga…</string>
+    <string name="title_update_available">D’Version %1$s ìsch verfiagbàr.</string>
+    <string name="title_update_button">Aktualisiara</string>
+    <string name="title_play_button">Spìla</string>
+    <string name="title_download_status">Version %1$s wird àblàda…</string>
+    <string name="title_install_status">Wird installiart…</string>
+    <string name="title_install_permission">Là ìn de Android-Iistellunga züa, dàss unbekànnta Àpp kenna installiart wara, un drucka denn noch eenàm àf Aktualisiara.</string>
+    <string name="title_install_failed">D’Aktualisiarig hàtt nìt funktionniart (%1$s). Du kànsch àwersch witterspìla.</string>
+
+    <!-- Confirmation avant d'ecraser une partie en cours -->
+    <string name="confirm_new_title">Neis Spiil?</string>
+    <string name="confirm_change_title">Niveau wägsla?</string>
+    <string name="confirm_change_ok">Niveau wägsla</string>
+    <string name="confirm_progress_message">A Spiil ìsch àm Laafa (%1$d Züg, %2$s). S’wird verlora gàn.</string>
+
+    <!-- Records personnels -->
+    <string name="scores_title">Persenliga Rekord</string>
+    <string name="scores_movestitle">Wenigschta Züg</string>
+    <string name="scores_timestitle">Schnellschta Zitt</string>
+    <string name="scores_skill">Niveau</string>
+    <string name="scores_moves">Züg</string>
+    <string name="scores_time">Zitt</string>
+    <string name="scores_when">Wann</string>
+    <string name="menu_scores_reset">Àlli Rekord zrucksetza</string>
+    <string name="scores_reset_confirm">Àlli dìn persenliga Rekord lescha?</string>
+
+    <!-- Aide à la résolution : Indice (cadre vert pulsé en mode
+         Signaler, rotation + tuile scellée en mode Corriger,
+         plafond paramétrable), popup Outils (Résoudre,
+         Démonstration), records enrichis d'indices. -->
+    <string name="menu_hint">Tipp</string>
+    <string name="menu_hint_count">Tipp (%1$d)</string>
+    <string name="menu_tools">Warkzeig</string>
+    <string name="menu_demo">Demoo</string>
+    <string name="hint_strategy_signal">Fähler markiara</string>
+    <string name="hint_strategy_fix">Fähler korrigiara</string>
+    <string name="hint_limit_title">Tipp-Limit</string>
+    <string name="hint_limit_zero">Üssgschàltet</string>
+    <string name="hint_limit_value">%1$d%%</string>
+    <string name="demo_diff_random">Zuefàllig</string>
+    <string name="demo_diff_progressive">Progressiv</string>
+    <string name="demo_skill_title">Niveaus</string>
+    <string name="demo_speed_title">Tempo</string>
+    <string name="demo_speed_slow">Làngsàm</string>
+    <string name="demo_speed_normal">Normal</string>
+    <string name="demo_speed_fast">Schnall</string>
+    <string name="hints_section">Tipps</string>
+    <string name="hints_total">Tipp-Kàchla brücht: %1$d</string>
+    <string name="hints_none">kai Tipp</string>
+    <string name="hints_n">%1$d Tipps</string>
+    <string name="hints_column_tiles">Tipps</string>
+    <string name="demo_touch_return">Tìpa, um ins Spiil zruckz’kumma</string>
+    <string name="demo_level_banner">Demoo-Niveau %1$s</string>
+</resources>

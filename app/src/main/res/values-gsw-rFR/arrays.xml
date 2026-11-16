@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Traduction alsacienne de l'aide et de l'À propos (première
+     passe IA du 16 nov. 2026, à faire valider par le relecteur
+     alsacien d'eric). Mêmes tableaux, mêmes comptes d'items que
+     values/arrays.xml (parité contrôlée par
+     tools/validate_langues.py). Glossar: vedi
+     values-gsw-rFR/strings.xml.
+-->
+<resources>
+
+    <!-- Titres des sections de l'aide. -->
+    <string-array name="help_titles">
+        <item>S’Spiil</item>
+        <item>Steierung</item>
+        <item>Niveaus</item>
+        <item>Rekord</item>
+        <item>Tipps</item>
+    </string-array>
+
+    <!-- Textes des sections de l'aide. -->
+    <string-array name="help_texts">
+        <item>Scrambled Net 2 ìsch a einfàch Rätselspiil: dü müassat d’Verbìndunga vun amra Compüternätzwärk ìn Ornung brìnga, so dàss àlli Terminàl àm Server hàn. S’Nätzwärk bschteeht üs Kàchla; àlli sìn àm rìchtiga Plàtz, àwer zuefàllig verdräit wora.\n\nDràà d’Kàchla ainà no de àndra, zum s’Nätzwärk wìder verbinda. D’Kàchla, wo àm Server hàn, wara hell markiart. Wànn jeder Terminàl verbunda ìsch, häsch gwunna.</item>
+        <item>Tìp àf a Kàchele, zum sa im Uhrzagersìnn z’dräja. Drìck a Kàchele làng, zum sa z’spara, wànn dü sichar bisch, oder zum sa wìder freiz’màcha; gsperrta Kàchla màcha a kurtzer Klick.\n\nSchìab mit ainem Fìnger s’Brätt, pinz mit zwa Fìnger zum Zoom.</item>
+        <item>Es gìat fìmf Niveaus. D’höchera Niveaus hàn greassera Brätta, un d’fortgschrìttana hàn bsundera Iigahaita:\n\n• Anfänger: a klains Brätt.\n\n• Normal: a ewigs greassers Brätt.\n\n• Expert: a gross Brätt.\n\n• Meister: a gross Brätt, wu d’Ränder ìnànànder gàn — a Verbìndung, wu àm rächta Rand rut géaht, kìmmt àm lìnka Rand rïn, un genauso owwe un unne.\n\n• Verruckt: wia Meister, àwer àlli Kàchla mit drài oder viar Verbìndunga sìn unsìchtbàr. Fìr a verruckta Rätsel brüchscht ganz neiji Schlussfolgerunga.</item>
+        <item>Jeder Gwìnn zällt dìn Züg un dìn Zitt, un dìn persenliga Rekorda wara fìr jedes Niveau gspeichert — àwer numma, wànn dü s’Rätsel saler gläast häsch: a Spiil, wu dr Auto-Löser brücht hàt, wurd nia gwertet.\n\nLueg « Rekord » ìm Menü.</item>
+        <item>Gàng vum Server üss noh üssa: bschtiatta Kàchla sìn dìn Anker, spar se, wànn dü wittersch geasch.\n\nKàchla mit numma ainà Verbìndung sìn Terminàl — Sakgassa; rìcht se àn de Nochber, wu se brücht.\n\nWànn dü lawai e ruìigs Brätt magst, kànsch d’Nätzwärk-Ànimation ìm Menü üssschàlta.</item>
+    </string-array>
+
+    <!-- Titres des sections de la page « À propos ». -->
+    <string-array name="about_titles">
+        <item>S’Spiil</item>
+        <item>Dr Autor</item>
+        <item>Ursprung un Lizenz</item>
+        <item>Mitmàcha</item>
+        <item>Nei ìn dam Remake</item>
+        <item>Ändart gegeewer em Original</item>
+        <item>Unwändert vum Original</item>
+        <item>Wägg gnumma vum Original</item>
+    </string-array>
+
+    <!-- Textes des sections de la page « À propos ». -->
+    <string-array name="about_texts">
+        <item>Scrambled Net 2 ìsch a moderner, freier Remake vun Scrambled Net, a Android-Portierung vum KDE-Spiil KNetWalk. Entzìrl a durschenànderigs Compüternätzwärk, so dàss jeder Terminàl àm Server hàt: àlli Kàchla sìn àm rìchtiga Plàtz, àwer zuefàllig verdräit. Dràà se ainà no de àndra, zum s’Nätzwärk nüi ufzbàua.</item>
+        <item>Scrambled Net 2 ìsch s’Wark vum Éric Chardon, wo sit jeher a grossi Begeischterung fìr Logik- un Rätselspiila hàt. Àm Ànfàng vun 2010 hàt ar d’berihmt Àpplikation vum Ian Cameron Smith entdeckt, mìt iam Quälltext glìfert, un 2014 d’Ùwernàhm dur de Michael Mueller — ìn de Hoffnung, dàss dää mehra Entwicklùnga brìngt un d’Spìler ìnteressiert hàlt. Wìà d’Joohr vergànga sìn ohni dàss dìà Hoffnìnga wahr wara, hàt ar bschlossa, s’erwartet Witterschpìla saler z’schrìwa: dean moderner, freier Remake, trèi zem Original.</item>
+        <item>KNetWalk, s’originaal KDE-Spiil: © 2004–2007 Andi Peredri, Thomas Nagy un Fela Winkelmolen.\n\nScrambled Net, d’Android-Portierung: © 2007–2010 Ian Cameron Smith, © 2014 Michael Mueller.\n\nDer Remake, Scrambled Net 2: © 2026 Éric Chardon.\n\nÀlli vertràija unter dr GPL-2.0-Lizenz — des Spiil ìsch a freii Softwàr.\n\nQuälltext: https://github.com/echardon69-collab/Scrambled-Net-2</item>
+        <item>Dü kànsch hàlfa, s’Spiil z’verbessera:\n\n• A Fähler mälda — Link folgt.\n\n• Dr Autor kontàktiara — Link folgt.\n\n• A Ùbersetzung ìn a neii Spraach vorschlàga — Link folgt.\n\n• A neis Kàchele-Design vorschlàga — Link folgt.</item>
+        <item>Gegeewer em originaal Spiil füagt der Remake derzüa:\n\n• D’Eedlos-Fàmìlie: drài neiji Niveaus (Eedlos, Abgrund, Leeri) àf aim riesiga Brätt 40 × 40, wu d’Ränder ìnànànder gàn — d’Kàmerà dreahat sich, ma siacht nia a Rand; Abgrund versteckt d’Kàbl, Leeri füagt a Näwel ìwers Nätzwärk.\n\n• A Tìtlschìrm mit Autàmàtika-Aktualisierunga vun GitHub, ìn zwài Versiona: d’GitHub-APK mìt em ìntegriarta Updater, d’Play-Store-APK ohna.\n\n• A Eläktrizitäts-Signàtür: d’Lichter vum Server un d’Dàta-Blips pulsìara ìn ainem àndra Rhìthmus, je nochdàm, welly Generàtor s’Brätt bàut hàt.\n\n• D’Beschriiwung vun jedem Niveau — ware Brättgràss un Reegla — àf dr Iistellungs-Sitta.\n\n• A Spraach-Iistellung (Änglisch, Frànzeesch, oder em Süschteem noh).</item>
+        <item>Funktiona, wo s’Original hàt, jetz ànderscht gmàcht:\n\n• Quälltext: Jàvà un Ant sìn dur Kotlin un Gràdl ersetzt wora.\n\n• Gràfik: d’Bitmaps vum Original sìn jetz VectorDrawables — gliacha Lueg, ìmmer scharf, a Dàtei fìr àlli Schìrm-Dìchteka.\n\n• Sound: kain Probe vum Original wird wìder brücht; stàtt dàm wara sex kurtzi Effäkt sünthetiziart.\n\n• Rendering: stàtt àb a Animàtionsschleif wur s’Brätt numma neizzeichnet, wànn sich ebs ändart — dàs schont d’Batterii.\n\n• S’Brätt wurd nìmm geedeaht, zum de Schìrm zfìlla: s’ìsch a Kàmàrà-Fenschter, wu dü mìt d’Fìnger ziacha un zooma kànsch, un de Zoom blibt unter ena verànkert.\n\n• Brätt-Erzeigung: d’Hälfti vun de Brätta kìmt vun am àlternierende Spannbàum-Generàtor, wu jede Kàchele verbìndet (dr Generàtor vum Original bàut àwersch d’àndra Hälfti — d’Eläktrizitäts-Signàtür zìagt se üssanànder).\n\n• Menüs: a Texàktionsleischte ohna Tìtel, Iistellunga àf ainàr Sittà stàtt Kaskàde-Untermenüs, un dr Üwer-Dialàg ìsch ze dera Sittà wora.</item>
+        <item>Funktiona vum Original, wià se gsi sìn, bhalta:\n\n• D’fìmf originaala Niveaus (Anfänger bis Verruckt) mìt era genàui Reegla — d’Ränder ìnànànder bim Meister, d’versteckta Kàbl bim Verruckta.\n\n• Dr Brätt-Generàtor vum Original: jedes Rätsel kàà gwunna wara, un gwunna ìsch s’Spiil, wànn jeder Terminàl verbunda ìsch.\n\n• D’Brättgràss pàsst se àn dìn Schìrm un dìn Orientiaring àà, genau wià d’Screen-Matrix vum Original.\n\n• Tìp àf a Kàchele, zum sa z’dräja; làng drucka, zum sa z’spara oder freiz’màcha.\n\n• Dr Auto-Löser — a mìt iam gläasta Spiil wurd nia gwertet.\n\n• Persenliga Rekorda (Züg un Zitt) fìr jedes Niveau.\n\n• S’gspeichart Spiil ìwerlìbt s’Schlìssa vun dr Àpp odder àn Ruhezüschdànd; d’Ühr frìart ìm Hìntergrund ii.\n\n• D’Reegla-Erìnnarunga, wànn dü Màister oder Verruckt àspìlst.\n\n• D’drì Sound-Modi un d’Ànimation-Iistellung.\n\n• D’Hìlf ìm Spiil.</item>
+        <item>Funktiona vum Original, wo wägg sìn, un wàrum:\n\n• D’Steierung mìt D-Pad, Trackball un Tàschtatur: der Remake ìsch numma Tàtsch, bàut fìr moderni Tälla un Tàbletta.\n\n• Dr rot Fokus-Cursor, gmàcht fìr d’Zeit vum D-Pad: mìt diräktàm Tàtsch wàr ar Lärm numma — s’Alarm-Blinka un dr Cursor vum Auto-Löser macha, wàs ar gmàcht hàt.\n\n• Jeda Abhàngigkeit vum Original (d’Bibliothekka HermitAndroid un HermitLibrary, mìt em Zuefàllsgeneràtor MTRandom, ersetzt dur de Standard-Generàtor vun Kotlin): dr Motor ìsch vum Grund üff nüi ìn Kotlin gschrìwa wora — kain Quälltext vum Original wird wìder brücht.</item>
+    </string-array>
+</resources>

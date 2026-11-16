@@ -42,8 +42,6 @@
          toute langue, la liste suit le système. -->
     <string name="menu_lang">Lingua</string>
     <string name="lang_system">Seguita u sistema</string>
-    <string name="lang_fr">Français</string>
-    <string name="lang_en">English</string>
 
     <!-- Descriptions des niveaux (page Réglages) -->
     <string name="skill_novice_desc">Scacchera %1$d × %2$d — dui rami, bordi aperti</string>

@@ -8,9 +8,10 @@ portage Android du jeu KDE KNetWalk) :
   HermitLibrary a été supprimée — seules les classes réellement utilisées
   ont été réintégrées) ;
 - Kotlin, Views + Material 3 ;
-- graphismes : 19 VectorDrawables convertis automatiquement depuis les SVG
-  d'origine (15 tuiles câbles, computer1/computer2, server/server1) avec
-  leurs dégradés natifs API 24+ (<aapt:attr>) — fidèles au look historique,
+- graphismes : 23 VectorDrawables convertis automatiquement depuis les SVG
+  (les 19 d'origine — 15 tuiles câbles, computer1/computer2, server/server1
+  — plus les 4 drapeaux du sélecteur de langue) avec leurs dégradés natifs
+  API 24+ (<aapt:attr>) — fidèles au look historique,
   un seul fichier pour toutes les densités, netteté parfaite à tout zoom,
   ~68 Ko au total contre ~1,1 Mo de SVG ;
 - rendu événementiel (aucune boucle à 33 fps) : économe en batterie ;
@@ -77,8 +78,9 @@ Structure
         ScoresStore.kt, ScoresActivity.kt : records personnels par
                   niveau (M4)
         HelpActivity.kt : manuel du jeu en sections (M5)
-    app/src/main/res/drawable/   19 tuiles VectorDrawable converties des
-                                  SVG d'origine (cable*, computer*, server*)
+    app/src/main/res/drawable/   23 VectorDrawables convertis des SVG
+                                  (cable*, computer*, server*, drapeaux
+                                  flag_* du sélecteur de langue)
     app/src/main/res/raw/        6 effets sonores WAV synthétisés
                                   (start, turn, click, pop, connect, win)
     app/src/test/                tests unitaires JVM du moteur
@@ -116,7 +118,7 @@ Feuille de route (validée)
   14 nov. 2026) ; outillage LIVRÉ le 16 nov. 2026 — guide du
   traducteur docs/TRADUIRE.md, kit généré par script (tableau
   clé|texte|contexte, glossaire, règles, licence, complétion par
-  delta) et validateur de langues (parité des clés 98 + 26,
+  delta) et validateur de langues (parité des clés 96 + 26,
   paramètres, apostrophes échappées, XML bien formé) ; processus B
   acté : GitHub PR + relecture IA (back-traduction) ; premier
   traduction corse menée par l'IA le 16 nov. 2026 (première
@@ -129,10 +131,55 @@ Feuille de route (validée)
   26 textes, locales_config) : pas de traducteur trouvé, eric a
   confié la traduction à l'IA ; RELECTURE par le testeur/relecteur
   corse d'eric à venir, ses corrections réintègrent par le même
-  canal. Le sélecteur de langue dynamique (rendre le corse
-  sélectionnable dans la page Réglages, en plus du réglage système
-  « langue par application » qui le propose dès à présent) reste à
-  venir
+  canal. Le sélecteur de langue dynamique — le corse
+  sélectionnable directement dans la page Réglages, en plus du
+  réglage système « langue par application » — est livré le
+  16 nov. 2026
+- Langue alsacienne : traduction du jeu en alsacien, ajoutée à la
+  roadmap le 16 nov. 2026 ; portée par le même processus de
+  traduction (kit, relecture, complétion par delta, contrôles CI).
+  Première passe IA LIVRÉE le 16 nov. 2026 (values-gsw-rFR
+  complet, 98 chaînes + 26 textes, locales_config) : eric a un
+  relecteur alsacien ; RELECTURE à venir, ses corrections
+  réintègrent par le même canal. L'alsacien n'a pas de code
+  Android propre : il est porté par la locale gsw-FR
+  (alémanique de France), sélectionnable via le réglage système
+  « langue par application » et, depuis le sélecteur de langue
+  de la page Réglages (livré le 16 nov. 2026), directement dans
+  l'app. L'alsacien est une langue
+  majoritairement orale, sans orthographe standardisée : la
+  première passe suit une graphie phonétique pratique, que le
+  relecteur normalisera
+- Sélecteur de langue dynamique : les radios de la section Langue
+  de la page Réglages n'étaient que trois et figées dans le
+  layout (Système, Français, English, v3 du 14 nov. 2026) — le
+  corse et l'alsacien n'y étaient PAS sélectionnables. Livré le
+  16 nov. 2026 : les radios naissent AU RUNTIME depuis
+  AppLanguages.kt (une ligne par langue : tag BCP-47 complet +
+  endonyme affiché), gonflées depuis item_lang_radio.xml ; le
+  corse et l'alsacien deviennent sélectionnables dans l'app, et
+  une langue ajoutée (dossier values-xx + locales_config.xml +
+  ligne AppLanguages, les trois pinnés ensemble par le nouveau
+  validateur validate_selecteur.py) y apparaît aussitôt. Les
+  endonymes (Français, English, Corsu, Elsässisch) quittent les
+  fichiers de traduction (strings lang_fr/lang_en retirées, base
+  96 chaînes) : identiques en toute langue, ils vivent dans
+  AppLanguages et restent relus par les relecteurs des langues.
+  Tests JVM : AppLanguagesTest (5 tests, 69 au total) ; le tag
+  complet fait foi dans la correspondance radio-locale (gsw-FR,
+  jamais « gsw » seul). Drapeaux (Lot 15, v20 du 16 nov. 2026) :
+  chaque radio porte le drapeau choisi par eric — France, Union
+  Jack, tête de Maure corse, Alsace historique — à gauche de son
+  endonyme. Sources dans svg/flags/flag_*.svg, converties par
+  tools/flags/convert_flags.py en drawables 15 dp de haut (les
+  règles VectorDrawable restent dans convert_tiles, source unique,
+  réutilisées ; banc d'essai tools/flags/test_convert_flags.py ;
+  validate_selecteur.py étendu à 43 vérifications), posées par
+  langFlagFor dans SettingsActivity (correspondance explicite,
+  pas de getIdentifier). L'Union Jack original de eric recadrait
+  ses contrebandes par clipPath — non représentable en
+  VectorDrawable : svg/flags/flag_en.svg est la réécriture
+  équivalente, géométrie exacte, documentée dans son en-tête.
 - Aide à la résolution : Indice (plafond paramétrable, informatif ou
   correctif) + Résoudre sous Outils + Démonstration en boucle
   (difficulté, zoom, rythme) (livré le 15 nov. 2026)

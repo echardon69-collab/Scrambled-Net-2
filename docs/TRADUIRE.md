@@ -138,16 +138,21 @@ Le vocabulaire à employer de façon cohérente (le kit en détaille les
    contresens). Vous recevez les remarques, vous tranchez.
 4. **Intégration** : eric intègre le CSV dans
    `values-<code>/strings.xml` et `values-<code>/arrays.xml`, ajoute
-   la langue à la configuration, et le validateur passe au vert.
+   la locale à `locales_config.xml`, une ligne à `AppLanguages.kt`
+   (tag + endonyme : la langue apparaît aussitôt dans le sélecteur
+   de Réglages) et un drapeau au sélecteur (source
+   `svg/flags/flag_<tag>.svg`, une ligne `langFlagFor` dans
+   SettingsActivity, drawables régénérés par
+   `tools/flags/convert-flags.sh`), et le validateur passe au vert.
 5. **Revue GitHub** : la traduction arrive dans le dépôt par une
    *pull request* GitHub, ouverte à vos commentaires. La traduction
    **intégrée au dépôt est couverte par la licence GPL-2.0** du jeu,
    comme toute contribution — c'est le standard des projets libres,
    à connaître avant de commencer.
 6. **Distribution** : la CI construit, la release GitHub paraît, et
-   l'Updater intégré au jeu propose la mise à jour aux joueurs
-   (l'apparaition de la langue dans le sélecteur de Réglages est un
-   chantier séparé, déjà inscrit à la feuille de route).
+   l'Updater intégré au jeu propose la mise à jour aux joueurs ; la
+   langue apparaît aussitôt dans le sélecteur de Réglages, construit
+   au runtime depuis `AppLanguages.kt` (v19 du 16 nov. 2026).
 
 ## Compléter après une évolution du jeu
 

@@ -306,7 +306,12 @@
                     android:text="@string/anim_on" />
             </RadioGroup>
 
-            <!-- Section 4 : langue (v3 du 14 nov., demande d'eric).
+            <!-- Section 4 : langue (v3 du 14 nov., demande d'eric ;
+                 v19 du 16 nov., sélecteur dynamique). Seule la radio
+                 « Suivre le système » vit ici : les radios des
+                 langues naissent AU RUNTIME (SettingsActivity,
+                 item_lang_radio.xml, données AppLanguages) — une
+                 traduction neuve apparaît sans toucher au layout.
                  Choix immédiat : appcompat stocke le choix
                  (autoStoreLocales, cf. manifeste) et recrée la pile
                  d'activités pour l'appliquer partout ; sur Android
@@ -333,20 +338,6 @@
                     android:maxWidth="320dp"
                     android:layout_height="wrap_content"
                     android:text="@string/lang_system" />
-
-                <com.google.android.material.radiobutton.MaterialRadioButton
-                    android:id="@+id/lang_fr"
-                    android:layout_width="match_parent"
-                    android:maxWidth="320dp"
-                    android:layout_height="wrap_content"
-                    android:text="@string/lang_fr" />
-
-                <com.google.android.material.radiobutton.MaterialRadioButton
-                    android:id="@+id/lang_en"
-                    android:layout_width="match_parent"
-                    android:maxWidth="320dp"
-                    android:layout_height="wrap_content"
-                    android:text="@string/lang_en" />
             </RadioGroup>
 
             <!-- Section 5 : indice (chantier Aide à la résolution, 15

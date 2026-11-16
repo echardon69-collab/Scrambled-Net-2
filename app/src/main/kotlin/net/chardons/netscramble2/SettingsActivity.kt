@@ -2,6 +2,7 @@ package net.chardons.netscramble2
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
 import android.widget.CompoundButton
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatDelegate
@@ -67,6 +68,25 @@ import net.chardons.netscramble2.ui.EdgeToEdge
  * [Settings] (mêmes clés et fichier historiques) ; le jeu relit le
  * plafond à chaque nouvelle partie, la démonstration ses réglages à
  * chaque lancement.
+ *
+ * V6 (chantier « sélecteur de langue dynamique », 16 nov. 2026) :
+ *  les radios des langues ne sont plus figées dans le layout — elles
+ *  naissent AU RUNTIME depuis [AppLanguages], une par langue du jeu,
+ *  libellée par son endonyme (« Français », « English », « Corsu »,
+ *  « Elsässisch ») ; seule « Suivre le système » reste statique. Une
+ *  traduction neuve (corse v17, alsacien v18…) devient sélectionnable
+ *  sans toucher à la page ; le tag COMPLET (gsw-FR, jamais « gsw »
+ *  seul) fait foi dans la correspondance radio <-> locale.
+ *
+ * V7 (chantier « drapeaux du sélecteur », Lot 15 du 16 nov. 2026) :
+ *  chaque radio de langue porte le DRAPEAU choisi par eric — France,
+ *  Union Jack, tête de Maure corse, Alsace historique — à gauche de
+ *  son endonyme (drawable 15 dp de haut, régénéré par tools/flags/
+ *  convert-flags.sh depuis svg/flags). La correspondance langue ->
+ *  drawable est EXPLICITE ([langFlagFor]) : pas de getIdentifier
+ *  (réflexion, et le tag « gsw-FR » n'est pas un nom de ressource
+ *  Android légal pour une recherche dynamique) — une langue ajoutée
+ *  sans drapeau reste affichée, simplement nue.
  */
 class SettingsActivity : AppCompatActivity() {
 
@@ -82,6 +102,11 @@ class SettingsActivity : AppCompatActivity() {
 
     /** True pendant les coches programmatiques (pas d'écoute). */
     private var suppressSkillCheck = false
+
+    /** V6 : ids des radios de langues posés au runtime — tag
+     * complet -> id de la vue (les ids n'existent pas à la
+     * compilation, rien n'est figé dans le layout). */
+    private val langRadioIds = mutableMapOf<String, Int>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -118,6 +143,9 @@ class SettingsActivity : AppCompatActivity() {
         binding.animGroup.check(
             if (Settings.loadAnimEnabled(this)) R.id.anim_on else R.id.anim_off
         )
+        // V6 : les radios des langues naissent au runtime, AVANT la
+        // coche initiale (le sélecteur n'a plus de radios figées).
+        buildLangRadios()
         binding.langGroup.check(langRadioFor(currentLanguageTag()))
 
         // V5 : sections « Indice » et « Démonstration » — mêmes coches
@@ -341,36 +369,96 @@ class SettingsActivity : AppCompatActivity() {
 
     /**
      * Langue en vigueur, telle qu'appcompat la connaît : le tag
-     * court de la première langue appliquée (« fr », « en »), ou
-     * une chaîne vide si l'application suit le système. Source de
-     * vérité UNIQUE du réglage : le stockage appcompat (restitué au
-     * démarrage, avant tout affichage) — la page n'a PAS de clé
-     * maison qui pourrait diverger de la langue réellement rendue.
+     * COMPLET de la première locale appliquée (« fr », « en »,
+     * « gsw-FR »), ou une chaîne vide si l'application suit le
+     * système. Source de vérité UNIQUE du réglage : le stockage
+     * appcompat (restitué au démarrage, avant tout affichage) — la
+     * page n'a PAS de clé maison qui pourrait diverger de la langue
+     * réellement rendue. V6 : le tag complet fait foi — la langue
+     * seule (« gsw ») matcherait l'alémanique suisse autant que
+     * l'alsacien.
      */
     private fun currentLanguageTag(): String {
         val locales = AppCompatDelegate.getApplicationLocales()
-        return if (locales.isEmpty) "" else locales[0]?.language ?: ""
-    }
-
-    /** Radio de la langue en vigueur (suivi du système par défaut). */
-    private fun langRadioFor(tag: String): Int = when (tag) {
-        "fr" -> R.id.lang_fr
-        "en" -> R.id.lang_en
-        else -> R.id.lang_system
+        return if (locales.isEmpty) "" else locales[0]?.toLanguageTag() ?: ""
     }
 
     /**
-     * Applique la langue choisie : appcompat stocke le choix et
-     * recrée la pile d'activités pour l'appliquer partout (toutes
-     * nos activités sont des AppCompatActivity, le ViewModel du jeu
-     * survit à la recréation). Liste VIDE = suivre la langue du
-     * système, aucun forçage.
+     * V6 : construit les radios du sélecteur, une par langue du jeu
+     * ([AppLanguages.ALL], ordre d'affichage), gonflées depuis
+     * item_lang_radio.xml directement dans le groupe de la section.
+     * Chaque radio reçoit un id posé au runtime ; le registre
+     * [langRadioIds] porte la correspondance tag complet -> id.
+     *
+     * CORRECTION (retour d'eric, 17 nov. 2026) : le gonflage se
+     * fait attachToRoot = FALSE puis addView — avec TRUE,
+     * LayoutInflater.inflate RENVOIE LE PARENT (le RadioGroup),
+     * pas l'enfant gonflé, et le cast en MaterialRadioButton
+     * plantait en ClassCastException dès la première langue, à
+     * l'ouverture de la page. Avec FALSE, inflate renvoie bien la
+     * racine du XML gonflé (la radio) avec ses LayoutParams
+     * dérivés du parent, qu'on ajoute alors à la main.
+     */
+    private fun buildLangRadios() {
+        AppLanguages.ALL.forEach { lang ->
+            val radio = layoutInflater.inflate(
+                R.layout.item_lang_radio, binding.langGroup, false
+            ) as MaterialRadioButton
+            binding.langGroup.addView(radio)
+            val id = View.generateViewId()
+            radio.id = id
+            radio.text = lang.endonym
+            langRadioIds[lang.tag] = id
+            // V7 : drapeau de la langue, à gauche du libellé.
+            // Surcharge (Int, Int, Int, Int) : ids de ressources,
+            // 0 = pas de drawable (la surcharge Drawable prend des
+            // objets, pas des ids — null y est réservé).
+            val flag = langFlagFor(lang.tag)
+            if (flag != 0) {
+                radio.setCompoundDrawablesRelativeWithIntrinsicBounds(
+                    flag, 0, 0, 0
+                )
+                // 8 dp -> pixels : la ressource n'existe pas pour
+                // un drawable posé au runtime, conversion inline.
+                radio.compoundDrawablePadding =
+                    (8 * resources.displayMetrics.density).toInt()
+            }
+        }
+    }
+
+    /**
+     * V7 : drawable du drapeau porté par une langue du sélecteur.
+     * Correspondance EXPLICITE (voir l'en-tête V7) : le tag complet
+     * fait foi, inconnu -> 0, la radio s'affiche alors sans drapeau.
+     */
+    private fun langFlagFor(tag: String): Int = when (tag) {
+        "fr" -> R.drawable.flag_fr
+        "en" -> R.drawable.flag_en
+        "co" -> R.drawable.flag_co
+        "gsw-FR" -> R.drawable.flag_gsw_fr
+        else -> 0
+    }
+
+    /** Radio de la langue en vigueur (suivi du système par défaut). */
+    private fun langRadioFor(tag: String): Int =
+        langRadioIds[tag] ?: R.id.lang_system
+
+    /**
+     * Applique la langue choisie : le registre rend le tag porté par
+     * la radio cochée (liste vide = « Suivre le système »), puis
+     * appcompat stocke le choix et recrée la pile d'activités pour
+     * l'appliquer partout (toutes nos activités sont des
+     * AppCompatActivity, le ViewModel du jeu survit à la
+     * recréation). Liste VIDE = suivre la langue du système, aucun
+     * forçage.
      */
     private fun applyLanguage(checkedId: Int) {
-        val locales = when (checkedId) {
-            R.id.lang_fr -> LocaleListCompat.forLanguageTags("fr")
-            R.id.lang_en -> LocaleListCompat.forLanguageTags("en")
-            else -> LocaleListCompat.getEmptyLocaleList()
+        val tag = langRadioIds.entries
+            .firstOrNull { it.value == checkedId }?.key
+        val locales = if (tag == null) {
+            LocaleListCompat.getEmptyLocaleList()
+        } else {
+            LocaleListCompat.forLanguageTags(tag)
         }
         AppCompatDelegate.setApplicationLocales(locales)
     }

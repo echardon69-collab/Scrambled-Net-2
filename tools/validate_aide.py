@@ -425,10 +425,13 @@ check("SettingsActivity : radios 10 et 20 portées au runtime via hint_limit_val
       and "hintPercentFor" in sc)
 check("SettingsActivity : la radio 0 porte hint_limit_zero, pas les autres",
       layout_settings.count('@string/hint_limit_zero') == 1)
-check("Layout réglages : 26 radios + 8 cases, maxWidth 320dp (v11 : radios de plafond retirées)",
-      layout_settings.count("<com.google.android.material.radiobutton.MaterialRadioButton") == 26
+# v19 (sélecteur de langue dynamique) : les radios Français et
+# English quittent le XML pour naître au runtime depuis
+# item_lang_radio.xml (borné pareil) — 24 radios, 40 bornes.
+check("Layout réglages : 24 radios + 8 cases, maxWidth 320dp (v11 : plafond à 3 radios ; v19 : radios de langues au runtime)",
+      layout_settings.count("<com.google.android.material.radiobutton.MaterialRadioButton") == 24
       and layout_settings.count("<com.google.android.material.checkbox.MaterialCheckBox") == 8
-      and layout_settings.count('android:maxWidth="320dp"') == 42
+      and layout_settings.count('android:maxWidth="320dp"') == 40
       and "demo_zoom" not in layout_settings
       and "hint_limit_5" not in layout_settings
       and "hint_limit_50" not in layout_settings)

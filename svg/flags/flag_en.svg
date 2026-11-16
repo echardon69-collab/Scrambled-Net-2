@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  flag_en.svg — Union Jack (ratio 1:2), drapeau de l'anglais dans le
+  sélecteur de langue de Scrambled Net 2.
+
+  RÉÉCRITURE du fichier d'eric « Flag_of_the_United_Kingdom_(1-2).svg » :
+  l'original dessine les contrebandes rouges de la croix de saint
+  Patrick par des traits épais RECADRÉS par deux <clipPath> (les 4
+  triangles autour du centre). Un VectorDrawable ne sait NI recadrer
+  (pas de clip-path) NI suivre un chemin de découpe : la construction
+  clipPath est impossible à convertir telle quelle.
+
+  Équivalence exacte, sans clip : chaque demi-bande rouge est un
+  segment porté par la parallèle à la diagonale passant à 20 unités
+  du centre (600,300), tracé avec stroke-width 40 — soit la bande
+  rouge décalée de saint Patrick, large de 40, collée à la diagonale.
+  Directions : diagonales de pente 1/2, vecteur unitaire normal
+  (1,-2)/√5, donc 20/√5 = 8,944271910 d'écart par coordonnée.
+  Contrebandes (quart antihoraire standard) :
+    haut-gauche  : centre-ligne décalé vers le bas-gauche,
+    bas-droite   : son opposé ;
+    haut-droite  : centre-ligne décalé vers le bas-droite,
+    bas-gauche   : son opposé.
+  Les traits débordent du cadre 1200x600 : le VectorDrawable, comme
+  le viewport SVG, rogne au rendu — rien à recadrer à la main.
+
+  Ordre de peinture (comme l'original) : fond bleu, sellette blanche
+  des diagonales, 4 demi-bandes rouges, croix de saint Georges
+  blanche puis rouge.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600">
+  <defs>
+    <style>
+      .f-bg{fill:#012169}
+      .f-sellette{fill:none;stroke:#ffffff;stroke-width:120}
+      .f-contrebande{fill:none;stroke:#c8102e;stroke-width:40}
+      .f-croix-blanche{fill:none;stroke:#ffffff;stroke-width:200}
+      .f-croix-rouge{fill:none;stroke:#c8102e;stroke-width:120}
+    </style>
+  </defs>
+  <title>Flag of the United Kingdom (réécrit sans clipPath)</title>
+  <rect class="f-bg" x="0" y="0" width="1200" height="600"/>
+  <path class="f-sellette" d="M0,0 L1200,600 M1200,0 L0,600"/>
+  <path class="f-contrebande" d="M591.055728090,317.888543820 L-108.944271910,-32.111456180"/>
+  <path class="f-contrebande" d="M608.944271910,282.111456180 L1308.944271910,632.111456180"/>
+  <path class="f-contrebande" d="M608.944271910,317.888543820 L1308.944271910,-32.111456180"/>
+  <path class="f-contrebande" d="M591.055728090,282.111456180 L-108.944271910,632.111456180"/>
+  <path class="f-croix-blanche" d="M600,0 L600,600 M0,300 L1200,300"/>
+  <path class="f-croix-rouge" d="M600,0 L600,600 M0,300 L1200,300"/>
+</svg>
