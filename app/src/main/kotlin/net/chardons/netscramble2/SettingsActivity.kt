@@ -377,42 +377,29 @@ class SettingsActivity : AppCompatActivity() {
 
     /** Radio du plafond d'indices pour un pourcentage (0 sinon). */
     private fun hintLimitRadioFor(percent: Int): Int = when (percent) {
-        5 -> R.id.hint_limit_5
+        // V11 : le cadre validé ne propose plus que 0/10/20.
         10 -> R.id.hint_limit_10
-        15 -> R.id.hint_limit_15
         20 -> R.id.hint_limit_20
-        25 -> R.id.hint_limit_25
-        30 -> R.id.hint_limit_30
-        35 -> R.id.hint_limit_35
-        40 -> R.id.hint_limit_40
-        45 -> R.id.hint_limit_45
-        50 -> R.id.hint_limit_50
         else -> R.id.hint_limit_0
     }
 
     /** Pourcentage porté par une radio du plafond (0 si inconnu). */
     private fun hintPercentFor(checkedId: Int): Int = when (checkedId) {
-        R.id.hint_limit_5 -> 5
+        // V11 : Désactivé/10/20, rien d'autre.
         R.id.hint_limit_10 -> 10
-        R.id.hint_limit_15 -> 15
         R.id.hint_limit_20 -> 20
-        R.id.hint_limit_25 -> 25
-        R.id.hint_limit_30 -> 30
-        R.id.hint_limit_35 -> 35
-        R.id.hint_limit_40 -> 40
-        R.id.hint_limit_45 -> 45
-        R.id.hint_limit_50 -> 50
         else -> 0
     }
 
     /**
      * Libellés du plafond d'indices (v5) : une seule string à
-     * argument (hint_limit_value, « n % »), posée au runtime sur les
-     * radios 5 à 50 — la radio 0 porte son propre libellé
+     * argument (hint_limit_value, « n % »), posée au runtime sur
+     * les radios 10 et 20 (v11 : les seules proposées avec
+     * Désactivé) — la radio 0 porte son propre libellé
      * (« Désactivé ») en XML.
      */
     private fun bindHintLimitRadios() {
-        for (percent in 5..50 step 5) {
+        for (percent in listOf(10, 20)) {
             val radio = binding.hintLimitGroup.findViewById<MaterialRadioButton>(
                 hintLimitRadioFor(percent)
             )

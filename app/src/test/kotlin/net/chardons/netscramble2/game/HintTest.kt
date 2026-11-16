@@ -141,15 +141,32 @@ class HintTest {
     }
 
     @Test
-    fun `hint allowance floors keeps at least one and disables at zero`() {
-        assertEquals(3, Board.hintAllowance(misplaced = 37, percent = 10))
-        assertEquals(18, Board.hintAllowance(misplaced = 37, percent = 50))
-        assertEquals(0, Board.hintAllowance(misplaced = 37, percent = 0))
-        // Pourcentage non nul : au moins un indice, même sur un petit plateau.
-        assertEquals(1, Board.hintAllowance(misplaced = 1, percent = 10))
-        assertEquals(1, Board.hintAllowance(misplaced = 9, percent = 10))
-        // Le pourcentage est borné à 50.
-        assertEquals(18, Board.hintAllowance(misplaced = 37, percent = 90))
+    fun `hint allowance uses the fixed per-level reference base`() {
+        // Bases de référence (v12, retour utilisateur du 16 nov. 2026) :
+        // les produits de la matrice MEDIUM de l'original, la famille
+        // Infini son plateau fixe — un même niveau offre TOUJOURS le
+        // même nombre d'indices, quel que soit le mélange ou l'écran.
+        assertEquals(25, Skill.hintReferenceTiles(Skill.NOVICE))
+        assertEquals(63, Skill.hintReferenceTiles(Skill.NORMAL))
+        assertEquals(77, Skill.hintReferenceTiles(Skill.EXPERT))
+        assertEquals(77, Skill.hintReferenceTiles(Skill.MASTER))
+        assertEquals(77, Skill.hintReferenceTiles(Skill.INSANE))
+        assertEquals(1600, Skill.hintReferenceTiles(Skill.ENDLESS))
+        assertEquals(1600, Skill.hintReferenceTiles(Skill.ABYSS))
+        assertEquals(1600, Skill.hintReferenceTiles(Skill.VOID))
+        // Comptes fixes par niveau (Désactivé/10 %/20 %).
+        assertEquals(2, Board.hintAllowance(base = 25, percent = 10))
+        assertEquals(5, Board.hintAllowance(base = 25, percent = 20))
+        assertEquals(6, Board.hintAllowance(base = 63, percent = 10))
+        assertEquals(12, Board.hintAllowance(base = 63, percent = 20))
+        assertEquals(7, Board.hintAllowance(base = 77, percent = 10))
+        assertEquals(15, Board.hintAllowance(base = 77, percent = 20))
+        // Désactivé : zéro indice, quelle que soit la base.
+        assertEquals(0, Board.hintAllowance(base = 1600, percent = 0))
+        // Pourcentage non nul : au moins un indice, même sur une petite base.
+        assertEquals(1, Board.hintAllowance(base = 1, percent = 10))
+        // Le pourcentage est borné à 50 (défense en profondeur).
+        assertEquals(38, Board.hintAllowance(base = 77, percent = 90))
     }
 
     @Test

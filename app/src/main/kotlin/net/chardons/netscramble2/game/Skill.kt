@@ -79,5 +79,26 @@ enum class Skill(
          * l'illusion d'un réseau sans bornes.
          */
         const val ENDLESS_SIZE = 40
+
+        /**
+         * Taille de RÉFÉRENCE du niveau, en nombre de tuiles, pour
+         * le plafond d'indices (v12, retour utilisateur du 16 nov.
+         * 2026) : les produits de la matrice MEDIUM de l'original
+         * (Screen.MEDIUM : Novice 5×5, Normal 9×7, Expert et
+         * Maître/Dément 11×7), la famille Infini son plateau fixe
+         * 40×40. Un même niveau offre TOUJOURS le même nombre
+         * d'indices : Board.hintAllowance applique le pourcentage du
+         * réglage à cette base FIXE — ni le mélange tiré, ni
+         * l'écran de l'appareil n'y entrent (avant v12 : pourcentage
+         * des tuiles mal orientées au mélange, donc un compte
+         * variable d'une partie à l'autre).
+         */
+        fun hintReferenceTiles(skill: Skill): Int = when (skill) {
+            NOVICE -> 25       // MEDIUM : 5 × 5
+            NORMAL -> 63      // MEDIUM : 9 × 7
+            EXPERT -> 77      // MEDIUM : 11 × 7
+            MASTER, INSANE -> 77   // MEDIUM : 11 × 7
+            ENDLESS, ABYSS, VOID -> ENDLESS_SIZE * ENDLESS_SIZE
+        }
     }
 }

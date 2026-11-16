@@ -288,11 +288,12 @@ class GameViewModel : ViewModel() {
         solveQueue = null
         solverFocusIndex = -1 // partie neuve : aucun curseur de solveur
         // Plafond d'indices de la partie (chantier Aide à la
-        // résolution) : pourcentage du nombre de tuiles mal orientées
-        // au mélange initial. Zéro (réglage « Désactivé ») éteint
-        // l'indice pour toute la partie.
+        // résolution) : pourcentage de la TAILLE DE RÉFÉRENCE du
+        // niveau (v12) — un même niveau offre toujours le même
+        // compte, quel que soit le mélange tiré. Zéro (réglage
+        // « Désactivé ») éteint l'indice pour toute la partie.
         hintsUsed = 0
-        hintsAllowed = Board.hintAllowance(misplacedTiles(board), hintPercent)
+        hintsAllowed = Board.hintAllowance(Skill.hintReferenceTiles(skill), hintPercent)
         hintFocusIndex = -1
         ++hintPulseId
         // Plateau neuf : pas de son de connexion, juste le son de départ.
@@ -369,14 +370,6 @@ class GameViewModel : ViewModel() {
      * l'utilisateur (dernière étape du chantier).
      */
     private fun hintMoveCost(steps: Int): Int = steps
-
-    /**
-     * Tuiles mal orientées d'un plateau, au sens FONCTIONNEL de
-     * Board.isMisplaced (une tuile symétrique bien branchée ne
-     * compte pas) — c'est la mesure du plafond d'indices.
-     */
-    private fun misplacedTiles(b: Board): Int =
-        (0 until b.size).count { b.isMisplaced(it) }
 
     /**
      * Auto-solveur, comme dans l'original : il joue un coup par tick (la
@@ -502,14 +495,12 @@ class GameViewModel : ViewModel() {
         hintsAllowed = spec.hintsAllowed
         if (hintsAllowed < 0) {
             // Partie née avant le chantier (v4 ou moins) : le plafond
-            // est recalculé sur le mélange initial du plateau, en le
-            // régénérant proprement depuis la graine — pas sur l'état
-            // courant, qui dépend des coups déjà joués.
-            val pristine = Board.generate(
-                spec.skill, spec.width, spec.height, spec.generator, spec.seed,
-                forcedRoot = spec.root
+            // est recalculé sur la base FIXE du niveau (v12) — plus
+            // besoin de régénérer le plateau : la référence ne
+            // dépend ni du mélange, ni des coups déjà joués.
+            hintsAllowed = Board.hintAllowance(
+                Skill.hintReferenceTiles(spec.skill), hintPercent
             )
-            hintsAllowed = Board.hintAllowance(misplacedTiles(pristine), hintPercent)
         }
         solveQueue = spec.solveQueue.takeIf { it.isNotEmpty() }
             ?.let { ArrayDeque(it) }

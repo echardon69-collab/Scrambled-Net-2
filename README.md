@@ -114,6 +114,9 @@ Feuille de route (validée)
   chaque évolution, contrôles CI ; guide docs/,
   preparer_kit_traduction.py et validate_langues.py (étude actée le
   14 nov. 2026, chantier à venir au feu vert)
+- Langue corse : traduction du jeu en corse, ajoutée à la roadmap
+  le 16 nov. 2026 ; portée par le processus de traduction ci-dessus
+  (kit, relecture, complétion par delta, contrôles CI) (à venir)
 - Aide à la résolution : Indice (plafond paramétrable, informatif ou
   correctif) + Résoudre sous Outils + Démonstration en boucle
   (difficulté, zoom, rythme) (livré le 15 nov. 2026)
@@ -159,8 +162,17 @@ Feuille de route (validée)
   appliqué dès le PREMIER plateau : le préréglage posé avant la
   première mesure attend le premier layout) et les billes de la
   vague de victoire suivent les tuiles soulevées (même soulèvement
-  que la passe des cellules, plus de billes hors des connecteurs)
-  (livré le 16 nov. 2026)
+  que la passe des cellules, plus de billes hors des connecteurs) ;
+  cinquième lot — le réglage du plafond d'indices ne propose plus
+  que Désactivé, 10 % (défaut) et 20 % (le pourcentage s'applique
+  au nombre de tuiles mal orientées au mélange initial, base
+  désormais documentée dans le code) ; le mode panic/travail est
+  retiré de la roadmap, sans intérêt pour les utilisateurs ; la
+  traduction en langue corse entre à la roadmap ; sixième lot —
+  le nombre d'indices est FIXE par niveau : le pourcentage du
+  plafond s'applique à la taille de référence du niveau (matrice
+  MEDIUM de l'original), ni le mélange tiré ni l'écran de
+  l'appareil ne le font varier (livré le 16 nov. 2026)
 - ID unique par plateau : identifiant généré par plateau, porte
   le partage de la graine (absorbe l'ancien sujet « seed
   partageable ») ; utilisation exacte à préciser : partage,

@@ -353,9 +353,12 @@
                  nov. 2026). Stratégie : SIGNAL montre l'erreur (cadre
                  vert pulsé, informatif), FIX la corrige (rotation à
                  l'aplomb puis tuile scellée). Plafond : pourcentage
-                 des tuiles mal orientées au mélange initial, de 0
-                 (désactivé) à 50 par pas de 5 — les libellés des
-                 pourcentages (5 à 50) sont posés au runtime par
+                 de la TAILLE DE RÉFÉRENCE du niveau (matrice MEDIUM
+                 de l'original — v12, retour utilisateur du
+                 16 nov. 2026 : un même niveau offre toujours le
+                 même nombre d'indices), proposé à Désactivé (0),
+                 10 (défaut) ou 20 SEULEMENT — les libellés des
+                 pourcentages sont posés au runtime par
                  SettingsActivity (une seule string à argument,
                  hint_limit_value), la radio 0 porte le sien. -->
             <TextView
@@ -406,11 +409,6 @@
                     android:layout_height="wrap_content"
                     android:text="@string/hint_limit_zero" />
 
-                <com.google.android.material.radiobutton.MaterialRadioButton
-                    android:id="@+id/hint_limit_5"
-                    android:layout_width="match_parent"
-                    android:maxWidth="320dp"
-                    android:layout_height="wrap_content" />
 
                 <com.google.android.material.radiobutton.MaterialRadioButton
                     android:id="@+id/hint_limit_10"
@@ -418,11 +416,6 @@
                     android:maxWidth="320dp"
                     android:layout_height="wrap_content" />
 
-                <com.google.android.material.radiobutton.MaterialRadioButton
-                    android:id="@+id/hint_limit_15"
-                    android:layout_width="match_parent"
-                    android:maxWidth="320dp"
-                    android:layout_height="wrap_content" />
 
                 <com.google.android.material.radiobutton.MaterialRadioButton
                     android:id="@+id/hint_limit_20"
@@ -430,41 +423,11 @@
                     android:maxWidth="320dp"
                     android:layout_height="wrap_content" />
 
-                <com.google.android.material.radiobutton.MaterialRadioButton
-                    android:id="@+id/hint_limit_25"
-                    android:layout_width="match_parent"
-                    android:maxWidth="320dp"
-                    android:layout_height="wrap_content" />
 
-                <com.google.android.material.radiobutton.MaterialRadioButton
-                    android:id="@+id/hint_limit_30"
-                    android:layout_width="match_parent"
-                    android:maxWidth="320dp"
-                    android:layout_height="wrap_content" />
 
-                <com.google.android.material.radiobutton.MaterialRadioButton
-                    android:id="@+id/hint_limit_35"
-                    android:layout_width="match_parent"
-                    android:maxWidth="320dp"
-                    android:layout_height="wrap_content" />
 
-                <com.google.android.material.radiobutton.MaterialRadioButton
-                    android:id="@+id/hint_limit_40"
-                    android:layout_width="match_parent"
-                    android:maxWidth="320dp"
-                    android:layout_height="wrap_content" />
 
-                <com.google.android.material.radiobutton.MaterialRadioButton
-                    android:id="@+id/hint_limit_45"
-                    android:layout_width="match_parent"
-                    android:maxWidth="320dp"
-                    android:layout_height="wrap_content" />
 
-                <com.google.android.material.radiobutton.MaterialRadioButton
-                    android:id="@+id/hint_limit_50"
-                    android:layout_width="match_parent"
-                    android:maxWidth="320dp"
-                    android:layout_height="wrap_content" />
             </RadioGroup>
 
             <!-- Section 6 : démonstration (chantier Aide à la

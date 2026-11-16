@@ -543,16 +543,23 @@ class Board(
         const val FOG_RADIUS_CELLS = 2
 
         /**
-         * Plafond d'indices d'une partie : [percent] pour cent des
-         * tuiles mal orientées au mélange initial, arrondi à
-         * l'entier inférieur, minimum 1 si le pourcentage est non
-         * nul. Zéro désactive l'indice. Le pourcentage vient du
-         * réglage (0 à 50, pas de 5).
+         * Plafond d'indices d'une partie : [percent] pour cent de la
+         * TAILLE DE RÉFÉRENCE du niveau ([base], voir
+         * Skill.hintReferenceTiles — matrice MEDIUM de l'original),
+         * arrondi à l'entier inférieur, minimum 1 si le pourcentage
+         * est non nul. Zéro désactive l'indice. La base est FIXE
+         * par niveau depuis la v12 (retour utilisateur du 16 nov.
+         * 2026) : un même niveau offre TOUJOURS le même nombre
+         * d'indices, quel que soit le mélange tiré ou l'écran
+         * (avant : pourcentage des tuiles mal orientées au mélange
+         * initial, un compte variable d'une partie à l'autre). Le
+         * réglage ne propose que Désactivé/10/20 (v11, défaut 10) ;
+         * la borne 0–50 reste ici en défense en profondeur.
          */
-        fun hintAllowance(misplaced: Int, percent: Int): Int {
+        fun hintAllowance(base: Int, percent: Int): Int {
             val p = percent.coerceIn(0, 50)
             if (p == 0) return 0
-            return (misplaced * p / 100).coerceAtLeast(1)
+            return (base * p / 100).coerceAtLeast(1)
         }
 
         /**

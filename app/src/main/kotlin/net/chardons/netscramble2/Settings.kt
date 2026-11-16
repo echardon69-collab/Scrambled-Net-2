@@ -67,19 +67,38 @@ object Settings {
     }
 
     /**
-     * Plafond d'indices, en pourcentage des tuiles mal orientées au
-     * mélange initial (0 à 50, pas de 5). Par défaut 10 ; zéro
-     * désactive l'indice. La valeur est bornée à la relecture :
-     * une sauvegarde falsifiée ne contourne jamais le cadre validé.
+     * Plafond d'indices, en pourcentage de la TAILLE DE RÉFÉRENCE
+     * du niveau (Skill.hintReferenceTiles : les produits de la
+     * matrice MEDIUM de l'original — c'est la base du calcul ;
+     * Board.hintAllowance applique floor(référence × pourcentage /
+     * 100), minimum 1 si le plafond est non nul). V12 (retour
+     * utilisateur du 16 nov. 2026) : un même niveau offre TOUJOURS
+     * le même nombre d'indices — ni le mélange tiré, ni l'écran de
+     * l'appareil n'y entrent. Valeurs proposées depuis la v11 (retour
+     * utilisateur
+     * du 16 nov. 2026) : Désactivé (0), 10 (DÉFAUT) ou 20 — aucune
+     * autre. Toute valeur hors cadre (sauvegarde ancienne à 5, 15,
+     * 25…50, ou falsifiée) retombe sur le défaut 10 sans crash :
+     * elle ne contourne jamais le réglage validé.
      */
     fun loadHintPercent(context: Context): Int =
-        prefs(context).getInt(Persistence.HINT_PERCENT_KEY, 10).coerceIn(0, 50)
+        coerceHintPercent(prefs(context).getInt(Persistence.HINT_PERCENT_KEY, 10))
 
     fun saveHintPercent(context: Context, percent: Int) {
         prefs(context).edit {
-            putInt(Persistence.HINT_PERCENT_KEY, percent.coerceIn(0, 50))
+            putInt(Persistence.HINT_PERCENT_KEY, coerceHintPercent(percent))
         }
     }
+
+    /**
+     * Cadre validé du plafond d'indices (v11) : 0 (désactivé),
+     * 10 (défaut) ou 20. Tout le reste retombe sur le défaut.
+     */
+    private fun coerceHintPercent(percent: Int): Int =
+        when (percent) {
+            0, 10, 20 -> percent
+            else -> 10
+        }
 
     /** Difficulté de la démonstration, PROGRESSIVE par défaut. */
     fun loadDemoDifficulty(context: Context): DemoDifficulty {
@@ -102,7 +121,7 @@ object Settings {
     fun loadDemoSkillSet(context: Context): List<Skill> {
         val mask = prefs(context).getInt(Persistence.DEMO_SKILL_SET_KEY, 1 shl Skill.NOVICE.ordinal)
         val skills = Skill.entries.filter { (mask shr it.ordinal) and 1 == 1 }
-        return if (skills.isEmpty()) listOf(Skill.NOVICE) else skills
+        return skills.ifEmpty { listOf(Skill.NOVICE) }
     }
 
     fun saveDemoSkillSet(context: Context, skills: List<Skill>) {

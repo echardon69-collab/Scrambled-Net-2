@@ -217,10 +217,12 @@ check("Layout : chaque radio porte le libellé de son string",
 # niveaux de la démo deviennent 8 CASES à cocher, bornées pareil —
 # 54 bornes au total. V10 (retour utilisateur du 16 nov. 2026) :
 # les 4 radios de zoom de la démo sont retirées (cadrage TOUJOURS
-# ajusté) — 50 bornes au total.
+# ajusté) — 50 bornes au total. V11 (retour utilisateur du
+# 16 nov. 2026) : les 8 radios du plafond d'indices sont
+# retirées (Désactivé/10/20 seulement) — 42 bornes au total.
 check("Layout : les radios, cases et descriptions sont bornées à "
       "320 dp (VisualLintButtonSize — régression bloquée)",
-      layout_src.count('android:maxWidth="320dp"') == 50
+      layout_src.count('android:maxWidth="320dp"') == 42
       and all(f'android:maxWidth="320dp"' in block
               for block in (skill_block.group(1) if skill_block else "",
                             sound_block.group(1) if sound_block else "",

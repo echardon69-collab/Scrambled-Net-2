@@ -11,8 +11,12 @@ Trois fonctionnalités actées avec eric :
      (4) première mal orientée en ordre BFS du solveur. Stratégie
      FIX : rotation à l'aplomb + révélation si cachée + tuile SCELLÉE
      (verrouillage définitif, fond rose intérim à statuer). Plafond =
-     hintAllowance(misplaced, percent) : pourcentage des tuiles mal
-     orientées au mélange, 0–50 pas de 5, floor, minimum 1 si >0,
+     hintAllowance(base, percent) : pourcentage de la TAILLE DE
+     RÉFÉRENCE du niveau (Skill.hintReferenceTiles, matrice MEDIUM —
+     v12, retour utilisateur du 16 nov. 2026 : un même niveau offre
+     TOUJOURS le même nombre d'indices, quel que soit le mélange ou
+     l'écran), Désactivé/10/20 seulement (v11, défaut 10 ; borne
+     moteur 0–50 conservée en défense), floor, minimum 1 si >0,
      0 = désactivé. Les records ne sont PAS grillés par l'indice :
      chaque record porte son nombre (« sans indice » si 0), et une
      rubrique « Indices » totalise les tuiles par niveau. Le coût en
@@ -74,6 +78,7 @@ def count(st, needle):
 
 b = read(KOTLIN / "game/Board.kt")
 gs = read(KOTLIN / "game/GameSpec.kt")
+sk = read(KOTLIN / "game/Skill.kt")
 vm = read(KOTLIN / "GameViewModel.kt")
 ma = read(KOTLIN / "MainActivity.kt")
 bv = read(KOTLIN / "ui/BoardView.kt")
@@ -142,7 +147,17 @@ check("Board : hintAllowance coercée 0–50",
 check("Board : hintAllowance nulle si pourcentage nul (désactivé)",
       "if (p == 0) return 0" in allow_fn)
 check("Board : hintAllowance floor puis minimum 1",
-      "(misplaced * p / 100).coerceAtLeast(1)" in allow_fn)
+      "(base * p / 100).coerceAtLeast(1)" in allow_fn
+      and "fun hintAllowance(base: Int, percent: Int)" in allow_fn)
+check("Skill : tailles de référence du plafond = matrice MEDIUM (v12, qualif. redondantes retirées v13)",
+      "fun hintReferenceTiles" in sk
+      and "NOVICE -> 25" in sk and "NORMAL -> 63" in sk
+      and "EXPERT -> 77" in sk
+      and "MASTER, INSANE -> 77" in sk
+      and "ENDLESS, ABYSS, VOID -> ENDLESS_SIZE * ENDLESS_SIZE" in sk
+      and "Skill." not in sk.split("fun hintReferenceTiles")[1].split("}")[0])
+check("Settings : filet niveaux démo via ifEmpty (lint IDE, v13)",
+      "skills.ifEmpty { listOf(Skill.NOVICE) }" in st)
 
 # ---------------------------------------------------------------------------
 # 2. GameSpec — format v5 (22 champs), rétrocompatibilité v4/v3/v2.
@@ -243,10 +258,12 @@ check("VM : hintMoveCost isolé et PROVISOIRE",
       and "PROVISOIRE" in vm)
 check("VM : newGame prend hintPercent (défaut 10) et calcule le plafond",
       "hintPercent: Int = 10" in vm
-      and "hintsAllowed = Board.hintAllowance(misplacedTiles(board), hintPercent)" in vm)
+      and "hintsAllowed = Board.hintAllowance(Skill.hintReferenceTiles(skill), hintPercent)" in vm
+      and "misplacedTiles" not in vm)
 check("VM : restoreIfPending recalcule un plafond v4 absent (< 0)",
       "if (hintsAllowed < 0)" in vm
-      and "hintsAllowed = Board.hintAllowance(misplacedTiles(pristine), hintPercent)" in vm)
+      and "Skill.hintReferenceTiles(spec.skill), hintPercent" in vm
+      and "pristine" not in vm)
 check("VM : refresh publie hintRemaining plancher 0 et hintIndex",
       "hintRemaining = (hintsAllowed - hintsUsed).coerceAtLeast(0)" in vm
       and "hintIndex = hintFocusIndex" in vm)
@@ -383,8 +400,14 @@ for fn in ["loadHintStrategy", "saveHintStrategy", "loadHintPercent", "saveHintP
            "loadDemoSkillSet", "saveDemoSkillSet",
            "loadDemoSkillSet", "saveDemoSkillSet", "loadDemoSpeed", "saveDemoSpeed"]:
     check(f"Settings : {fn} présent", f"fun {fn}(" in st)
-check("Settings : hintPercent coercé 0–50 aux deux sens",
-      count(st, "coerceIn(0, 50)") >= 2)
+check("Settings : hintPercent borné au cadre 0/10/20, repli 10 (v11)",
+      count(st, "coerceHintPercent") >= 2
+      and "0, 10, 20 -> percent" in st and "else -> 10" in st
+      and "coerceIn(0, 50)" not in st)
+check("Settings : base du plafond documentée (taille de référence MEDIUM, v12)",
+      "TAILLE DE RÉFÉRENCE" in st
+      and "matrice MEDIUM" in st and "Skill.hintReferenceTiles" in st
+      and "MÉLANGE INITIAL" not in st)
 check("Settings : défauts SIGNAL/10/PROGRESSIVE/NOVICE/NORMAL (v10 : sans zoom)",
       "HintStrategy.SIGNAL" in st and "10" in st and "DemoDifficulty.PROGRESSIVE" in st
       and "Skill.NOVICE" in st and "DemoSpeed.NORMAL" in st
@@ -395,19 +418,28 @@ groups = ["hintStrategyGroup", "hintLimitGroup", "demoDiffGroup",
 for g in groups:
     check(f"SettingsActivity : groupe {g} coché AVANT l'écoute",
           0 < sc.find(f"binding.{g}.check(") < sc.find(f"binding.{g}.setOnCheckedChangeListener"))
-check("SettingsActivity : radios 5–50 portées au runtime via hint_limit_value",
+check("SettingsActivity : radios 10 et 20 portées au runtime via hint_limit_value (v11)",
       "bindHintLimitRadios" in sc and "R.string.hint_limit_value" in sc
+      and "listOf(10, 20)" in sc and "5..50" not in sc
+      and "hint_limit_5" not in sc and "hint_limit_50" not in sc
       and "hintPercentFor" in sc)
 check("SettingsActivity : la radio 0 porte hint_limit_zero, pas les autres",
       layout_settings.count('@string/hint_limit_zero') == 1)
-check("Layout réglages : 34 radios + 8 cases, maxWidth 320dp (v10 : radios de zoom retirées)",
-      layout_settings.count("<com.google.android.material.radiobutton.MaterialRadioButton") == 34
+check("Layout réglages : 26 radios + 8 cases, maxWidth 320dp (v11 : radios de plafond retirées)",
+      layout_settings.count("<com.google.android.material.radiobutton.MaterialRadioButton") == 26
       and layout_settings.count("<com.google.android.material.checkbox.MaterialCheckBox") == 8
-      and layout_settings.count('android:maxWidth="320dp"') == 50
-      and "demo_zoom" not in layout_settings)
+      and layout_settings.count('android:maxWidth="320dp"') == 42
+      and "demo_zoom" not in layout_settings
+      and "hint_limit_5" not in layout_settings
+      and "hint_limit_50" not in layout_settings)
+check("Layout réglages : plafond d'indices à 3 radios Désactivé/10/20 (v11)",
+      layout_settings.count('@+id/hint_limit_0"') == 1
+      and layout_settings.count('@+id/hint_limit_10"') == 1
+      and layout_settings.count('@+id/hint_limit_20"') == 1
+      and layout_settings.count("@+id/hint_limit_") == 4)
 check("Layout réglages : 8 RadioGroups au total (v10 : le groupe de zoom est retiré)",
       layout_settings.count("<RadioGroup") == 8)
-for gid, n in [("hint_strategy_group", 2), ("hint_limit_group", 11), ("demo_diff_group", 2),
+for gid, n in [("hint_strategy_group", 2), ("hint_limit_group", 3), ("demo_diff_group", 2),
                ("demo_speed_group", 3)]:
     m = re.search(rf'@\+id/{gid}"[\s\S]*?</RadioGroup>', layout_settings)
     check(f"Layout réglages : {gid} porte {n} radios",
@@ -639,17 +671,22 @@ check("GameSpecTest : le test d'indices porte une caméra "
 # ---------------------------------------------------------------------------
 # 12. Miroirs Python.
 # ---------------------------------------------------------------------------
-def allowance(misplaced, percent):
+def allowance(base, percent):
     p = max(0, min(50, percent))
     if p == 0:
         return 0
-    return max(1, misplaced * p // 100)
+    return max(1, base * p // 100)
 
 check("Miroir hintAllowance : floor/minimum-1/désactivé/bornes",
       allowance(10, 50) == 5 and allowance(10, 0) == 0
       and allowance(10, 90) == 5 and allowance(3, 18) == 1
       and allowance(100, 10) == 10 and allowance(1, 50) == 1
       and allowance(7, 25) == 1 and allowance(0, 10) == 1)
+check("Miroir plafond v12 : comptes fixes par niveau (référence MEDIUM)",
+      allowance(25, 10) == 2 and allowance(25, 20) == 5
+      and allowance(63, 10) == 6 and allowance(63, 20) == 12
+      and allowance(77, 10) == 7 and allowance(77, 20) == 15
+      and allowance(1600, 10) == 160 and allowance(1600, 20) == 320)
 
 class FakeBoard:
     """Miroir minimal de Board : rotations, drapeaux, masques Dir."""
