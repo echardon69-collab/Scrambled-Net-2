@@ -113,7 +113,13 @@ Feuille de route (validée)
   traducteur sur GitHub PR, relecture IA, complétion par delta à
   chaque évolution, contrôles CI ; guide docs/,
   preparer_kit_traduction.py et validate_langues.py (étude actée le
-  14 nov. 2026, chantier à venir au feu vert)
+  14 nov. 2026) ; outillage LIVRÉ le 16 nov. 2026 — guide du
+  traducteur docs/TRADUIRE.md, kit généré par script (tableau
+  clé|texte|contexte, glossaire, règles, licence, complétion par
+  delta) et validateur de langues (parité des clés 98 + 26,
+  paramètres, apostrophes échappées, XML bien formé) ; processus B
+  acté : GitHub PR + relecture IA (back-traduction) ; premier
+  traducteur (corse) à trouver
 - Langue corse : traduction du jeu en corse, ajoutée à la roadmap
   le 16 nov. 2026 ; portée par le processus de traduction ci-dessus
   (kit, relecture, complétion par delta, contrôles CI) (à venir)
@@ -172,10 +178,18 @@ Feuille de route (validée)
   le nombre d'indices est FIXE par niveau : le pourcentage du
   plafond s'applique à la taille de référence du niveau (matrice
   MEDIUM de l'original), ni le mélange tiré ni l'écran de
-  l'appareil ne le font varier (livré le 16 nov. 2026)
+  l'appareil ne le font varier (livré le 16 nov. 2026) ; septième lot — glossaire développeur : GLOSSAIRE.md à la
+  racine traduit en français les concepts et termes anglais du code
+  (plateau, tuiles, caméra, blips, indices, réglages…), avec leurs
+  emplacements, à compléter à chaque chantier (livré le 16 nov. 2026)
 - ID unique par plateau : identifiant généré par plateau, porte
   le partage de la graine (absorbe l'ancien sujet « seed
   partageable ») ; utilisation exacte à préciser : partage,
   reprise, records ? (à venir)
 - Thèmes daltoniens : palettes du jeu adaptées aux
   dyschromatopsies (détails à venir)
+- Date limite d'utilisation : les versions qui ne sont pas des
+  releases officielles du jeu (les versions 0.x.y par exemple)
+  portent une date limite d'utilisation ; au-delà de cette date,
+  le jeu cesse de fonctionner et la page de chargement affiche le
+  message « version obsolète ! » (à venir)
