@@ -102,6 +102,11 @@
     <string name="title_install_permission">Allow this app to install unknown apps in Android settings, then tap Update again.</string>
     <string name="title_install_failed">Update failed (%1$s). You can keep playing.</string>
 
+    <!-- Lot 17 — péremption : versions de développement expirées -->
+    <string name="version_obsolete">Outdated version!</string>
+    <string name="version_obsolete_detail">This development version has expired. Install the official release.</string>
+    <string name="version_obsolete_quitter">Exit</string>
+
     <!-- Confirmation avant d'ecraser une partie en cours -->
     <string name="confirm_new_title">New game?</string>
     <string name="confirm_change_title">Change level?</string>

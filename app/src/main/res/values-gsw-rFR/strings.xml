@@ -110,6 +110,11 @@
     <string name="title_install_permission">Là ìn de Android-Iistellunga züa, dàss unbekànnta Àpp kenna installiart wara, un drucka denn noch eenàm àf Aktualisiara.</string>
     <string name="title_install_failed">D’Aktualisiarig hàtt nìt funktionniart (%1$s). Du kànsch àwersch witterspìla.</string>
 
+    <!-- Lot 17 — péremption : versions de développement expirées -->
+    <string name="version_obsolete">Version üssglaüfa!</string>
+    <string name="version_obsolete_detail">Des Entwickligs-Version isch üssglaüfa. Installier d\'offiziell Version.</string>
+    <string name="version_obsolete_quitter">Beenda</string>
+
     <!-- Confirmation avant d'ecraser une partie en cours -->
     <string name="confirm_new_title">Neis Spiil?</string>
     <string name="confirm_change_title">Niveau wägsla?</string>

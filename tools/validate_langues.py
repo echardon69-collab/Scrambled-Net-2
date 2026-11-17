@@ -45,7 +45,10 @@ BASE = RES / "values"
 # endonymes lang_fr/lang_en quittent les traductions pour
 # AppLanguages.kt — la base passe de 98 à 96 chaînes, miroirs
 # compris.
-PINNED_STRINGS = 96
+# Lot 17 (péremption, 17 nov. 2026) : version_obsolete,
+# version_obsolete_detail et version_obsolete_quitter — la
+# base passe de 96 à 99 chaînes, miroirs compris.
+PINNED_STRINGS = 99
 PINNED_ARRAYS = 4
 PINNED_ITEMS = 26
 

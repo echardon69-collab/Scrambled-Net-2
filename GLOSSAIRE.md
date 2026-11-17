@@ -33,6 +33,7 @@ Convention des colonnes :
 12. [Sons](#12-sons)
 13. [Scores](#13-scores)
 14. [Chaînes de caractères (strings)](#14-chaînes-de-caractères-strings)
+15. [Péremption](#15-péremption)
 
 ---
 
@@ -259,6 +260,26 @@ système ou se force (le corse est à la feuille de route).
 | `sounds_*` / `anim_*` | Réglages sonores et animation : `sounds_off/quiet/full`, `anim_off/on`. | strings EN/FR |
 | `lang_*` | Choix de langue : `lang_system` (suit le système), `lang_fr`, `lang_en`. | strings EN/FR |
 | `help_titles` / `help_texts` / `about_titles` / `about_texts` | Tableaux des pages d'aide et d'à-propos (arrays). | `res/values/arrays.xml`, `res/values-fr/arrays.xml` |
+
+---
+
+## 15. Péremption
+
+Date limite d'utilisation des versions de développement (Lot 17) : une
+pré-release (versionName de majeure 0) s'autolimite à 5 jours après sa
+date de build ; une release officielle (1.x.y et au-delà) n'expire jamais.
+
+| Terme | Définition | Emplacements |
+| --- | --- | --- |
+| `Peremption` | Logique de péremption, pur Kotlin testable JVM : grâce, date limite, règle du numéro, témoin. | `Peremption.kt` |
+| `GRACE_JOURS` | Grâce en jours après la date de build (décision d'eric : 5). | `Peremption.kt` |
+| `estPreRelease` | Majeure 0 (« 0.x.y ») = pré-release limitée. | `Peremption.kt` |
+| `dateLimite` / `dateLimiteDe` | Date limite (build + grâce) ; null pour une release officielle. | `Peremption.kt` |
+| `estPerimee` | Périmée si le jour observé (max lexical du jour UTC et du témoin) dépasse strictement la limite : le jour de grâce reste jouable. | `Peremption.kt` |
+| `jourIso` | Formatage ISO « yyyy-MM-dd » d'un calendrier. | `Peremption.kt` |
+| `FICHIER` / `CLE_TEMOIN` | Témoin de date persisté (fichier dédié « peremption », jamais la sauvegarde de partie). | `Peremption.kt`, `TitleActivity.kt` |
+| `DATE_BUILD` | Date de build UTC (ISO yyyy-MM-dd) estampillée par Gradle. | `app/build.gradle.kts`, `BuildConfig` |
+| `version_obsolete*` | Chaînes du blocage : titre, phrase d'accompagnement, bouton Quitter (4 langues). | `res/values*/strings.xml` |
 
 ---
 

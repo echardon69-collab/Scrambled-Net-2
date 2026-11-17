@@ -99,6 +99,11 @@
     <string name="title_install_permission">Permettite l\'installazione d\'appi scanusciute ind\'e Preferenze Android, poì appughjà torna nantu à Actualizà.</string>
     <string name="title_install_failed">L\'actualizazione hè fallita (%1$s). Pudete cuntinuà à ghjucà.</string>
 
+    <!-- Lot 17 — péremption : versions de développement expirées -->
+    <string name="version_obsolete">Versione scaduta!</string>
+    <string name="version_obsolete_detail">Sta versione di sviluppu hè scaduta. Installa a versione ufficiale.</string>
+    <string name="version_obsolete_quitter">Esce</string>
+
     <!-- Confirmation avant d'ecraser une partie en cours -->
     <string name="confirm_new_title">Nova partita?</string>
     <string name="confirm_change_title">Cambià livellu?</string>

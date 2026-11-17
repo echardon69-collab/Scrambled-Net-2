@@ -245,8 +245,20 @@ Feuille de route (validée)
   reprise, records ? (à venir)
 - Thèmes daltoniens : palettes du jeu adaptées aux
   dyschromatopsies (détails à venir)
-- Date limite d'utilisation : les versions qui ne sont pas des
-  releases officielles du jeu (les versions 0.x.y par exemple)
-  portent une date limite d'utilisation ; au-delà de cette date,
-  le jeu cesse de fonctionner et la page de chargement affiche le
-  message « version obsolète ! » (à venir)
+- Date limite d'utilisation (livré le 17 nov. 2026, Lot 17) : les
+  versions qui ne sont pas des releases officielles du jeu (les
+  versions 0.x.y par exemple) portent une date limite
+  d'utilisation ; au-delà de cette date, le jeu cesse de
+  fonctionner et la page titre affiche le blocage « version
+  obsolète ! ». Décisions d'eric : grâce de 5 jours après la
+  date de build, écran de blocage pur avec bouton Quitter (pas
+  de proposition de mise à jour), règle du numéro (majeure 0 =
+  pré-release limitée, 1.x.y et au-delà = release illimitée),
+  message avec phrase d'accompagnement.
+- Publication des APK sur GitHub : la CI bâtit les deux saveurs à
+  chaque poussée mais ne les publie pas — ajouter un artifact de
+  run (APK téléchargeable depuis les Actions) et un job qui crée
+  la Release GitHub avec l'APK de la saveur github au poussé d'un
+  tag v* ; c'est le canal attendu par l'Updater intégré
+  (releases/latest), et le lien direct qui permet d'installer
+  l'app sur un smartphone par simple téléchargement (à venir)

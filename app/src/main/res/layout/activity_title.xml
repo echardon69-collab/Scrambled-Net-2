@@ -35,6 +35,37 @@
         android:layout_marginTop="4dp"
         android:textAppearance="?attr/textAppearanceBodyMedium" />
 
+    <!-- Lot 17 — péremption : blocage pur des versions de
+         développement expirées (décision eric : pas de
+         proposition de mise à jour), caché tant que la
+         version est valide. -->
+    <TextView
+        android:id="@+id/title_obsolete"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text="@string/version_obsolete"
+        android:textAppearance="?attr/textAppearanceHeadlineSmall"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/title_obsolete_detail"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="center"
+        android:text="@string/version_obsolete_detail"
+        android:textAppearance="?attr/textAppearanceBodyMedium"
+        android:visibility="gone" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/title_obsolete_quit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="@string/version_obsolete_quitter"
+        android:visibility="gone" />
+
     <!-- Licence et remerciements -->
     <TextView
         android:id="@+id/title_license"

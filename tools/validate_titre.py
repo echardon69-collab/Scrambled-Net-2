@@ -303,8 +303,11 @@ for label, check_ms, newer, expect_enter, expect_used in scenarios:
 check("Layout : barre de progression linéaire Material",
       "LinearProgressIndicator" in layout
       and '@+id/title_progress' in layout)
-check("Layout : boutons cachés par défaut (entrée automatique)",
-      layout.count('android:visibility="gone"') == 2
+# Lot 17 (péremption, 17 nov. 2026) : le bloc « version
+# obsolète » ajoute 3 vues cachées elles aussi par défaut —
+# 2 + 3 = 5.
+check("Layout : boutons et blocage expiré cachés par défaut",
+      layout.count('android:visibility="gone"') == 5
       and '@+id/update_button' in layout
       and '@+id/play_button' in layout)
 check("Layout : icône grand format + licence + statut initial",

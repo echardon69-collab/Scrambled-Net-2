@@ -10,6 +10,7 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.content.IntentCompat
+import androidx.core.content.edit
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
@@ -48,6 +49,15 @@ import java.io.File
  *   sans confirmation quand Android l'accepte, sinon écran système)
  *   ou « Jouer » ;
  * - sinon : entrée automatique dans le jeu.
+ *
+ * LOT 17 — péremption (16-17 nov. 2026, décisions d'eric) :
+ * les versions de DÉVELOPPEMENT (versionName 0.x.y)
+ * s'autolimitent à 5 jours après la date de build estampillée
+ * par Gradle (BuildConfig.DATE_BUILD) ; les releases (1.x.y
+ * et au-delà) sont illimitées. Au-delà de la limite : écran A,
+ * blocage pur avec bouton « Quitter », SANS proposition de
+ * mise à jour. Un témoin de date persisté dans un fichier
+ * dédié rend un retour en arrière de l'horloge inopérant.
  */
 class TitleActivity : AppCompatActivity() {
 
@@ -115,7 +125,60 @@ class TitleActivity : AppCompatActivity() {
             ContextCompat.RECEIVER_NOT_EXPORTED
         )
 
+        // Lot 17 : péremption APRÈS l'inscription du récepteur
+        // (onDestroy le désinscrit sans condition) mais AVANT
+        // le déroulé : une version expirée ne charge rien, ne
+        // vérifie rien, ne lance aucune coroutine.
+        if (afficherEcranPerime()) return
+
         launchFlow(version)
+    }
+
+    /**
+     * Jour UTC au format ISO « yyyy-MM-dd » : le téléphone peut
+     * être réglé sur un autre fuseau, seule la date UTC compte
+     * pour la péremption.
+     */
+    private fun dateUtcDuJour(): String = Peremption.jourIso(
+        java.util.Calendar.getInstance(
+            java.util.TimeZone.getTimeZone("UTC"))
+    )
+
+    /**
+     * Lot 17 — péremption : cette installation a-t-elle expiré ?
+     * Version de développement (0.x.y) au-delà de la limite
+     * (build + 5 jours de grâce, jour limite INCLUS) : écran A,
+     * blocage pur — titre, phrase d'accompagnement, bouton
+     * « Quitter » (finishAffinity), PAS de proposition de mise
+     * à jour (décisions d'eric). Release (1.x.y et au-delà) :
+     * jamais bloquée, rend faux immédiatement. Le témoin de
+     * date est persisté AVANT le test, même quand
+     * l'application est déjà périmée : reculer l'horloge du
+     * téléphone ne la réouvre pas.
+     *
+     * Rend vrai quand l'écran de blocage est affiché ; onCreate
+     * s'arrête alors là (rien d'autre n'est lancé).
+     */
+    private fun afficherEcranPerime(): Boolean {
+        val prefs = getSharedPreferences(Peremption.FICHIER, MODE_PRIVATE)
+        val temoin = prefs.getString(Peremption.CLE_TEMOIN, null)
+        val aujourdhui = dateUtcDuJour()
+        prefs.edit {
+            putString(Peremption.CLE_TEMOIN,
+                      maxOf(temoin ?: "", aujourdhui))
+        }
+        val limite = Peremption.dateLimiteDe(
+            BuildConfig.VERSION_NAME, BuildConfig.DATE_BUILD)
+        if (!Peremption.estPerimee(limite, aujourdhui, temoin)) {
+            return false
+        }
+        binding.titleProgress.isVisible = false
+        binding.titleStatus.isVisible = false
+        binding.titleObsolete.isVisible = true
+        binding.titleObsoleteDetail.isVisible = true
+        binding.titleObsoleteQuit.isVisible = true
+        binding.titleObsoleteQuit.setOnClickListener { finishAffinity() }
+        return true
     }
 
     /**

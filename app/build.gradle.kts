@@ -1,3 +1,6 @@
+import java.time.LocalDate
+import java.time.ZoneOffset
+
 plugins {
     alias(libs.plugins.android.application)
 }
@@ -15,6 +18,20 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "0.1.0"
+
+        // Lot 17 — péremption (16-17 nov. 2026, décisions
+        // d'eric) : Gradle n'estampille QUE la date de build
+        // du jour (UTC, ISO yyyy-MM-dd) dans BuildConfig ;
+        // TOUTE la logique de péremption vit dans
+        // Peremption.kt, testable sur JVM. Versions de
+        // développement (0.x.y) : 5 jours de grâce puis écran
+        // de blocage pur ; releases (1.x.y et au-delà) :
+        // illimitées.
+        buildConfigField(
+            "String",
+            "DATE_BUILD",
+            "\"" + LocalDate.now(ZoneOffset.UTC) + "\""
+        )
     }
 
     buildTypes {
@@ -51,6 +68,10 @@ android {
     }
 
     buildFeatures {
+        // Lot 17 : BuildConfig est coupé par défaut depuis
+        // AGP 8 ; la date de build (DATE_BUILD) l'exige de
+        // nouveau, aux côtés du viewBinding.
+        buildConfig = true
         viewBinding = true
     }
 
