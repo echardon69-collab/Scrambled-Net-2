@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Leçon du mode Apprentissage (chantier du 17 nov. 2026) : plein
+     écran, patron de la démonstration — la vue du plateau occupe
+     tout, la pile du bas porte la bulle de guidance et le bouton
+     que la bulle appelle (Continuer, Indice, Résoudre — un seul
+     visible à la fois, l'activité en décide). L'inset bas de la
+     barre de navigation est posé en PADDING par
+     EdgeToEdge.padSystemBars sur la pile (patron v9 de la démo) :
+     le voile vit sur un containeur INTERNE, sinon la zone colorée
+     déborde sur la barre de navigation. Le retour système referme
+     la leçon sans confirmation — elle se rejoue depuis la liste. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/lesson_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <net.chardons.netscramble2.ui.BoardView
+        android:id="@+id/lesson_board"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- Pile du bas (patron de la démo, v7/v9) : voile sur le
+         containeur interne, texte plein, inset en padding externe. -->
+    <LinearLayout
+        android:id="@+id/lesson_bottom_stack"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="24dp"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:id="@+id/lesson_hint_panel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:background="@color/demo_hint_scrim"
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp">
+
+            <TextView
+                android:id="@+id/lesson_bubble"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:maxWidth="320dp"
+                android:textAppearance="?attr/textAppearanceTitleMedium"
+                android:textColor="?attr/colorOnSurface" />
+
+            <!-- Bouton de l'étape courante : Continuer, Indice ou
+                 Résoudre — l'activité n'en montre qu'un, l'étape de
+                 la leçon en décide (GONE par défaut, le premier
+                 rendu pose le bon). -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/lesson_continue_btn"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="8dp"
+                android:text="@string/lesson_continue"
+                android:visibility="gone" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/lesson_hint_btn"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="8dp"
+                android:text="@string/menu_hint"
+                android:visibility="gone" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/lesson_solve_btn"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="8dp"
+                android:text="@string/menu_solve"
+                android:visibility="gone" />
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

@@ -48,7 +48,12 @@ BASE = RES / "values"
 # Lot 17 (péremption, 17 nov. 2026) : version_obsolete,
 # version_obsolete_detail et version_obsolete_quitter — la
 # base passe de 96 à 99 chaînes, miroirs compris.
-PINNED_STRINGS = 99
+# Chantier Apprentissage (17 nov. 2026) : menu_lessons, les
+# titres des sept leçons, 23 bulles de guidance, la coche
+# « Terminée » et « Continuer » — la base passe de 99 à
+# 133 chaînes, miroir FR complet, complétion par delta pour
+# les autres langues (kits à régénérer).
+PINNED_STRINGS = 133
 PINNED_ARRAYS = 4
 PINNED_ITEMS = 26
 

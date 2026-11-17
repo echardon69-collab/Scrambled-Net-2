@@ -34,6 +34,7 @@ Convention des colonnes :
 13. [Scores](#13-scores)
 14. [Chaînes de caractères (strings)](#14-chaînes-de-caractères-strings)
 15. [Péremption](#15-péremption)
+16. [Apprentissage](#16-apprentissage)
 
 ---
 
@@ -280,6 +281,29 @@ date de build ; une release officielle (1.x.y et au-delà) n'expire jamais.
 | `FICHIER` / `CLE_TEMOIN` | Témoin de date persisté (fichier dédié « peremption », jamais la sauvegarde de partie). | `Peremption.kt`, `TitleActivity.kt` |
 | `DATE_BUILD` | Date de build UTC (ISO yyyy-MM-dd) estampillée par Gradle. | `app/build.gradle.kts`, `BuildConfig` |
 | `version_obsolete*` | Chaînes du blocage : titre, phrase d'accompagnement, bouton Quitter (4 langues). | `res/values*/strings.xml` |
+
+---
+
+## 16. Apprentissage
+
+Mode d'initiation (chantier du 17 nov. 2026) : sept leçons interactives
+sous le popup Outils uniquement, rejouables à volonté, aucune incidence
+sur la partie en cours ni sur les records. Une leçon = un plateau
+reproductible + des bulles de guidance + UNE action attendue à la fois.
+
+| Terme | Définition | Emplacements |
+| --- | --- | --- |
+| `Lesson` / `LessonStep` | Une leçon (id stable, titre, plateau, scénario) et une de ses étapes : bulle affichée + action attendue. | `Lessons.kt` |
+| `LessonBoard` | Plateau de leçon reproductible : niveau, dimensions explicites, générateur, graine ; `preSolved` (livré résolu) et `cameraOnly` (aucune tuile jouable). | `Lessons.kt` |
+| `build()` | Construit le plateau de leçon ; sur `preSolved`, remise à l'aplomb de chaque tuile par ses propres quarts de tour. | `Lessons.kt` |
+| `ExpectKind` | Ce qu'une étape attend : CONTINUE, ROTATE, LOCK, UNLOCK, HINT_SIGNAL, HINT_FIX, SOLVE, VICTORY, PAN_X, PAN_Y, ZOOM. | `Lessons.kt` |
+| `LessonRunner` | Machine d'étapes pure : consomme les événements, cumule les déplacements de caméra jusqu'au tour complet, remet ses accumulateurs à zéro à chaque étape. | `Lessons.kt` |
+| `LessonEvent` | Événement envoyé au runner par le modèle : rotation, verrouillage, indices, solveur, victoire, défilement (en cellules), pincement (en facteur). | `Lessons.kt`, `LessonViewModel.kt` |
+| `bulle` | Texte de guidance affiché dans le bandeau bas de l'écran de leçon ; identifié par son id de chaîne (`lesson_lX_bY`), rendu par le `when` de LessonActivity. | `Lessons.kt`, `LessonActivity.kt`, `res/values*/strings.xml` |
+| `coche` | Marque « Terminée » d'une leçon finie, persistée dans le masque `lessonsDone` ; une leçon cochée reste rejouable. | `Persistence.kt`, `Settings.kt`, `LessonsListActivity.kt` |
+| `cameraOnly` | Leçon où seule la caméra parle (Infini) : le modèle ignore taps et verrouillage, la vue traduit ses gestes en événements. | `Lessons.kt`, `LessonViewModel.kt` |
+| `onCameraScrolled` / `onCameraZoomed` | Listeners d'observation de la caméra de BoardView (deltas en cellules, pincement en facteur), branchés par l'écran de leçon. | `ui/BoardView.kt`, `LessonActivity.kt` |
+| `ZOOM_IN_DONE` / `ZOOM_OUT_DONE` | Seuils de pincement validant l'étape ZOOM : 1,3 avant cumulé, ou 0,8 arrière si le plancher le permet. | `Lessons.kt` |
 
 ---
 

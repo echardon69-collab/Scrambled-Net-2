@@ -353,6 +353,14 @@ class MainActivity : AppCompatActivity() {
                 startActivity(Intent(this, DemoActivity::class.java))
                 true
             }
+            R.id.menu_lessons -> {
+                // Mode Apprentissage (chantier du 17 nov. 2026) :
+                // la liste des sept leçons interactives — du quart
+                // de tour au brouillard. La partie du joueur n'a
+                // pas bougé, aucune leçon ne compte au score.
+                startActivity(Intent(this, LessonsListActivity::class.java))
+                true
+            }
             R.id.menu_settings -> {
                 // Page unique « Réglages » : l'état courant du jeu
                 // passe à la page (niveau en cours, avancement) pour

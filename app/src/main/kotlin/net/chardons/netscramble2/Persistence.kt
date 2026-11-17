@@ -55,4 +55,12 @@ object Persistence {
 
     /** Clé du rythme de la démonstration (délai par coup du solveur). */
     const val DEMO_SPEED_KEY = "demoSpeed"
+
+    /**
+     * Clé du MASQUE des leçons du mode Apprentissage terminées
+     * (chantier du 17 nov. 2026) : un bit par leçon (1 shl index
+     * dans Lessons.ALL), zéro par défaut — jamais faite, jamais
+     * perdue : une leçon cochée reste rejouable.
+     */
+    const val LESSONS_DONE_KEY = "lessonsDone"
 }

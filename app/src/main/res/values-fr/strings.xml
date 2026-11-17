@@ -151,6 +151,46 @@
     <string name="demo_touch_return">Touchez pour revenir au jeu</string>
     <string name="demo_level_banner">Démonstration niveau %1$s</string>
 
+    <!-- Mode Apprentissage (chantier du 17 nov. 2026) : sept
+         leçons interactives sous le popup Outils, rejouables à
+         volonté, coche persistée. Bulles de guidance, une action
+         attendue à la fois ; les textes vivent ICI, la leçon ne
+         porte que leurs identifiants (Lessons.kt). -->
+    <string name="menu_lessons">Apprentissage</string>
+    <string name="lesson_1_title">Tourner et connecter</string>
+    <string name="lesson_2_title">La méthode et le verrou</string>
+    <string name="lesson_3_title">Les aides</string>
+    <string name="lesson_4_title">Le tableau torique</string>
+    <string name="lesson_5_title">Les tuiles invisibles</string>
+    <string name="lesson_6_title">Le tableau infini</string>
+    <string name="lesson_7_title">Le brouillard</string>
+    <string name="lesson_l1_b1">Touchez une tuile pour la faire tourner d\'un quart de tour. Reliez le réseau du serveur au terminal.</string>
+    <string name="lesson_l1_b2">Continuez : chaque tuile reliée au serveur s\'illumine.</string>
+    <string name="lesson_l1_b3">Bravo, réseau résolu ! Toute partie se gagne ainsi : tourner, connecter, illuminer.</string>
+    <string name="lesson_l2_b1">Méthode : partez du serveur et suivez les câbles déjà reliés, de proche en proche. Tournez une tuile pour commencer.</string>
+    <string name="lesson_l2_b2">Appui long sur une tuile bien orientée : le verrou la protège d\'un tour malheureux.</string>
+    <string name="lesson_l2_b3">Poursuivez de proche en proche jusqu\'à la victoire, en verrouillant vos certitudes.</string>
+    <string name="lesson_l2_b4">Le verrouillage est votre allié sur les grands plateaux : gardez la méthode.</string>
+    <string name="lesson_l3_b1">L\'indice informatif désigne une tuile à corriger (cadre vert). Touchez Indice.</string>
+    <string name="lesson_l3_b2">L\'indice correctif remet la tuile à l\'aplomb et la scelle (verrou définitif). Touchez Indice.</string>
+    <string name="lesson_l3_b3">Résoudre joue la partie à votre place, un coup à la fois ; une partie résolue ainsi ne compte pas au score. Touchez Résoudre.</string>
+    <string name="lesson_l3_b4">Les aides sont là pour débloquer, pas pour jouer : à vous de choisir.</string>
+    <string name="lesson_l4_b1">Plateau Maître : les bords se raccordent. Le plateau est un TORE : la droite rejoint la gauche, le haut rejoint le bas.</string>
+    <string name="lesson_l4_b2">Résolvez : au moins un câble traverse le bord du plateau pour se raccorder au-delà.</string>
+    <string name="lesson_l4_b3">Le tore est partout dès Maître : pensez le plateau sans bords.</string>
+    <string name="lesson_l5_b1">Niveau Dément : des tuiles sont INVISIBLES. Déduisez leur orientation de leurs voisines, puis tournez une tuile visible.</string>
+    <string name="lesson_l5_b2">Continuez : chaque voisine contraint les tuiles cachées, la victoire seule révèle tout.</string>
+    <string name="lesson_l5_b3">L\'indice correctif révèle une tuile masquée : un coup montré, jamais joué.</string>
+    <string name="lesson_l6_b1">Plateau Infini : 40 x 40 en tore, cadré sur le serveur. Faites défiler la fenêtre d\'un tour horizontal complet, jusqu\'à RETROUVER le serveur.</string>
+    <string name="lesson_l6_b2">Le plateau se répète à l\'infini : jamais d\'anneau gris. Voyagez maintenant verticalement, un tour complet.</string>
+    <string name="lesson_l6_b3">Pincez pour zoomer et dézoomer : la fenêtre est votre caméra, le monde reste le même.</string>
+    <string name="lesson_l6_b4">Le mode Infini se joue à la caméra : le plateau n\'a pas de bords, seulement des fenêtres.</string>
+    <string name="lesson_l7_b1">Niveau Néant : le BROUILLARD cache le plateau. Chaque connexion repousse la brume. Tournez une tuile visible.</string>
+    <string name="lesson_l7_b2">Continuez : chaque connexion gagnée éclaire la zone autour d\'elle.</string>
+    <string name="lesson_l7_b3">Le brouillard se gagne tuile par tuile : la lumière suit le réseau.</string>
+    <string name="lesson_completed">Terminée</string>
+    <string name="lesson_continue">Continuer</string>
+
     <!-- À propos : la fenêtre de dialogue est devenue la page
          autonome AboutActivity (refonte du 14 nov. 2026) — le
          contenu vit dans about_titles / about_texts

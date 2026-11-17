@@ -255,6 +255,40 @@ Feuille de route (validée)
   de proposition de mise à jour), règle du numéro (majeure 0 =
   pré-release limitée, 1.x.y et au-delà = release illimitée),
   message avec phrase d'accompagnement.
+- Mention Mistral AI (livrée le 17 nov. 2026) : la page « À propos »
+  raconte la genèse du remake — écrit avec Vibe, l'assistant de
+  développement de Mistral AI, sous la direction, la relecture et
+  la validation systématique d'eric ; spécifications, moteur de
+  jeu Kotlin, interface, tests et validateurs écrits avec son
+  aide ; le code produit rejoint le dépôt sous la même licence
+  GPL-2.0. La mention vit dans l'item histoire de about_texts
+  (arrays.xml), déclinée dans toutes les langues de l'app
+  (anglais, français, corse, alsacien)
+- Apprentissage (livré le 17 nov. 2026) : mode d'initiation au jeu
+  et à ses concepts, sept leçons INTERACTIVES accessibles par le
+  popup Outils uniquement (pas d'entrée à l'écran titre, décision
+  d'eric), rejouables à volonté, aucune incidence sur la partie en
+  cours ni sur les records ; la liste des leçons (écran dédié,
+  patron des records) montre une coche « Terminée » persistée par
+  leçon. Chaque leçon est un vrai plateau reproductible (graine
+  figée aux invariants pédagogiques, épinglés par LessonTest) et
+  des bulles de guidance dans un bandeau bas (patron de la
+  démonstration), une action attendue à la fois : 1) tourner et
+  connecter sur un 3 x 3 Novice à terminal unique ; 2) la méthode
+  proche en proche puis le verrouillage sur un 5 x 5 Novice à
+  trois terminaux ; 3) les aides — indice informatif, indice
+  correctif scellé, puis Résoudre réellement exécuté (jamais
+  scoré) ; 4) le tableau torique sur un 5 x 5 Maître dont une
+  connexion de la solution traverse le bord ; 5) les tuiles
+  invisibles sur un 5 x 5 Dément ; 6) le tableau infini —
+  scénario d'eric en version enrichie : plateau 40 x 40
+  pré-résolu cadré sur le serveur, tour horizontal puis vertical
+  de la fenêtre jusqu'à retrouver le serveur (la propriété
+  torique se VIT), puis pincements zoom/dézoom, aucune tuile à
+  tourner ; 7) le brouillard sur un 6 x 6 Néant. Moteur pur
+  (Lessons.kt) testé en JVM (LessonTest, 18 tests), validateur
+  dédié validate_apprentissage.py (64 contrôles), BoardView
+  observé par des listeners de caméra pour la leçon Infini
 - Publication des APK sur GitHub : la CI bâtit les deux saveurs à
   chaque poussée mais ne les publie pas — ajouter un artifact de
   run (APK téléchargeable depuis les Actions) et un job qui crée

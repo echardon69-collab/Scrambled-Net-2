@@ -152,6 +152,46 @@
     <string name="demo_touch_return">Touch to return to the game</string>
     <string name="demo_level_banner">Demo level %1$s</string>
 
+    <!-- Mode Apprentissage (chantier du 17 nov. 2026) : sept
+         leçons interactives sous le popup Outils, rejouables à
+         volonté, coche persistée. Bulles de guidance, une action
+         attendue à la fois ; les textes vivent ICI, la leçon ne
+         porte que leurs identifiants (Lessons.kt). -->
+    <string name="menu_lessons">Learning</string>
+    <string name="lesson_1_title">Turn and connect</string>
+    <string name="lesson_2_title">Method and lock</string>
+    <string name="lesson_3_title">Helpers</string>
+    <string name="lesson_4_title">The toroidal board</string>
+    <string name="lesson_5_title">Invisible tiles</string>
+    <string name="lesson_6_title">The endless board</string>
+    <string name="lesson_7_title">The fog</string>
+    <string name="lesson_l1_b1">Tap a tile to rotate it a quarter turn. Connect the network from the server to the terminal.</string>
+    <string name="lesson_l1_b2">Keep going: every tile connected to the server lights up.</string>
+    <string name="lesson_l1_b3">Well done, network solved! Every game is won this way: rotate, connect, light up.</string>
+    <string name="lesson_l2_b1">Method: start from the server and follow the connected cables, from neighbour to neighbour. Rotate a tile to begin.</string>
+    <string name="lesson_l2_b2">Long-press a well oriented tile: the lock protects it from an unlucky turn.</string>
+    <string name="lesson_l2_b3">Carry on from neighbour to neighbour until victory, locking what you are sure of.</string>
+    <string name="lesson_l2_b4">Locking is your ally on big boards: keep the method.</string>
+    <string name="lesson_l3_b1">The informative hint points at a tile to fix (green frame). Tap Hint.</string>
+    <string name="lesson_l3_b2">The corrective hint sets the tile upright and seals it (final lock). Tap Hint.</string>
+    <string name="lesson_l3_b3">Solve plays the game for you, one move at a time; a game solved this way never counts toward records. Tap Solve.</string>
+    <string name="lesson_l3_b4">Helpers are there to unblock, not to play: your call.</string>
+    <string name="lesson_l4_b1">Master board: the edges wrap around. The board is a TORUS: right joins left, top joins bottom.</string>
+    <string name="lesson_l4_b2">Solve it: at least one cable crosses the edge of the board to connect beyond.</string>
+    <string name="lesson_l4_b3">The torus is everywhere from Master on: think of the board without edges.</string>
+    <string name="lesson_l5_b1">Insane level: some tiles are INVISIBLE. Deduce their orientation from their neighbours, then rotate a visible tile.</string>
+    <string name="lesson_l5_b2">Keep going: each neighbour constrains the hidden tiles, only victory reveals everything.</string>
+    <string name="lesson_l5_b3">The corrective hint reveals a masked tile: a move shown, never played.</string>
+    <string name="lesson_l6_b1">Endless board: a 40 x 40 torus, framed on the server. Scroll the window a full turn horizontally, until you FIND the server again.</string>
+    <string name="lesson_l6_b2">The board repeats forever: no grey ring. Now travel vertically, one full turn.</string>
+    <string name="lesson_l6_b3">Pinch to zoom in and out: the window is your camera, the world stays the same.</string>
+    <string name="lesson_l6_b4">The Endless mode is played with the camera: the board has no edges, only windows.</string>
+    <string name="lesson_l7_b1">Void level: FOG hides the board. Every connection pushes the mist back. Rotate a visible tile.</string>
+    <string name="lesson_l7_b2">Keep going: each won connection lights the area around it.</string>
+    <string name="lesson_l7_b3">Fog is won tile by tile: the light follows the network.</string>
+    <string name="lesson_completed">Completed</string>
+    <string name="lesson_continue">Continue</string>
+
     <!-- À propos : la fenêtre de dialogue est devenue la page
          autonome AboutActivity (refonte du 14 nov. 2026) — le
          contenu vit dans about_titles / about_texts

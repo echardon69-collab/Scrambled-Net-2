@@ -131,6 +131,22 @@ object Settings {
         }
     }
 
+    /**
+     * Masque des leçons du mode Apprentissage TERMINÉES (chantier
+     * du 17 nov. 2026) : un bit par leçon (1 shl index dans
+     * Lessons.ALL), zéro par défaut. La coche ne verrouille rien :
+     * une leçon faite se REJOUE, le masque n'est jamais nettoyé.
+     */
+    fun loadLessonsDoneMask(context: Context): Int =
+        prefs(context).getInt(Persistence.LESSONS_DONE_KEY, 0)
+
+    /** Coche la leçon d'index [ordinal] : son bit est posé, les autres intacts. */
+    fun saveLessonDone(context: Context, ordinal: Int) {
+        prefs(context).edit {
+            putInt(Persistence.LESSONS_DONE_KEY, loadLessonsDoneMask(context) or (1 shl ordinal))
+        }
+    }
+
     /** Rythme de la démonstration (délai par coup), NORMAL par défaut. */
     fun loadDemoSpeed(context: Context): DemoSpeed {
         val stored = prefs(context).getString(Persistence.DEMO_SPEED_KEY, null)

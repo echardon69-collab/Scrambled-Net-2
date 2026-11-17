@@ -4,4 +4,9 @@
          s'adapter aux tablettes (values-sw600dp). -->
     <dimen name="screen_padding">16dp</dimen>
     <dimen name="content_padding_h">16dp</dimen>
+
+    <!-- Mode Apprentissage (chantier du 17 nov. 2026) : lignes de la
+         liste des leçons, construites en code. -->
+    <dimen name="lesson_row_padding">16dp</dimen>
+    <dimen name="lesson_row_padding_vertical">14dp</dimen>
 </resources>

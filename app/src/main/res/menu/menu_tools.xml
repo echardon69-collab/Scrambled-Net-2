@@ -22,4 +22,11 @@
         android:title="@string/menu_demo"
         app:showAsAction="never" />
 
+    <!-- Mode Apprentissage (chantier du 17 nov. 2026) : la liste
+         des leçons interactives, après la démonstration. -->
+    <item
+        android:id="@+id/menu_lessons"
+        android:title="@string/menu_lessons"
+        app:showAsAction="never" />
+
 </menu>

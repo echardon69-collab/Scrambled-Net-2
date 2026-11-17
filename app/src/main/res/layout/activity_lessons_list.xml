@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Liste des leçons du mode Apprentissage (chantier du 17 nov.
+     2026) : patron de l'écran des records — toolbar avec retour,
+     contenu en ScrollView dégagé de la barre de navigation. Les
+     lignes sont construites en CODE (LessonsListActivity.fillRows)
+     : le conteneur ici est vide d'origine, repeuplé à chaque
+     onStart pour rattraper la coche d'une leçon finie entre-temps. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <!-- Hauteur : wrap_content + minHeight (patron des records) :
+         la toolbar absorbe l'inset de barre d'état sans rogner le
+         titre. -->
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/lessons_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="?attr/actionBarSize"
+        android:background="?attr/colorPrimary"
+        app:title="@string/menu_lessons"
+        app:titleTextColor="@color/brand_on_primary" />
+
+    <ScrollView
+        android:id="@+id/lessons_scroll"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false">
+
+        <LinearLayout
+            android:id="@+id/lesson_rows"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="@dimen/content_padding_h"
+            android:paddingTop="8dp"
+            android:paddingBottom="24dp" />
+    </ScrollView>
+
+</LinearLayout>

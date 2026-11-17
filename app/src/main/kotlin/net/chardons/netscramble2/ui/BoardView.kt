@@ -104,6 +104,18 @@ class BoardView @JvmOverloads constructor(
     /** Écouteur d'appui long sur une cellule (verrouillage). */
     var onCellLongPressed: ((Int) -> Unit)? = null
 
+    /**
+     * Mode Apprentissage (chantier du 17 nov. 2026) : défilement
+     * de la caméra observé, deltas en CELLULES (translation de la
+     * fenêtre sur le monde). La leçon Infini s'en sert pour
+     * mesurer le tour complet du plateau ; le jeu, lui, n'écoute
+     * rien — le listener reste null, aucun coût.
+     */
+    var onCameraScrolled: ((Float, Float) -> Unit)? = null
+
+    /** Pincement observé, en FACTEUR de croissance (1f = rien). */
+    var onCameraZoomed: ((Float) -> Unit)? = null
+
     private var board: Board? = null
     private var connected: BooleanArray? = null
 
@@ -514,6 +526,12 @@ class BoardView @JvmOverloads constructor(
             panX -= dx
             panY -= dy
             clampPan()
+            // Mode Apprentissage : la fenêtre a voyagé de -dx/-dy en
+            // pixels d'écran, soit la même chose en cellules une
+            // fois ramenée à la taille de case courante.
+            if (cellPx > 0f) {
+                onCameraScrolled?.invoke(-dx / cellPx, -dy / cellPx)
+            }
             invalidate()
             return true
         }
@@ -538,6 +556,9 @@ class BoardView @JvmOverloads constructor(
             val newCellPx = (cellPx * detector.scaleFactor)
                 .coerceIn(floorCellPx(b), maxCellPx)
             val growth = if (cellPx > 0f) newCellPx / cellPx else 1f
+            // Mode Apprentissage : le pincement est observé AVANT
+            // l'écrasement de cellPx, en facteur de croissance.
+            onCameraZoomed?.invoke(growth)
             panX = focusX - (focusX - panX) * growth
             panY = focusY - (focusY - panY) * growth
             cellPx = newCellPx

@@ -87,6 +87,23 @@
             android:label="@string/menu_demo"
             android:parentActivityName=".MainActivity" />
 
+        <!-- Mode Apprentissage (chantier du 17 nov. 2026) : la liste
+             des leçons puis chaque leçon plein écran — aucune
+             incidence sur la partie en cours, aucune leçon ne
+             compte au score. La liste revient au jeu, la leçon
+             revient à la liste. -->
+        <activity
+            android:name=".LessonsListActivity"
+            android:exported="false"
+            android:label="@string/menu_lessons"
+            android:parentActivityName=".MainActivity" />
+
+        <activity
+            android:name=".LessonActivity"
+            android:exported="false"
+            android:label="@string/menu_lessons"
+            android:parentActivityName=".LessonsListActivity" />
+
         <!-- Langue par application (page Réglages, v3 du 14 nov.
              2026) : ce service ne TOURNE jamais, il ne porte que le
              marqueur d'auto-stockage d'appcompat. Avant Android 13,
