@@ -81,7 +81,12 @@
             players interested. As the years went by without
             those hopes materializing, he decided to write the
             awaited sequel himself: this modern, open-source
-            remake, faithful to the original.</item>
+            remake, faithful to the original.\n\nTo design and write this remake he relied on Vibe,
+            the Mistral AI development assistant: the specifications,
+            the Kotlin game engine, the interface, the tests and the
+            validators were written with its help, under his direction,
+            review and systematic validation. The code produced this
+            way joins the repository under the same GPL-2.0 license.</item>
         <item>KNetWalk, the original KDE game: © 2004–2007 Andi
             Peredri, Thomas Nagy and Fela Winkelmolen.\n\n
             Scrambled Net, the Android port: © 2007–2010 Ian

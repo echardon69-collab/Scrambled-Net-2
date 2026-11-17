@@ -160,9 +160,11 @@ required = [
     (0, ["Scrambled Net 2", "KNetWalk", "terminal"], 0,
      ["Scrambled Net 2", "KNetWalk", "terminal"]),
     (1, ["Éric Chardon", "logic and puzzle games",
-         "Ian Cameron Smith", "Michael Mueller", "2010", "2014"], 1,
+         "Ian Cameron Smith", "Michael Mueller", "2010", "2014",
+         "Vibe", "Mistral AI", "GPL-2.0"], 1,
      ["Éric Chardon", "jeux de logique", "Ian Cameron Smith",
-      "Michael Mueller", "2010", "2014"]),
+      "Michael Mueller", "2010", "2014",
+      "Vibe", "Mistral AI", "GPL-2.0"]),
     (2, ["Peredri", "Nagy", "Winkelmolen", "Ian Cameron Smith",
          "Michael Mueller", "Éric Chardon", "GPL-2.0",
          "github.com/echardon69-collab/Scrambled-Net-2"], 2,
@@ -228,6 +230,31 @@ for lang, text in (("EN", en_texts[2]), ("FR", fr_texts[2])):
     pos = [text.find(word) for word in chain]
     check(f"Miroir : chaîne de licence {lang} dans l'ordre",
           all(p >= 0 for p in pos) and pos == sorted(pos))
+
+# Mention Mistral AI (Vibe) — chantier du 17 nov. 2026 : la rubrique
+# « L'auteur » précise que la refonte a été écrite avec l'aide de
+# Vibe, l'assistant de développement de Mistral AI, sous la
+# conduite, la relecture et la validation systématique de l'auteur,
+# et que le code produit rejoint le dépôt sous la même GPL-2.0.
+check("Mistral : mention Vibe + Mistral AI dans « L'auteur » EN",
+      "Vibe" in en_texts[1] and "Mistral AI" in en_texts[1])
+check("Mistral : mention Vibe + Mistral AI dans « L'auteur » FR",
+      "Vibe" in fr_texts[1] and "Mistral AI" in fr_texts[1])
+check("Mistral : l'auteur garde conduite, relecture et validation EN",
+      "direction, review and systematic validation" in en_texts[1])
+check("Mistral : l'auteur garde conduite, relecture et validation FR",
+      "sa conduite, sa relecture et sa validation" in fr_texts[1])
+check("Mistral : le code rejoint le dépôt sous GPL-2.0 (EN et FR)",
+      "same GPL-2.0 license" in en_texts[1]
+      and "même licence GPL-2.0" in fr_texts[1])
+for tag, path in (("corse", "values-co"), ("alsacien", "values-gsw-rFR")):
+    items = flat(items_of(f"{RES}/{path}/arrays.xml", "about_texts"))
+    check(f"Mistral : mention présente dans « L'auteur » ({tag})",
+          len(items) == 8 and "Vibe" in items[1]
+          and "Mistral AI" in items[1] and "GPL-2.0" in items[1])
+check("FR : coquille « phylosophie » corrigée en « philosophie »",
+      "phylosophie" not in read(f"{RES}/values-fr/arrays.xml")
+      and "philosophie" in read(f"{RES}/values-fr/arrays.xml"))
 
 # ---------------------------------------------------------------------------
 # 5. Strings : les mortes du dialogue sont retirées, les vives intactes.

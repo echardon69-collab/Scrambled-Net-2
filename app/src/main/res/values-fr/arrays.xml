@@ -89,8 +89,14 @@
             passant sans que ces espoirs se concrétisent, il
             décide d\'écrire lui-même la suite attendue : cette
             refonte moderne, fidèle à l\'original et toujours libre,
-            conserve sa phylosophie : partage intégral du code
-            source et de ses ressources.</item>
+            conserve sa philosophie : partage intégral du code
+            source et de ses ressources.\n\nPour concevoir et écrire cette refonte, il s\'est appuyé
+            sur Vibe, l\'assistant de développement de Mistral AI :
+            spécifications, moteur de jeu en Kotlin, interface,
+            tests et validateurs ont été écrits avec son aide,
+            sous sa conduite, sa relecture et sa validation
+            systématique. Le code ainsi produit rejoint le dépôt
+            sous la même licence GPL-2.0.</item>
         <item>KNetWalk, le jeu KDE d\'origine : © 2004–2007
             Andi Peredri, Thomas Nagy et Fela
             Winkelmolen.\n\nScrambled Net, le portage Android :
