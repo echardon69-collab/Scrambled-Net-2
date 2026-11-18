@@ -10,7 +10,8 @@
      (fill ET fill-rule), fill-rule evenodd, <line> -> M...L...,
      tailles dp rectangulaires (largeur x hauteur), OMBRAGE des
      drapeaux pâles : bandeaux dégradés sous les bordures droite
-     et basse, épaisseur TOUJOURS 1 dp, posés en DERNIER ;
+     et basse, épaisseur TOUJOURS 1,5 dp (v2 du 18 nov. 2026 :
+     un peu plus épaisse et plus sombre), posés en DERNIER ;
   2. vérifie les refus explicites : clip-path, transform, tracé sans
      fill ni stroke (le VectorDrawable ne sait pas les représenter) ;
   3. ORACLE : convertit les 4 VRAIS drapeaux (svg/flags/flag_fr,
@@ -172,42 +173,42 @@ def main():
                ombre.index('android:fillColor="#FFFFFFFF"')
                < ombre.index('<aapt:attr'),
                '')
-    ok = check(ok, 'ombre du BAS pleine largeur : hauteur 28->30'
-               ' = 1 dp (2 unités, viewport 60 x 30)',
-               d_ombre[2] == 'M0,28 L60,28 L60,30 L0,30 Z',
+    ok = check(ok, 'ombre du BAS pleine largeur : hauteur 27->30'
+               ' = 1,5 dp (3 unités, viewport 60 x 30)',
+               d_ombre[2] == 'M0,27 L60,27 L60,30 L0,30 Z',
                '(lu %r)' % d_ombre[2])
     ok = check(ok, 'ombre de la DROITE pleine hauteur : '
-               '58->60 = 1 dp du bord',
-               d_ombre[3] == 'M58,0 L60,0 L60,30 L58,30 Z',
+               '57->60 = 1,5 dp du bord',
+               d_ombre[3] == 'M57,0 L60,0 L60,30 L57,30 Z',
                '(lu %r)' % d_ombre[3])
     ok = check(ok, 'les DEUX ombres sont des tracés à dégradé aapt'
                ' (les seuls)',
                len(blocs_ombre) == 2, '(lu %d)' % len(blocs_ombre))
     ok = check(ok, 'dégradé linéaire : transparent vers l intérieur,'
-               ' #26000000 au ras du bord, les DEUX bandaux',
+               ' #40000000 au ras du bord, les DEUX bandaux',
                all(('android:type="linear"' in b
                     and '<item android:offset="0"'
                     ' android:color="#00000000"/>' in b
                     and '<item android:offset="1"'
-                    ' android:color="#26000000"/>' in b)
+                    ' android:color="#40000000"/>' in b)
                    for b in blocs_ombre),
                '(blocs=%r)' % [b[:60] for b in blocs_ombre])
-    ok = check(ok, 'gradient du BAS vertical (28->30), gradient de'
-               ' la DROITE horizontal (58->60)',
-               ('android:startX="0" android:startY="28"'
+    ok = check(ok, 'gradient du BAS vertical (27->30), gradient de'
+               ' la DROITE horizontal (57->60)',
+               ('android:startX="0" android:startY="27"'
                 in blocs_ombre[0]
                 and 'android:endX="0" android:endY="30"'
                 in blocs_ombre[0]
-                and 'android:startX="58" android:startY="0"'
+                and 'android:startX="57" android:startY="0"'
                 in blocs_ombre[1]
                 and 'android:endX="60" android:endY="0"'
                 in blocs_ombre[1]),
                '')
-    ok = check(ok, 'constantes réglables épinglées : bandau 1 dp,'
-               ' alpha 0x26 (38/255, environ 15 %)',
-               (cf.OMBRE_LARGEUR_DP == 1.0
-                and cf.OMBRE_ALPHA == 0x26), '')
-    # Épaisseur TOUJOURS 1 dp : un ratio différent reçoit un bandau
+    ok = check(ok, 'constantes réglables épinglées : bandau 1,5 dp,'
+               ' alpha 0x40 (64/255, environ 25 %)',
+               (cf.OMBRE_LARGEUR_DP == 1.5
+                and cf.OMBRE_ALPHA == 0x40), '')
+    # Épaisseur TOUJOURS 1,5 dp : un ratio différent reçoit un bandau
     # PLUS FIN en unités de viewport, IDENTIQUE en dp.
     ratio3 = os.path.join(WORK, 'essais', 'flag_ratio.svg')
     with open(ratio3, 'w', encoding='utf-8') as fh:
@@ -218,8 +219,8 @@ def main():
     nums = [float(v) for v in re.findall(r'[-+]?[\d.]+', d_r[-2])]
     ep_dp = (nums[5] - nums[1]) * 15.0 / 20.0
     ok = check(ok, 'épaisseur constante : viewport 60 x 20 (dp 45 x'
-               ' 15) -> bandau 4/3 unités = toujours 1 dp',
-               abs(ep_dp - 1.0) < 1e-4, '(lu %r dp)' % ep_dp)
+               ' 15) -> bandau 2 unités = toujours 1,5 dp',
+               abs(ep_dp - 1.5) < 1e-4, '(lu %r dp)' % ep_dp)
 
     print('== 2. Refus explicites (VectorDrawable) ==')
     for label, svg, attendu in (

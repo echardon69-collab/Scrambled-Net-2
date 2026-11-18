@@ -60,11 +60,13 @@ Extension « ombrage des drapeaux pâles » (nov. 2026, retour
 d'eric : les drapeaux blancs ne se démarquent pas sur fond blanc) :
 le convertisseur POSE en dernier, par-dessus le contenu, deux
 bandeaux de dégradé linéaire (transparent vers l'intérieur,
-#26000000 au ras du bord), sous les bordures droite et basse, de
-1 dp d'épaisseur TOUJOURS (quelle que soit la taille du drapeau).
+#40000000 au ras du bord), sous les bordures droite et basse, de
+1,5 dp d'épaisseur TOUJOURS (quelle que soit la taille du drapeau).
 Pinné ici : présence et ordre (les DEUX derniers tracés, PARSÉS),
 épaisseur en dp des deux axes, et l'alpha en miroir du
-convertisseur (OMBRE_ALPHA).
+convertisseur (OMBRE_ALPHA). Révisé le 18 nov. 2026 sur second
+retour d'eric : 1,5 dp et alpha 0x40 (~25 %), le 1 dp à ~15 %
+ne se détachait pas assez.
 
 Usage : python3 tools/validate_selecteur.py
 """
@@ -232,12 +234,12 @@ lang_files = {
     "values-gsw-rFR": RES / "values-gsw-rFR/strings.xml",
     "values-zh-rCN": RES / "values-zh-rCN/strings.xml",
 }
-for name, path in sorted(lang_files.items()):
-    src = read(path)
-    check(f"Strings {name} : endonymes absents "
+for dossier, chemin in sorted(lang_files.items()):
+    src = read(chemin)
+    check(f"Strings {dossier} : endonymes absents "
           "(lang_fr/lang_en retirées)",
           'name="lang_fr"' not in src and 'name="lang_en"' not in src)
-    check(f"Strings {name} : menu_lang et lang_system toujours là "
+    check(f"Strings {dossier} : menu_lang et lang_system toujours là "
           "(seuls libellés traduits de la section)",
           'name="menu_lang"' in src and 'name="lang_system"' in src)
 
@@ -261,11 +263,12 @@ flag_tags = (("fr", "flag_fr", "22.5", "900", "600"),
              ("co", "flag_co", "25", "750", "450"),
              ("gsw-FR", "flag_gsw_fr", "22.5", "900", "600"),
              ("zh-CN", "flag_zh", "22.5", "900", "600"))
-for tag, name, w, vw, vh in flag_tags:
-    svg = FLAGS_SVG / f"{name}.svg"
-    check(f"Drapeau {tag} : source svg/flags/{name}.svg présente",
+for tag, drawable, w, vw, vh in flag_tags:
+    svg = FLAGS_SVG / f"{drawable}.svg"
+    check(f"Drapeau {tag} : source svg/flags/{drawable}.svg "
+          f"présente",
           svg.exists())
-    vd = read(RES / f"drawable/{name}.xml")
+    vd = read(RES / f"drawable/{drawable}.xml")
     check(f"Drapeau {tag} : drawable exact ({w} dp x 15 dp, "
           f"viewport {vw} x {vh})",
           f'android:width="{w}dp"' in vd
@@ -274,7 +277,8 @@ for tag, name, w, vw, vh in flag_tags:
           and f'android:viewportHeight="{vh}"' in vd)
     check(f"Drapeau {tag} : posé par langFlagFor dans "
           f"SettingsActivity (correspondance explicite)",
-          re.search(r'"%s" -> R\.drawable\.%s' % (re.escape(tag), name),
+          re.search(r'"%s" -> R\.drawable\.%s'
+                    % (re.escape(tag), drawable),
                     sa_src) is not None)
 
 _ANDROID = "{http://schemas.android.com/apk/res/android}"
@@ -293,8 +297,8 @@ def _gradient_de(trace):
     return None
 
 
-for tag, name, w, vw, vh in flag_tags:
-    arbre = ElementTree.parse(RES / f"drawable/{name}.xml")
+for tag, drawable, w, vw, vh in flag_tags:
+    arbre = ElementTree.parse(RES / f"drawable/{drawable}.xml")
     traces = [e for e in arbre.getroot() if e.tag == "path"]
     ombres = [t for t in traces if _gradient_de(t)]
     check(f"Drapeau {tag} : ombrage des drapeaux pâles — les DEUX "
@@ -302,14 +306,14 @@ for tag, name, w, vw, vh in flag_tags:
           f"en dernier, par-dessus le contenu, une seule fois)",
           len(ombres) == 2 and traces[-2:] == ombres)
     epaisseurs = []
-    for trace in ombres:
-        grad = _gradient_de(trace)
+    for bandau in ombres:
+        gradient = _gradient_de(bandau)
         stops = [(item.get(_ANDROID + "offset"),
                   item.get(_ANDROID + "color"))
-                 for item in grad]
+                 for item in gradient]
         nums = [float(v)
                 for v in re.findall(r"[-+]?[\d.]+",
-                                    trace.get(_ANDROID + "pathData"))]
+                                    bandau.get(_ANDROID + "pathData"))]
         if nums[0] == 0.0:      # bandeau du BAS : M0,y ... pleine largeur
             ep = (nums[5] - nums[1]) * 15.0 / float(vh)
         else:                   # bandeau de la DROITE : Mx,0 ... Mx,vh
@@ -317,19 +321,19 @@ for tag, name, w, vw, vh in flag_tags:
             # drapeau), PAS vh/15 comme sur l'axe vertical.
             ep = (nums[2] - nums[0]) * float(w) / float(vw)
         epaisseurs.append((ep, stops))
-    check(f"Drapeau {tag} : bandeaux de 1 dp sur les DEUX axes, "
-          f"gradient linéaire transparent -> #26000000 au bord",
-          all(abs(ep - 1.0) < 1e-4 and stops == [("0", "#00000000"),
-                                                 ("1", "#26000000")]
+    check(f"Drapeau {tag} : bandeaux de 1,5 dp sur les DEUX axes, "
+          f"gradient linéaire transparent -> #40000000 au bord",
+          all(abs(ep - 1.5) < 1e-4 and stops == [("0", "#00000000"),
+                                                 ("1", "#40000000")]
               for ep, stops in epaisseurs))
 
 outil_drapeaux = (ROOT / "tools/flags/convert_flags.py").read_text(
     encoding="utf-8")
 check("Drapeaux : miroir des constantes du convertisseur — "
-      "bandau de 1 dp et alpha 0x26 (retouchables là, épinglés ici)",
-      re.search(r"^OMBRE_LARGEUR_DP = 1\.0", outil_drapeaux, re.M)
+      "bandau de 1,5 dp et alpha 0x40 (retouchables là, épinglés ici)",
+      re.search(r"^OMBRE_LARGEUR_DP = 1\.5", outil_drapeaux, re.M)
       is not None
-      and re.search(r"^OMBRE_ALPHA = 0x26", outil_drapeaux, re.M)
+      and re.search(r"^OMBRE_ALPHA = 0x40", outil_drapeaux, re.M)
       is not None)
 
 check("Drapeaux : l'Union Jack est RÉÉCRIT sans clipPath (non "
@@ -352,7 +356,7 @@ check("Drapeaux : autant de sources que de langues (compte exact 5 "
       "des deux côtés)",
       len(flags_svg) == 5
       and len([t for t in locale_tags if t in
-               dict((tag, name) for tag, name, *_ in flag_tags)])
+               dict((tag, drawable) for tag, drawable, *_ in flag_tags)])
       == 5)
 check("Drapeaux : la source unique des règles — convert_flags "
       "réutilise convert_tiles ET generate_graphics, jamais de "
@@ -374,8 +378,8 @@ check("Drapeaux : la source unique des règles — convert_flags "
 print()
 if failures:
     print(f"{len(failures)} échec(s) sur {checks} vérifications :")
-    for name in failures:
-        print(f"  - {name}")
+    for echec in failures:
+        print(f"  - {echec}")
     sys.exit(1)
 print(f"TOUT PASSE : {checks}/{checks} vérifications "
       "(sélecteur de langue dynamique : radios nées au runtime "

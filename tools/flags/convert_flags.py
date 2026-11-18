@@ -72,8 +72,10 @@ HAUTEUR_DP = 15.0
 # bordures DROITE et BASSE : le drapeau paraît posé, sa géométrie et
 # ses couleurs restent celles du SVG source, l'ombre se dessine
 # PAR-DESSUS, en DERNIER. Les deux constantes se règlent ici.
-OMBRE_LARGEUR_DP = 1.0   # épaisseur du bandau, en dp
-OMBRE_ALPHA = 0x26       # 38/255 : ~15 % de noir au ras du bord
+# Révisées le 18 nov. 2026 sur second retour d'eric : 1 dp et
+# ~15 % de noir ne se détachaient pas assez sur fond blanc.
+OMBRE_LARGEUR_DP = 1.5   # épaisseur du bandau, en dp
+OMBRE_ALPHA = 0x40       # 64/255 : ~25 % de noir au ras du bord
 
 # Propriétés CSS/attributs hérités par les enfants, résolus par ce
 # convertisseur (le reste — d, points, x, y... — reste un attribut

@@ -320,28 +320,28 @@
     android:fillColor="#FF808080"
       />
   <path
-    android:pathData="M0,420 L750,420 L750,450 L0,450 Z"
+    android:pathData="M0,405 L750,405 L750,450 L0,450 Z"
       >
     <aapt:attr name="android:fillColor">
         <gradient
         android:type="linear"
-        android:startX="0" android:startY="420"
+        android:startX="0" android:startY="405"
         android:endX="0" android:endY="450">
         <item android:offset="0" android:color="#00000000"/>
-        <item android:offset="1" android:color="#26000000"/>
+        <item android:offset="1" android:color="#40000000"/>
         </gradient>
     </aapt:attr>
   </path>
   <path
-    android:pathData="M720,0 L750,0 L750,450 L720,450 Z"
+    android:pathData="M705,0 L750,0 L750,450 L705,450 Z"
       >
     <aapt:attr name="android:fillColor">
         <gradient
         android:type="linear"
-        android:startX="720" android:startY="0"
+        android:startX="705" android:startY="0"
         android:endX="750" android:endY="0">
         <item android:offset="0" android:color="#00000000"/>
-        <item android:offset="1" android:color="#26000000"/>
+        <item android:offset="1" android:color="#40000000"/>
         </gradient>
     </aapt:attr>
   </path>
