@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Перевод на русский язык (первый проход ИИ, 18-19 ноября 2026 г.,
+     экспериментальный, ожидает вычитки носителем русского прежде
+     чем стать официальным — тот же процесс, что для корсиканского,
+     эльзасского, китайского, испанского, португальского, итальянского
+     и иврита: ИИ переводит, корректор правит, правки возвращаются
+     тем же каналом). Те же ключи, что в values/strings.xml (парность
+     проверяет tools/validate_langues.py). Обращение на «ты», как
+     принято в играх. Буква «ё» заменена на «е» по типографской
+     печатной норме; кавычки «ёлочки» без внутренних пробелов.
+
+     Глоссарий (EN → RU) :
+       tile → плитка ; board → доска (по образцу шахматной, как
+       испанское tablero) ; server → сервер ; terminal →
+       терминал ; network → сеть ; wiring → проводка ; lock/unlock
+       → блокировка/разблокировка ; hint → подсказка ; hint
+       allowance → лимит подсказок ; moves → ходы ; fog → туман ;
+       torus (edges wrap around) → тор: края замыкаются ; hidden
+       wiring → скрытая проводка ; panning → прокрутка ; zoom →
+       масштаб ; camera → камера ; personal best → личный рекорд ;
+       settings → настройки ;
+       skills : Novice → Новичок, Normal → Обычный, Expert →
+       Эксперт, Master → Мастер, Insane → Безумный, Endless →
+       Бесконечный, Abyss → Бездна, Void → Пустота. «Блипы» и
+       имена собственные остаются как есть. Параметры %1$d /
+       %1$s / %2$d и переводы строк "\n" остаются как есть.
+-->
+<resources>
+    <string name="app_name">Scrambled Net 2</string>
+
+    <string name="menu_new">Новая игра</string>
+    <string name="menu_solve">Решить</string>
+    <string name="menu_settings">Настройки</string>
+    <string name="menu_stop_solve">Остановить решение</string>
+    <string name="solver_used">Использован автоматический решатель — эта игра не пойдет в зачет.</string>
+    <string name="menu_skill">Уровень сложности</string>
+    <string name="menu_sounds">Звуки</string>
+    <string name="sounds_off">Отключены</string>
+    <string name="sounds_quiet">Тихие</string>
+    <string name="sounds_full">Полные</string>
+    <string name="menu_anim">Анимация</string>
+    <string name="anim_off">Без анимации</string>
+    <string name="anim_on">Анимация</string>
+
+    <string name="menu_lang">Язык</string>
+    <string name="lang_system">Как в системе</string>
+
+    <string name="skill_novice_desc">Доска %1$d × %2$d — две ветви, открытые края</string>
+    <string name="skill_normal_desc">Доска %1$d × %2$d — две ветви, открытые края</string>
+    <string name="skill_expert_desc">Доска %1$d × %2$d — две ветви, открытые края</string>
+    <string name="skill_master_desc">Доска %1$d × %2$d — тор: края замыкаются, три ветви</string>
+    <string name="skill_insane_desc">Доска %1$d × %2$d — тор, три ветви, скрытая проводка на развилках</string>
+    <string name="skill_endless_desc">Доска %1$d × %2$d — тор, прокрутка никогда не покажет край</string>
+    <string name="skill_abyss_desc">Доска %1$d × %2$d — тор, скрытая проводка на развилках</string>
+    <string name="skill_void_desc">Доска %1$d × %2$d — тор, скрытая проводка, туман над сетью</string>
+
+    <string name="help_master">На уровне Мастер края доски замыкаются:
+        клетки правого края соединяются с клетками левого края,
+        и наоборот. То же с верхним и нижним краями.</string>
+    <string name="help_insane">На уровне Безумный края доски замыкаются:
+        клетки правого края соединяются с клетками левого края,
+        и наоборот. То же с верхним и нижним краями. Но вдобавок
+        в плитках с 3 или 4 связями проводка невидима. Удачи!</string>
+    <string name="help_abyss">На уровне Бездна доска бесконечна: она
+        занимает 40 на 40 плиток, и ее края замыкаются, так что
+        прокрутка никогда не покажет край. Вдобавок в плитках с 3
+        или 4 связями проводка невидима. Удачи!</string>
+    <string name="help_void">На уровне Пустота доска бесконечна: она
+        занимает 40 на 40 плиток, и ее края замыкаются. В плитках
+        с 3 или 4 связями проводка невидима. И вдобавок туман
+        скрывает плитки вдали от сети, подключенной к серверу:
+        видны лишь окрестности подключенных плиток. Удачи!</string>
+    <string name="menu_scores">Рекорды</string>
+    <string name="menu_help">Помощь</string>
+    <string name="menu_about">О программе</string>
+
+    <string name="skill_novice">Новичок</string>
+    <string name="skill_normal">Обычный</string>
+    <string name="skill_expert">Эксперт</string>
+    <string name="skill_master">Мастер</string>
+    <string name="skill_insane">Безумный</string>
+    <string name="skill_endless">Бесконечный</string>
+    <string name="skill_abyss">Бездна</string>
+    <string name="skill_void">Пустота</string>
+
+    <string name="status_moves">Ходы: %1$d</string>
+    <string name="status_time">Время: %1$s</string>
+
+    <string name="win_title">Ты победил!</string>
+    <string name="win_pbest_title">Новый личный рекорд!</string>
+    <string name="win_text">Поздравляем! Ты решил головоломку за %1$s, сделав %2$d ходов.</string>
+    <string name="best_moves_text">Это твой лучший результат по ходам на этом уровне!</string>
+    <string name="best_time_text">Это твое самое быстрое время на этом уровне!</string>
+    <string name="best_both_text">Это твой лучший результат по ходам и самое быстрое время на этом уровне!</string>
+    <string name="win_new">Новая игра</string>
+    <string name="win_continue">Продолжить</string>
+
+    <string name="title_version">Версия %1$s</string>
+    <string name="title_license">Основано на Scrambled Net (© 2007–2010 Ian Cameron Smith,\n© 2014 Michael Mueller), порте игры KNetWalk из KDE.\nЭта версия: © 2026 Eric Chardon — GPL-2.0.</string>
+    <string name="title_loading">Загрузка сохраненной игры…</string>
+    <string name="title_checking">Проверка обновлений…</string>
+    <string name="title_update_available">Доступна версия %1$s.</string>
+    <string name="title_update_button">Обновить</string>
+    <string name="title_play_button">Играть</string>
+    <string name="title_download_status">Загрузка версии %1$s…</string>
+    <string name="title_install_status">Установка…</string>
+    <string name="title_install_permission">Разреши установку неизвестных приложений в настройках Android, затем снова коснись «Обновить».</string>
+    <string name="title_install_failed">Не удалось обновить (%1$s). Можно продолжать играть.</string>
+
+    <string name="version_obsolete">Устаревшая версия!</string>
+    <string name="version_obsolete_detail">Срок действия этой версии разработки истек. Установи официальную версию.</string>
+    <string name="version_obsolete_quitter">Выход</string>
+
+    <string name="confirm_new_title">Новая игра?</string>
+    <string name="confirm_change_title">Сменить уровень?</string>
+    <string name="confirm_change_ok">Сменить уровень</string>
+    <string name="confirm_progress_message">Идет игра (%1$d ходов, %2$s). Она будет потеряна.</string>
+
+    <string name="scores_title">Личные рекорды</string>
+    <string name="scores_movestitle">Меньше всего ходов</string>
+    <string name="scores_timestitle">Самое быстрое время</string>
+    <string name="scores_skill">Уровень</string>
+    <string name="scores_moves">Ходы</string>
+    <string name="scores_time">Время</string>
+    <string name="scores_when">Дата</string>
+    <string name="menu_scores_reset">Сбросить все рекорды</string>
+    <string name="scores_reset_confirm">Стереть все твои личные рекорды?</string>
+
+    <string name="menu_hint">Подсказка</string>
+    <string name="menu_hint_count">Подсказка (%1$d)</string>
+    <string name="menu_tools">Инструменты</string>
+    <string name="menu_demo">Демонстрация</string>
+    <string name="hint_strategy_signal">Указать ошибку</string>
+    <string name="hint_strategy_fix">Исправить ошибку</string>
+    <string name="hint_limit_title">Лимит подсказок</string>
+    <string name="hint_limit_zero">Отключен</string>
+    <string name="hint_limit_value">%1$d%%</string>
+    <string name="demo_diff_random">Случайная</string>
+    <string name="demo_diff_progressive">Прогрессивная</string>
+    <string name="demo_skill_title">Уровни</string>
+    <string name="demo_speed_title">Темп</string>
+    <string name="demo_speed_slow">Медленно</string>
+    <string name="demo_speed_normal">Обычно</string>
+    <string name="demo_speed_fast">Быстро</string>
+    <string name="hints_section">Подсказки</string>
+    <string name="hints_total">Плиток, обработанных подсказкой: %1$d</string>
+    <string name="hints_none">без подсказок</string>
+    <string name="hints_n">Подсказок: %1$d</string>
+    <string name="hints_column_tiles">Подсказки</string>
+    <string name="demo_touch_return">Коснись экрана, чтобы вернуться в игру</string>
+    <string name="demo_level_banner">Демонстрация, уровень %1$s</string>
+
+    <string name="menu_lessons">Обучение</string>
+    <string name="lesson_1_title">Поворот и соединение</string>
+    <string name="lesson_2_title">Метод и блокировка</string>
+    <string name="lesson_3_title">Помощники</string>
+    <string name="lesson_4_title">Торическая доска</string>
+    <string name="lesson_5_title">Невидимые плитки</string>
+    <string name="lesson_6_title">Бесконечная доска</string>
+    <string name="lesson_7_title">Туман</string>
+    <string name="lesson_l1_b1">Коснись плитки, чтобы повернуть ее на четверть оборота. Соедини сеть от сервера к терминалу.</string>
+    <string name="lesson_l1_b2">Продолжай: каждая плитка, подключенная к серверу, загорается.</string>
+    <string name="lesson_l1_b3">Отлично, сеть решена! Каждая игра выигрывается так: поворачивай, соединяй, зажигай.</string>
+    <string name="lesson_l2_b1">Метод: начни от сервера и следуй по подключенным кабелям, от соседа к соседу. Поверни плитку, чтобы начать.</string>
+    <string name="lesson_l2_b2">Долгое нажатие на правильно повернутой плитке: блокировка защитит ее от неудачного поворота.</string>
+    <string name="lesson_l2_b3">Продолжай от соседа к соседу до победы, блокируя то, в чем ты уверен.</string>
+    <string name="lesson_l2_b4">Блокировка — твой союзник на больших досках: помни метод.</string>
+    <string name="lesson_l3_b1">Наводящая подсказка указывает на плитку, которую надо исправить (зеленая рамка). Коснись «Подсказка».</string>
+    <string name="lesson_l3_b2">Исправляющая подсказка ставит плитку прямо и запечатывает ее (окончательная блокировка). Коснись «Подсказка».</string>
+    <string name="lesson_l3_b3">«Решить» играет за тебя, по одному ходу; игра, решенная так, никогда не идет в зачет рекордов. Коснись «Решить».</string>
+    <string name="lesson_l3_b4">Помощники нужны, чтобы распутаться, а не играть за тебя: решать тебе.</string>
+    <string name="lesson_l4_b1">Доска Мастера: края замыкаются. Доска — это ТОР: правый край соединяется с левым, верхний — с нижним.</string>
+    <string name="lesson_l4_b2">Реши ее: хотя бы один кабель пересекает край доски, чтобы подключиться за ним.</string>
+    <string name="lesson_l4_b3">Тор присутствует начиная с Мастера: думай о доске без краев.</string>
+    <string name="lesson_l5_b1">Уровень Безумный: некоторые плитки НЕВИДИМЫ. Выведи их ориентацию по соседям, затем поверни видимую плитку.</string>
+    <string name="lesson_l5_b2">Продолжай: каждый сосед ограничивает скрытые плитки, только победа открывает все.</string>
+    <string name="lesson_l5_b3">Исправляющая подсказка открывает скрытую плитку: ход показан, но не сыгран.</string>
+    <string name="lesson_l6_b1">Бесконечная доска: тор 40 x 40, в рамке сервера. Прокрути окно на полный оборот по горизонтали, пока не НАЙДЕШЬ сервер снова.</string>
+    <string name="lesson_l6_b2">Доска повторяется вечно: никакого серого кольца. Теперь пройди по вертикали полный оборот.</string>
+    <string name="lesson_l6_b3">Сведи и разведи два пальца, чтобы менять масштаб: окно — твоя камера, мир остается прежним.</string>
+    <string name="lesson_l6_b4">В режим Бесконечный играют камерой: у доски нет краев, только окна.</string>
+    <string name="lesson_l7_b1">Уровень Пустота: ТУМАН скрывает доску. Каждое соединение отталкивает мглу. Поверни видимую плитку.</string>
+    <string name="lesson_l7_b2">Продолжай: каждое завоеванное соединение освещает округу вокруг.</string>
+    <string name="lesson_l7_b3">Туман побеждают плитку за плиткой: свет идет по сети.</string>
+    <string name="lesson_completed">Пройден</string>
+    <string name="lesson_continue">Продолжить</string>
+</resources>

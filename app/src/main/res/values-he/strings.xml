@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     תרגום לעברית (מעבר ראשון של בינה מלאכותית, 18 בנובמבר 2026,
+     ניסיוני, ממתין לבדיקה של דובר עברית לפני כל הפיכה לרשמית —
+     אותו תהליך כמו הקורסיקנית, האלזסית, הסינית המפושטת,
+     הספרדית, הפורטוגזית והאיטלקית: הבינה מלאכותית מתרגמת,
+     הסוקר מתקן, התיקונים חוזרים באותו ערוץ). אותם מפתחות כמו
+     values/strings.xml (שקילות נבדקת על ידי tools/validate_langues.py).
+     פנייה בלשון זכר יחיד (סטנדרט של משחקי מחשב). העברית נכתבת
+     מימין לשמאל: המניפסט מצהייר supportsRtl=true, אנדרואיד משקף
+     את הפריסה מעצמו. אין אותיות רישיות בעברית — ההדגשה באותיות
+     רישיות של המקור (FIND, TORUS, FOG…) תורגמה במילים רגילות.
+
+     מילון (EN → HE) :
+       tile → אריח ; board → לוח ; server → שרת ; terminal →
+       מסוף ; network → רשת ; wiring → חיווט ; lock/unlock →
+       נעילה/ביטול נעילה ; hint → רמז ; hint allowance → תקציב
+       רמזים ; moves → מהלכים ; fog → ערפל ; torus (edges wrap
+       around) → טורוס: הקצוות מתעטפים ; hidden wiring → חיווט
+       נסתר ; panning → גלילה ; zoom → זום ; camera → מצלמה ;
+       personal best → שיא אישי ; settings → הגדרות ;
+       skills : Novice → מתחיל, Normal → רגיל, Expert → מומחה,
+       Master → אמן, Insane → מטורף, Endless → אינסופי, Abyss →
+       תהום, Void → ריק. ה־blips ושמות הפרטיים נשארים כמו שהם.
+       הפרמטרים %1$d / %1$s / %2$d והמעברים "\n" נשארים כמו
+       שהם.
+-->
+<resources>
+    <string name="app_name">Scrambled Net 2</string>
+
+    <string name="menu_new">משחק חדש</string>
+    <string name="menu_solve">פתור</string>
+    <string name="menu_settings">הגדרות</string>
+    <string name="menu_stop_solve">עצירת הפתרון</string>
+    <string name="solver_used">נעשה שימוש בפותר האוטומטי — משחק זה לא ייספר לניקוד.</string>
+    <string name="menu_skill">רמת קושי</string>
+    <string name="menu_sounds">צלילים</string>
+    <string name="sounds_off">מושתקים</string>
+    <string name="sounds_quiet">שקטים</string>
+    <string name="sounds_full">מלאים</string>
+    <string name="menu_anim">הנפשה</string>
+    <string name="anim_off">ללא הנפשה</string>
+    <string name="anim_on">הנפשה</string>
+
+    <string name="menu_lang">שפה</string>
+    <string name="lang_system">לפי המערכת</string>
+
+    <string name="skill_novice_desc">לוח %1$d × %2$d — שני ענפים, קצוות פתוחים</string>
+    <string name="skill_normal_desc">לוח %1$d × %2$d — שני ענפים, קצוות פתוחים</string>
+    <string name="skill_expert_desc">לוח %1$d × %2$d — שני ענפים, קצוות פתוחים</string>
+    <string name="skill_master_desc">לוח %1$d × %2$d — טורוס: הקצוות מתעטפים, שלושה ענפים</string>
+    <string name="skill_insane_desc">לוח %1$d × %2$d — טורוס, שלושה ענפים, חיווט נסתר בצמתים</string>
+    <string name="skill_endless_desc">לוח %1$d × %2$d — טורוס, הגלילה לעולם לא מציגה קצה</string>
+    <string name="skill_abyss_desc">לוח %1$d × %2$d — טורוס, חיווט נסתר בצמתים</string>
+    <string name="skill_void_desc">לוח %1$d × %2$d — טורוס, חיווט נסתר, ערפל על הרשת</string>
+
+    <string name="help_master">ברמת אמן, קצוות הלוח מתעטפים:
+        האריחים שבקצה הימני מחוברים לאלו שבקצה השמאלי,
+        ולהפך. כך גם לגבי הקצוות העליונים והתחתונים.</string>
+    <string name="help_insane">ברמת מטורף, קצוות הלוח מתעטפים:
+        האריחים שבקצה הימני מחוברים לאלו שבקצה השמאלי,
+        ולהפך. כך גם לגבי הקצוות העליונים והתחתונים. אבל
+        בנוסף, באריחים עם 3 או 4 חיבורים החיווט בלתי נראה.
+        בהצלחה!</string>
+    <string name="help_abyss">ברמת תהום, הלוח אינסופי: הוא מכסה
+        40 על 40 אריחים וקצוותיו מתעטפים, כך שהגלילה לעולם לא
+        מציגה קצה. בנוסף, באריחים עם 3 או 4 חיבורים החיווט
+        בלתי נראה. בהצלחה!</string>
+    <string name="help_void">ברמת ריק, הלוח אינסופי: הוא מכסה
+        40 על 40 אריחים וקצוותיו מתעטפים. באריחים עם 3 או 4
+        חיבורים החיווט בלתי נראה. ובנוסף, ערפל מסתיר את
+        האריחים הרחוקים מהרשת המחוברת לשרת: רק סביבתם של
+        האריחים המחוברים נשארת גלויה. בהצלחה!</string>
+    <string name="menu_scores">שיאים</string>
+    <string name="menu_help">עזרה</string>
+    <string name="menu_about">אודות</string>
+
+    <string name="skill_novice">מתחיל</string>
+    <string name="skill_normal">רגיל</string>
+    <string name="skill_expert">מומחה</string>
+    <string name="skill_master">אמן</string>
+    <string name="skill_insane">מטורף</string>
+    <string name="skill_endless">אינסופי</string>
+    <string name="skill_abyss">תהום</string>
+    <string name="skill_void">ריק</string>
+
+    <string name="status_moves">מהלכים: %1$d</string>
+    <string name="status_time">זמן: %1$s</string>
+
+    <string name="win_title">ניצחת!</string>
+    <string name="win_pbest_title">שיא אישי חדש!</string>
+    <string name="win_text">כל הכבוד! פתרת את הפאזל בזמן %1$s ב־%2$d מהלכים.</string>
+    <string name="best_moves_text">זה מספר המהלכים הטוב ביותר שלך ברמה זו!</string>
+    <string name="best_time_text">זה הזמן המהיר ביותר שלך ברמה זו!</string>
+    <string name="best_both_text">זה מספר המהלכים הטוב ביותר והזמן המהיר ביותר שלך ברמה זו!</string>
+    <string name="win_new">משחק חדש</string>
+    <string name="win_continue">המשך</string>
+
+    <string name="title_version">גרסה %1$s</string>
+    <string name="title_license">מבוסס על Scrambled Net (© 2007–2010 Ian Cameron Smith,\n© 2014 Michael Mueller), היסב של משחק ה־KDE KNetWalk.\nגרסה זו: © 2026 Eric Chardon — GPL-2.0.</string>
+    <string name="title_loading">טוען משחק שמור…</string>
+    <string name="title_checking">מחפש עדכונים…</string>
+    <string name="title_update_available">גרסה %1$s זמינה.</string>
+    <string name="title_update_button">עדכון</string>
+    <string name="title_play_button">שחק</string>
+    <string name="title_download_status">מוריד את גרסה %1$s…</string>
+    <string name="title_install_status">מתקין…</string>
+    <string name="title_install_permission">אפשר התקנת אפליקציות לא מוכרות בהגדרות Android, ואז גע שוב בעדכון.</string>
+    <string name="title_install_failed">העדכון נכשל (%1$s). אפשר להמשיך לשחק.</string>
+
+    <string name="version_obsolete">גרסה מיושנת!</string>
+    <string name="version_obsolete_detail">גרסת הפיתוח הזו פגה. התקן את הגרסה הרשמית.</string>
+    <string name="version_obsolete_quitter">יציאה</string>
+
+    <string name="confirm_new_title">משחק חדש?</string>
+    <string name="confirm_change_title">לשנות רמה?</string>
+    <string name="confirm_change_ok">שינוי רמה</string>
+    <string name="confirm_progress_message">יש משחק בעיצומו (%1$d מהלכים, %2$s). הוא יאבד.</string>
+
+    <string name="scores_title">שיאים אישיים</string>
+    <string name="scores_movestitle">הכי מעט מהלכים</string>
+    <string name="scores_timestitle">הזמן המהיר ביותר</string>
+    <string name="scores_skill">רמה</string>
+    <string name="scores_moves">מהלכים</string>
+    <string name="scores_time">זמן</string>
+    <string name="scores_when">מתי</string>
+    <string name="menu_scores_reset">מחיקת כל השיאים</string>
+    <string name="scores_reset_confirm">למחוק את כל השיאים האישיים שלך?</string>
+
+    <string name="menu_hint">רמז</string>
+    <string name="menu_hint_count">רמז (%1$d)</string>
+    <string name="menu_tools">כלים</string>
+    <string name="menu_demo">הדגמה</string>
+    <string name="hint_strategy_signal">סמן את השגיאה</string>
+    <string name="hint_strategy_fix">תקן את השגיאה</string>
+    <string name="hint_limit_title">תקציב רמזים</string>
+    <string name="hint_limit_zero">כבוי</string>
+    <string name="hint_limit_value">%1$d%%</string>
+    <string name="demo_diff_random">אקראית</string>
+    <string name="demo_diff_progressive">מדורגת</string>
+    <string name="demo_skill_title">רמות</string>
+    <string name="demo_speed_title">קצב</string>
+    <string name="demo_speed_slow">אטי</string>
+    <string name="demo_speed_normal">רגיל</string>
+    <string name="demo_speed_fast">מהיר</string>
+    <string name="hints_section">רמזים</string>
+    <string name="hints_total">אריחים שטופלו ברמז: %1$d</string>
+    <string name="hints_none">ללא רמז</string>
+    <string name="hints_n">%1$d רמזים</string>
+    <string name="hints_column_tiles">רמזים</string>
+    <string name="demo_touch_return">גע במסך כדי לחזור למשחק</string>
+    <string name="demo_level_banner">הדגמה, רמה %1$s</string>
+
+    <string name="menu_lessons">למידה</string>
+    <string name="lesson_1_title">סיבוב וחיבור</string>
+    <string name="lesson_2_title">השיטה והנעילה</string>
+    <string name="lesson_3_title">העזרים</string>
+    <string name="lesson_4_title">לוח הטורוס</string>
+    <string name="lesson_5_title">האריחים הבלתי נראים</string>
+    <string name="lesson_6_title">הלוח האינסופי</string>
+    <string name="lesson_7_title">הערפל</string>
+    <string name="lesson_l1_b1">גע באריח כדי לסובב אותו רבע סיבוב. חבר את הרשת מהשרת אל המסוף.</string>
+    <string name="lesson_l1_b2">המשך כך: כל אריח המחובר לשרת נדלק.</string>
+    <string name="lesson_l1_b3">כל הכבוד, רשת פתורה! כך מנצחים כל משחק: מסובבים, מחברים, מדליקים.</string>
+    <string name="lesson_l2_b1">שיטה: התחל מהשרת ועקוב אחר הכבלים המחוברים, משכן לשכן. סובב אריח כדי להתחיל.</string>
+    <string name="lesson_l2_b2">לחיצה ארוכה על אריח שכוון נכון: הנעילה מגינה עליו מפני סיבוב ביש מזל.</string>
+    <string name="lesson_l2_b3">המשך משכן לשכן עד לניצחון, נועל את מה שאתה בטוח בו.</string>
+    <string name="lesson_l2_b4">הנעילה היא בעלת בריתך בלוחות גדולים: שמור על השיטה.</string>
+    <string name="lesson_l3_b1">הרמז המכוון מצביע על אריח לתיקון (מסגרת ירוקה). גע ברמז.</string>
+    <string name="lesson_l3_b2">הרמז המתקן מיישר את האריח וחותם אותו (נעילה סופית). גע ברמז.</string>
+    <string name="lesson_l3_b3">פתור משחק במקומך, מהלך אחר מהלך; משחק שנפתר כך לעולם לא נספר לשיאים. גע בפתור.</string>
+    <string name="lesson_l3_b4">העזרים נועדו לחלץ אותך ממבוי סתום, לא לשחק במקומך: אתה מחליט.</string>
+    <string name="lesson_l4_b1">לוח אמן: הקצוות מתעטפים. הלוח הוא טורוס: הימין מתחבר לשמאל, העליון מתחבר לתחתון.</string>
+    <string name="lesson_l4_b2">פתור אותו: לפחות כבל אחד חוצה את קצה הלוח כדי להתחבר מעבר לו.</string>
+    <string name="lesson_l4_b3">הטורוס נוכח בכל רמה מאמן ואילך: חשוב על הלוח בלי קצוות.</string>
+    <string name="lesson_l5_b1">רמת מטורף: חלק מהאריחים בלתי נראים. הסק את כיוונם משכניהם, ואז סובב אריח גלוי.</string>
+    <string name="lesson_l5_b2">המשך כך: כל שכן מגביל את האריחים הנסתרים, רק הניצחון חושף הכול.</string>
+    <string name="lesson_l5_b3">הרמז המתקן חושף אריח מוסתר: מהלך שמוצג, לעולם לא משוחק.</string>
+    <string name="lesson_l6_b1">לוח אינסופי: טורוס של 40 x 40, ממוסגר על השרת. גלול את החלון סיבוב מלא אופקית, עד שתמצא את השרת שוב.</string>
+    <string name="lesson_l6_b2">הלוח חוזר על עצמו לנצח: לעולם לא טבעת אפורה. עכשיו נסע אנכית, סיבוב מלא.</string>
+    <string name="lesson_l6_b3">צבוט בשתי אצבעות כדי להתקרב ולהתרחק: החלון הוא המצלמה שלך, העולם נשאר כפי שהוא.</string>
+    <string name="lesson_l6_b4">מצב אינסופי משוחק במצלמה: ללוח אין קצוות, רק חלונות.</string>
+    <string name="lesson_l7_b1">רמת ריק: ערפל מסתיר את הלוח. כל חיבור דוחק את הערפל לאחור. סובב אריח גלוי.</string>
+    <string name="lesson_l7_b2">המשך כך: כל חיבור שנכבש מאיר את הסביבה שמסביבו.</string>
+    <string name="lesson_l7_b3">ערפל נכבש אריח אחר אריח: האור עוקב אחר הרשת.</string>
+    <string name="lesson_completed">הושלם</string>
+    <string name="lesson_continue">המשך</string>
+</resources>

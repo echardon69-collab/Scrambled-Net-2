@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Deutsche Übersetzung (erster KI-Durchgang, 18.-19. November 2026,
+     experimentell — wartet auf die Durchsicht durch einen
+     deutschsprachigen Muttersprachler, bevor sie offiziell wird;
+     derselbe Prozess wie für Korsisch, Elsässisch, Chinesisch,
+     Spanisch, Portugugiesisch, Italienisch, Hebräisch und
+     Russisch: die KI übersetzt, der Korrektor liest und
+     überarbeitet, die Korrekturen kehren auf demselben Weg
+     zurück). Dieselben Schlüssel wie in values/strings.xml
+     (Paarbarkeit prüft tools/validate_langues.py). Anrede mit
+     «du», wie in Spielen üblich; deutsche Anführungszeichen
+     „…“, ausgeschriebene Majuskeln-Betonung aus dem Original
+     INVISIBLE/TORUS/NEBEL bleibt erhalten.
+
+     Glossar (EN → DE):
+       tile → Kachel ; board → Spielbrett (kurz: Brett) ; server →
+       Server ; terminal → Terminal ; network → Netzwerk ; wiring →
+       Verkabelung ; hidden wiring → verborgene Verkabelung ;
+       lock/unlock → Sperre/entsperren ; hint → Tipp ; hint
+       allowance → Tipp-Limit ; moves → Züge ; fog → Nebel ;
+       torus (edges wrap around) → Torus: die Ränder verbinden
+       sich ; panning → Verschieben ; zoom → Zoom ; camera →
+       Kamera ; personal best → persönliche Bestleistung ;
+       settings → Einstellungen ;
+       Stufen: Novice → Anfänger, Normal → Normal, Expert →
+       Experte, Master → Meister, Insane → Verrückt, Endless →
+       Endlos, Abyss → Abgrund, Void → Leere. Eigennamen und
+       «blips» bleiben unübersetzt. Platzhalter %1$d / %1$s /
+       %2$d und Zeilenumbrüche «\n» bleiben unangetastet.
+-->
+<resources>
+    <string name="app_name">Scrambled Net 2</string>
+
+    <string name="menu_new">Neues Spiel</string>
+    <string name="menu_solve">Lösen</string>
+    <string name="menu_settings">Einstellungen</string>
+    <string name="menu_stop_solve">Lösen stoppen</string>
+    <string name="solver_used">Auto-Löser benutzt — dieses Spiel zählt nicht zum Ergebnis.</string>
+    <string name="menu_skill">Schwierigkeitsgrad</string>
+    <string name="menu_sounds">Töne</string>
+    <string name="sounds_off">Stumm</string>
+    <string name="sounds_quiet">Leise</string>
+    <string name="sounds_full">Voll</string>
+    <string name="menu_anim">Animation</string>
+    <string name="anim_off">Ohne Animation</string>
+    <string name="anim_on">Animation</string>
+
+    <string name="menu_lang">Sprache</string>
+    <string name="lang_system">Dem System folgen</string>
+
+    <string name="skill_novice_desc">Spielbrett %1$d × %2$d — zwei Zweige, offene Ränder</string>
+    <string name="skill_normal_desc">Spielbrett %1$d × %2$d — zwei Zweige, offene Ränder</string>
+    <string name="skill_expert_desc">Spielbrett %1$d × %2$d — zwei Zweige, offene Ränder</string>
+    <string name="skill_master_desc">Spielbrett %1$d × %2$d — Torus: die Ränder verbinden sich, drei Zweige</string>
+    <string name="skill_insane_desc">Spielbrett %1$d × %2$d — Torus, drei Zweige, verborgene Verkabelung an Abzweigungen</string>
+    <string name="skill_endless_desc">Spielbrett %1$d × %2$d — Torus, beim Verschieben erscheint nie ein Rand</string>
+    <string name="skill_abyss_desc">Spielbrett %1$d × %2$d — Torus, verborgene Verkabelung an Abzweigungen</string>
+    <string name="skill_void_desc">Spielbrett %1$d × %2$d — Torus, verborgene Verkabelung, Nebel über dem Netzwerk</string>
+
+    <string name="help_master">Auf der Stufe Meister verbinden sich die Ränder des
+        Spielbretts: die Kacheln am rechten Rand sind mit den Kacheln
+        am linken Rand verbunden, und umgekehrt. Ebenso oben und unten.</string>
+    <string name="help_insane">Auf der Stufe Verrückt verbinden sich die Ränder des
+        Spielbretts: die Kacheln am rechten Rand sind mit den Kacheln
+        am linken Rand verbunden, und umgekehrt. Ebenso oben und unten.
+        Doch zusätzlich ist in Kacheln mit 3 oder 4 Anschlüssen die
+        Verkabelung unsichtbar. Viel Glück!</string>
+    <string name="help_abyss">Auf der Stufe Abgrund ist das Spielbrett endlos: es
+        umfasst 40 mal 40 Kacheln, und seine Ränder verbinden sich,
+        sodass beim Verschieben nie ein Ende erscheint. Zusätzlich ist
+        in Kacheln mit 3 oder 4 Anschlüssen die Verkabelung unsichtbar.
+        Viel Glück!</string>
+    <string name="help_void">Auf der Stufe Leere ist das Spielbrett endlos: es
+        umfasst 40 mal 40 Kacheln, und seine Ränder verbinden sich. In
+        Kacheln mit 3 oder 4 Anschlüssen ist die Verkabelung unsichtbar.
+        Und zusätzlich verhüllt ein Nebel die Kacheln abseits des
+        Netzwerks, das mit dem Server verbunden ist: sichtbar bleibt
+        nur die Umgebung der verbundenen Kacheln. Viel Glück!</string>
+    <string name="menu_scores">Bestenliste</string>
+    <string name="menu_help">Hilfe</string>
+    <string name="menu_about">Über das Spiel</string>
+
+    <string name="skill_novice">Anfänger</string>
+    <string name="skill_normal">Normal</string>
+    <string name="skill_expert">Experte</string>
+    <string name="skill_master">Meister</string>
+    <string name="skill_insane">Verrückt</string>
+    <string name="skill_endless">Endlos</string>
+    <string name="skill_abyss">Abgrund</string>
+    <string name="skill_void">Leere</string>
+
+    <string name="status_moves">Züge: %1$d</string>
+    <string name="status_time">Zeit: %1$s</string>
+
+    <string name="win_title">Du hast gewonnen!</string>
+    <string name="win_pbest_title">Neue persönliche Bestleistung!</string>
+    <string name="win_text">Glückwunsch! Du hast das Rätsel in %1$s mit %2$d Zügen gelöst.</string>
+    <string name="best_moves_text">Das ist deine bisher beste Zugzahl auf dieser Stufe!</string>
+    <string name="best_time_text">Das ist deine bisher schnellste Zeit auf dieser Stufe!</string>
+    <string name="best_both_text">Das ist deine bisher beste Zugzahl und schnellste Zeit auf dieser Stufe!</string>
+    <string name="win_new">Neues Spiel</string>
+    <string name="win_continue">Weiterspielen</string>
+
+    <string name="title_version">Version %1$s</string>
+    <string name="title_license">Basiert auf Scrambled Net (© 2007–2010 Ian Cameron Smith,\n© 2014 Michael Mueller), einer Portierung des KDE-Spiels KNetWalk.\nDiese Version: © 2026 Eric Chardon — GPL-2.0.</string>
+    <string name="title_loading">Gespeichertes Spiel wird geladen…</string>
+    <string name="title_checking">Suche nach Updates…</string>
+    <string name="title_update_available">Version %1$s ist verfügbar.</string>
+    <string name="title_update_button">Aktualisieren</string>
+    <string name="title_play_button">Spielen</string>
+    <string name="title_download_status">Version %1$s wird geladen…</string>
+    <string name="title_install_status">Installation…</string>
+    <string name="title_install_permission">Erlaube die Installation unbekannter Apps in den Android-Einstellungen und tippe dann erneut auf „Aktualisieren“.</string>
+    <string name="title_install_failed">Aktualisierung fehlgeschlagen (%1$s). Du kannst weiterspielen.</string>
+
+    <string name="version_obsolete">Veraltete Version!</string>
+    <string name="version_obsolete_detail">Diese Entwicklungsversion ist abgelaufen. Installiere die offizielle Version.</string>
+    <string name="version_obsolete_quitter">Beenden</string>
+
+    <string name="confirm_new_title">Neues Spiel?</string>
+    <string name="confirm_change_title">Stufe wechseln?</string>
+    <string name="confirm_change_ok">Stufe wechseln</string>
+    <string name="confirm_progress_message">Ein Spiel läuft (%1$d Züge, %2$s). Es geht verloren.</string>
+
+    <string name="scores_title">Persönliche Bestleistungen</string>
+    <string name="scores_movestitle">Wenigste Züge</string>
+    <string name="scores_timestitle">Schnellste Zeit</string>
+    <string name="scores_skill">Stufe</string>
+    <string name="scores_moves">Züge</string>
+    <string name="scores_time">Zeit</string>
+    <string name="scores_when">Datum</string>
+    <string name="menu_scores_reset">Alle Bestleistungen zurücksetzen</string>
+    <string name="scores_reset_confirm">Alle deine persönlichen Bestleistungen löschen?</string>
+
+    <string name="menu_hint">Tipp</string>
+    <string name="menu_hint_count">Tipp (%1$d)</string>
+    <string name="menu_tools">Werkzeuge</string>
+    <string name="menu_demo">Demo</string>
+    <string name="hint_strategy_signal">Fehler hervorheben</string>
+    <string name="hint_strategy_fix">Fehler beheben</string>
+    <string name="hint_limit_title">Tipp-Limit</string>
+    <string name="hint_limit_zero">Deaktiviert</string>
+    <string name="hint_limit_value">%1$d%%</string>
+    <string name="demo_diff_random">Zufällig</string>
+    <string name="demo_diff_progressive">Fortschreitend</string>
+    <string name="demo_skill_title">Stufen</string>
+    <string name="demo_speed_title">Tempo</string>
+    <string name="demo_speed_slow">Langsam</string>
+    <string name="demo_speed_normal">Normal</string>
+    <string name="demo_speed_fast">Schnell</string>
+    <string name="hints_section">Tipps</string>
+    <string name="hints_total">Vom Tipp behandelte Kacheln: %1$d</string>
+    <string name="hints_none">ohne Tipp</string>
+    <string name="hints_n">%1$d Tipps</string>
+    <string name="hints_column_tiles">Tipps</string>
+    <string name="demo_touch_return">Tippe, um zum Spiel zurückzukehren</string>
+    <string name="demo_level_banner">Demo-Stufe %1$s</string>
+
+    <string name="menu_lessons">Lektionen</string>
+    <string name="lesson_1_title">Drehen und Verbinden</string>
+    <string name="lesson_2_title">Methode und Sperre</string>
+    <string name="lesson_3_title">Helfer</string>
+    <string name="lesson_4_title">Das torusförmige Brett</string>
+    <string name="lesson_5_title">Unsichtbare Kacheln</string>
+    <string name="lesson_6_title">Das endlose Brett</string>
+    <string name="lesson_7_title">Der Nebel</string>
+    <string name="lesson_l1_b1">Tippe eine Kachel an, um sie um eine Vierteldrehung zu drehen. Verbinde das Netzwerk vom Server zum Terminal.</string>
+    <string name="lesson_l1_b2">Weiter so: jede Kachel, die mit dem Server verbunden ist, leuchtet auf.</string>
+    <string name="lesson_l1_b3">Gut gemacht, Netzwerk gelöst! So wird jedes Spiel gewonnen: drehen, verbinden, aufleuchten.</string>
+    <string name="lesson_l2_b1">Die Methode: starte beim Server und folge den verbundenen Kabeln, von Nachbar zu Nachbar. Drehe eine Kachel, um zu beginnen.</string>
+    <string name="lesson_l2_b2">Langes Drücken einer richtig gedrehten Kachel: die Sperre schützt sie vor einem unglücklichen Dreh.</string>
+    <string name="lesson_l2_b3">Gehe weiter von Nachbar zu Nachbar bis zum Sieg und sperre, was du sicher weißt.</string>
+    <string name="lesson_l2_b4">Die Sperre ist dein Verbündeter auf großen Spielfeldern: behalte die Methode.</string>
+    <string name="lesson_l3_b1">Der hinweisende Tipp zeigt auf eine Kachel, die zu korrigieren ist (grüner Rahmen). Tippe auf „Tipp“.</string>
+    <string name="lesson_l3_b2">Der korrigierende Tipp stellt die Kachel aufrecht und versiegelt sie (endgültige Sperre). Tippe auf „Tipp“.</string>
+    <string name="lesson_l3_b3">Lösen spielt für dich, einen Zug nach dem anderen; ein so gelöstes Spiel zählt nie zu den Bestleistungen. Tippe auf „Lösen“.</string>
+    <string name="lesson_l3_b4">Helfer sind dazu da, weiterzuhelfen, nicht für dich zu spielen: deine Entscheidung.</string>
+    <string name="lesson_l4_b1">Meister-Brett: die Ränder verbinden sich. Das Brett ist ein TORUS: rechts verbindet sich mit links, oben mit unten.</string>
+    <string name="lesson_l4_b2">Löse es: mindestens ein Kabel überschreitet den Rand des Bretts, um sich dahinter zu verbinden.</string>
+    <string name="lesson_l4_b3">Der Torus ist ab Meister überall: denk an das Brett ohne Ränder.</string>
+    <string name="lesson_l5_b1">Stufe Verrückt: einige Kacheln sind UNSICHTBAR. Leite ihre Ausrichtung von ihren Nachbarn ab und drehe dann eine sichtbare Kachel.</string>
+    <string name="lesson_l5_b2">Weiter so: jeder Nachbar schränkt die verborgenen Kacheln ein, erst der Sieg deckt alles auf.</string>
+    <string name="lesson_l5_b3">Der korrigierende Tipp deckt eine verhüllte Kachel auf: ein Zug gezeigt, nie gespielt.</string>
+    <string name="lesson_l6_b1">Endloses Brett: ein 40 x 40 Torus, gerahmt vom Server. Verschiebe das Fenster eine ganze Runde horizontal, bis du den Server WIEDERFINDEST.</string>
+    <string name="lesson_l6_b2">Das Brett wiederholt sich endlos: kein grauer Ring. Jetzt reise vertikal, eine ganze Runde.</string>
+    <string name="lesson_l6_b3">Zusammenschieben zum Zoomen: das Fenster ist deine Kamera, die Welt bleibt dieselbe.</string>
+    <string name="lesson_l6_b4">Der Endlos-Modus wird mit der Kamera gespielt: das Brett hat keine Ränder, nur Fenster.</string>
+    <string name="lesson_l7_b1">Stufe Leere: NEBEL verhüllt das Brett. Jede Verbindung drückt den Schleier zurück. Drehe eine sichtbare Kachel.</string>
+    <string name="lesson_l7_b2">Weiter so: jede gewonnene Verbindung beleuchtet die Gegend um sie herum.</string>
+    <string name="lesson_l7_b3">Der Nebel wird Kachel für Kachel besiegt: das Licht folgt dem Netzwerk.</string>
+    <string name="lesson_completed">Abgeschlossen</string>
+    <string name="lesson_continue">Weiter</string>
+</resources>

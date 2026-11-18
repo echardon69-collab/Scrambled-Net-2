@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Drapeau de la Russie — chantier traduction (russe expérimental,
+     18 nov. 2026). Ratio officiel 2:3, donc viewBox 600 X 400 et
+     drawable 22,5 dp X 15 dp : trois bandes horizontales égales de
+     133,33 unités — blanc en haut, bleu au milieu, rouge en bas.
+     Teintes officielles du drapeau d'État : #FFFFFF, #0039A6,
+     #D52B1E. Aucun emblème : le tricolore russe n'en porte pas.
+     Pas de dégradé ni de clip : le convertisseur accepte des
+     remplissages unis seulement (l'ombrage est synthétique). -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400">
+  <rect x="0" y="0" width="600" height="133.33" fill="#FFFFFF"/>
+  <rect x="0" y="133.33" width="600" height="133.34" fill="#0039A6"/>
+  <rect x="0" y="266.67" width="600" height="133.33" fill="#D52B1E"/>
+</svg>

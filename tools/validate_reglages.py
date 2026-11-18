@@ -482,14 +482,14 @@ check("Manifest : SettingsActivity déclarée, interne, titrée "
                 r'android:parentActivityName="\.MainActivity"',
                 manifest_src, re.S) is not None)
 # Corse puis alsacien ajoutés (chantier traduction, 16 nov. 2026),
-# puis chinois simplifié, espagnol, portugais et italien (18 nov.
-# 2026, traductions expérimentales en attente de relecture
-# native) : localeConfig déclare HUIT langues — en base ; fr, co,
-# gsw-FR (alsacien), zh-CN, es, pt et it traductions. Le pin
-# exige le compte exact pour qu'une neuvième langue n'entre pas
-# sans que ce check soit relu.
-check("Manifest : localeConfig déclare exactement les huit langues "
-      "de l'app (en base ; fr, co, gsw-FR, zh-CN, es, pt et it traductions)",
+# puis chinois simplifié, espagnol, portugais, italien, hébreu,
+# russe et allemand (18-19 nov. 2026, traductions expérimentales
+# en attente de relecture native) : localeConfig déclare ONZE
+# langues — en base ; fr, co, gsw-FR (alsacien), zh-CN, es, pt,
+# it, he, ru et de traductions. Le pin exige le compte exact pour
+# qu'une douzième langue n'entre pas sans que ce check soit relu.
+check("Manifest : localeConfig déclare exactement les onze langues "
+      "de l'app (en base ; fr, co, gsw-FR, zh-CN, es, pt, it, he, ru et de traductions)",
       'android:localeConfig="@xml/locales_config"' in manifest_src
       and '<locale android:name="en" />' in locales_src
       and '<locale android:name="fr" />' in locales_src
@@ -499,7 +499,10 @@ check("Manifest : localeConfig déclare exactement les huit langues "
       and '<locale android:name="es" />' in locales_src
       and '<locale android:name="pt" />' in locales_src
       and '<locale android:name="it" />' in locales_src
-      and locales_src.count("<locale ") == 8)
+      and '<locale android:name="he" />' in locales_src
+      and '<locale android:name="ru" />' in locales_src
+      and '<locale android:name="de" />' in locales_src
+      and locales_src.count("<locale ") == 11)
 check("Manifest : auto-stockage appcompat de la langue "
       "(AppLocalesMetadataHolderService, marqueur autoStoreLocales, "
       "jamais exporté)",

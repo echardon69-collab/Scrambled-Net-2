@@ -81,6 +81,20 @@ object AppLanguages {
         // expérimentale — relecteur natif attendu avant toute
         // officialisation, comme l'espagnol et le portugais.
         AppLanguage("it", "Italiano"),
+        // עברית (18-19 nov. 2026) : première passe IA
+        // expérimentale — PREMIÈRE LANGUE RTL du jeu : le manifeste
+        // porte supportsRtl=true, Android reflète la mise en page
+        // seul, rien à faire côté écrans. Relecteur natif attendu
+        // avant toute officialisation, comme es/pt/it.
+        AppLanguage("he", "עברית"),
+        // Русский (18-19 nov. 2026) : première passe IA
+        // expérimentale — relecteur natif attendu avant toute
+        // officialisation, comme l'hébreu et es/pt/it.
+        AppLanguage("ru", "Русский"),
+        // Deutsch (18-19 nov. 2026) : première passe IA
+        // expérimentale — relecteur natif attendu avant toute
+        // officialisation, comme le russe et l'hébreu.
+        AppLanguage("de", "Deutsch"),
     )
 
     /**

@@ -2,14 +2,14 @@
 <!-- Langues de l'application (page Réglages, v3 du 14 nov. 2026 ;
      corse puis alsacien ajoutés le 16 nov. 2026, chantier traduction ;
      chinois simplifié, espagnol, portugais puis italien ajoutés
-     le 18 nov. 2026, traductions expérimentales, relecture
-     native en attente).
+     le 18 nov. 2026, puis hébreu, russe et allemand le 18-19
+     nov. 2026, traductions expérimentales, relecture native en attente).
      Déclaré au manifeste par android:localeConfig : sur Android 13+,
      le réglage système « langue par application » propose exactement
-     ces huit langues. La base est l'anglais (values), le français,
+     ces onze langues. La base est l'anglais (values), le français,
      le corse et l'alsacien sont les traductions (values-fr,
      values-co, values-gsw-rFR, values-zh-rCN, values-es,
-     values-pt, values-it) ; la page Réglages force en ou fr
+     values-pt, values-it, values-he, values-ru, values-de) ; la page Réglages force en ou fr
      via appcompat, ou suit le système — c'est ainsi que le corse
      et l'alsacien s'activent jusqu'au chantier « sélecteur de
      langue dynamique ». L'alsacien n'a pas de code Android propre :
@@ -23,4 +23,7 @@
     <locale android:name="es" />
     <locale android:name="pt" />
     <locale android:name="it" />
+    <locale android:name="he" />
+    <locale android:name="ru" />
+    <locale android:name="de" />
 </locale-config>

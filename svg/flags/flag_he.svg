@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Drapeau d'Israël — chantier traduction (hébreu expérimental,
+     18 nov. 2026). Géométrie de la LOI de 1949 (déclaration de
+     l'assemblée provisoire, approuvée par la Knesset) : drapeau de
+     220 cm de long sur 160 cm de haut, fond blanc, deux bandes
+     bleu tekhélèth de 25 cm de haut chacune, la supérieure à
+     15 cm du bord supérieur (et son symétrique du bas) — reportée
+     ici X2,5 dans un viewBox 550 X 400 : bandes de 62,5 unités
+     à 37,5 du bord, espace central de 100 à 300. La loi ne fixe
+     PAS la teinte exacte du bleu : #0038B8, le tekhélèth des
+     drapeaux usuels. Le maguen David de la loi est fait de six
+     bandes de 5,5 cm formant deux triangles : à 15 dp de haut,
+     ces bandes seraient illisibles — il est schématisé en DEUX
+     TRIANGLES PLEINS superposés (silhouette hexagramme),
+     circumrayon 80 centré (275, 200), pointe en haut et pointe
+     en bas, bases parallèles aux bandes comme le veut la loi.
+     Pas de dégradé ni de clip : le convertisseur accepte des
+     remplissages unis seulement (l'ombrage est synthétique). -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 550 400">
+  <rect x="0" y="0" width="550" height="400" fill="#FFFFFF"/>
+  <rect x="0" y="37.5" width="550" height="62.5" fill="#0038B8"/>
+  <rect x="0" y="300" width="550" height="62.5" fill="#0038B8"/>
+  <polygon points="275,120 344.28,240 205.72,240" fill="#0038B8"/>
+  <polygon points="275,280 205.72,160 344.28,160" fill="#0038B8"/>
+</svg>

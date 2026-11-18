@@ -56,6 +56,37 @@ officielle 30 × 20, polygones à cinq branches). Relecture native
 attendue avant toute officialisation, même processus que le corse
 et l'alsacien.
 
+Extension « traduction en allemand » (18-19 nov. 2026,
+expérimentale) : première passe IA d'allemand (de), intégrée
+COMPLÈTE comme le mandarin — les trois sources ensemble, jamais
+l'une sans les autres : le dossier values-de, la locale de dans
+locales_config, la ligne AppLanguage et le drapeau de l'Allemagne
+(tricolore officiel 3:5, trois bandes horizontales égales aux
+teintes officielles #000000/#DD0000/#FFCE00, sans emblème : le
+drapeau n'en porte pas). Relecture native attendue avant toute
+officialisation.
+
+Extension « traduction en russe » (18-19 nov. 2026,
+expérimentale) : première passe IA de russe (ru), intégrée
+COMPLÈTE comme le mandarin — les trois sources ensemble, jamais
+l'une sans les autres : le dossier values-ru, la locale ru dans
+locales_config, la ligne AppLanguage et le drapeau de la Russie
+(tricolore officiel 2:3, trois bandes horizontales égales aux
+teintes officielles #FFFFFF/#0039A6/#D52B1E, sans emblème : le
+tricolore n'en porte pas). Relecture native attendue avant toute
+officialisation.
+
+Extension « traduction en hébreu » (18-19 nov. 2026,
+expérimentale) : première passe IA d'hébreu (he), PREMIÈRE LANGUE
+RTL du jeu — intégrée COMPLÈTE comme le mandarin : le dossier
+values-he, la locale he dans locales_config, la ligne AppLanguage
+et le drapeau d'Israël (géométrie de la LOI de 1949 reportée dans
+un viewBox 550 X 400 : bandes de 25 cm à 15 cm du bord, maguen
+David de la loi — six bandes de 5,5 cm — schématisé en deux
+triangles pleins, illisibles autrement à 15 dp). Le manifeste
+porte supportsRtl=true : Android reflète la mise en page seul.
+Relecture native attendue avant toute officialisation.
+
 Extension « traduction en italien » (18 nov. 2026,
 expérimentale) : première passe IA d'italien (it), intégrée
 COMPLÈTE comme le mandarin — le dossier values-it, la locale it
@@ -166,15 +197,18 @@ check("AppLanguages : objet AppLanguages avec ALL en liste",
 pairs = [(t, e, d or None) for t, e, d in re.findall(
     r'AppLanguage\("([^"]+)",\s*"([^"]+)"'
     r'(?:,\s*drapeauPays\s*=\s*"([^"]*)")?\),?', al_src)]
-check("AppLanguages : les huit langues, tags, endonymes et "
+check("AppLanguages : les onze langues, tags, endonymes et "
       "drapeaux pays épinglés (fr, en, co, gsw-FR, zh-CN, es, pt, "
-      "it — continuité de la page v3 puis langues ajoutées)",
+      "it, he, ru, de — continuité de la page v3 puis langues ajoutées)",
       pairs == [("fr", "Français", None), ("en", "English", None),
                 ("co", "Corsu", "fr"), ("gsw-FR", "Elsässisch", "fr"),
                 ("zh-CN", "简体中文", None),
                 ("es", "Español", None),
                 ("pt", "Português", None),
-                ("it", "Italiano", None)],
+                ("it", "Italiano", None),
+                ("he", "עברית", None),
+                ("ru", "Русский", None),
+                ("de", "Deutsch", None)],
       str(pairs))
 check("AppLanguages : drapeau NATIONAL réservé aux langues "
       "SECONDAIRES d'un pays (v21, demande d'eric : corse et "
@@ -198,8 +232,8 @@ locale_tags = re.findall(r'<locale android:name="([^"]+)" />',
                         locales_src)
 app_tags = [tag for tag, _, _ in pairs]
 check("Cohérence : locales_config et AppLanguages portent les "
-      "MÊMES langues (set, compte exact 8)",
-      len(locale_tags) == 8
+      "MÊMES langues (set, compte exact 11)",
+      len(locale_tags) == 11
       and set(locale_tags) == set(app_tags),
       f"locales_config={locale_tags} AppLanguages={app_tags}")
 
@@ -335,6 +369,9 @@ lang_files = {
     "values-es": RES / "values-es/strings.xml",
     "values-pt": RES / "values-pt/strings.xml",
     "values-it": RES / "values-it/strings.xml",
+    "values-he": RES / "values-he/strings.xml",
+    "values-ru": RES / "values-ru/strings.xml",
+    "values-de": RES / "values-de/strings.xml",
 }
 for dossier, chemin in sorted(lang_files.items()):
     src = read(chemin)
@@ -352,14 +389,14 @@ check("Tests JVM : AppLanguagesTest existe et épingle le piège "
       (TESTS / "AppLanguagesTest.kt").exists()
       and '"gsw-FR"' in test_src
       and 'assertNull(AppLanguages.byTag("gsw"))' in test_src)
-check("Tests JVM : les huit langues et endonymes épinglés, "
+check("Tests JVM : les onze langues et endonymes épinglés, "
       "correspondance exacte et endonymes sains",
-      "listsAllEightLanguagesInDisplayOrder" in test_src
+      "listsAllElevenLanguagesInDisplayOrder" in test_src
       and "byTagIsExactMatchOnly" in test_src
       and "endonymsAreNotBlankAndDistinct" in test_src)
 check("Tests JVM : drapeau NATIONAL pour les seules langues "
       "secondaires (v21 : co et gsw-FR portent « fr », fr, en, "
-      "zh-CN, es, pt et it n'en portent PAS)",
+      "zh-CN, es, pt, it, he, ru et de n'en portent PAS)",
       "countryFlagsOnlyOnSecondaryLanguages" in test_src
       and "?.drapeauPays" in test_src)
 
@@ -372,7 +409,10 @@ flag_tags = (("fr", "flag_fr", "22.5", "900", "600"),
              ("zh-CN", "flag_zh", "22.5", "900", "600"),
              ("es", "flag_es", "22.5", "750", "500"),
              ("pt", "flag_pt", "22.5", "600", "400"),
-             ("it", "flag_it", "22.5", "600", "400"))
+             ("it", "flag_it", "22.5", "600", "400"),
+             ("he", "flag_he", "20.625", "550", "400"),
+             ("ru", "flag_ru", "22.5", "600", "400"),
+             ("de", "flag_de", "25", "750", "450"))
 for tag, drawable, w, vw, vh in flag_tags:
     svg = FLAGS_SVG / f"{drawable}.svg"
     check(f"Drapeau {tag} : source svg/flags/{drawable}.svg "
@@ -463,12 +503,12 @@ check("Drapeaux : les items de la feuille et l'entrée résumé "
       and "compoundDrawablePadding" in sa_src
       and re.search(r"\.getIdentifier\(", sa_src) is None)
 flags_svg = sorted(f.name for f in FLAGS_SVG.glob("flag_*.svg"))
-check("Drapeaux : autant de sources que de langues (compte exact 8 "
+check("Drapeaux : autant de sources que de langues (compte exact 11 "
       "des deux côtés)",
-      len(flags_svg) == 8
+      len(flags_svg) == 11
       and len([t for t in locale_tags if t in
                dict((tag, drawable) for tag, drawable, *_ in flag_tags)])
-      == 8)
+      == 11)
 check("Drapeaux : la source unique des règles — convert_flags "
       "réutilise convert_tiles ET generate_graphics, jamais de "
       "règles retapées",

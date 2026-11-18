@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Drapeau de l'Allemagne — chantier traduction (allemand
+     expérimental, 18-19 nov. 2026). Ratio officiel 3:5, donc
+     viewBox 750 X 450 et drawable 25 dp X 15 dp : trois bandes
+     horizontales égales de 150 unités — noir en haut, rouge au
+     milieu, or en bas. Teintes officielles du drapeau fédéral :
+     #000000, #DD0000, #FFCE00. Aucun emblème : le drapeau
+     tricolore allemand n'en porte pas. Pas de dégradé ni de
+     clip : le convertisseur accepte des remplissages unis
+     seulement (l'ombrage est synthétique). -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 750 450">
+  <rect x="0" y="0" width="750" height="150" fill="#000000"/>
+  <rect x="0" y="150" width="750" height="150" fill="#DD0000"/>
+  <rect x="0" y="300" width="750" height="150" fill="#FFCE00"/>
+</svg>

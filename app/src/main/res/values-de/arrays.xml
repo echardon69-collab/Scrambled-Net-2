@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Deutsche Übersetzung (erster KI-Durchgang, 18.-19. November 2026,
+     experimentell — wartet auf die Durchsicht durch einen
+     deutschsprachigen Muttersprachler; derselbe Prozess wie für
+     values-de/strings.xml: die KI übersetzt, der Korrektor
+     überarbeitet). Dieselben vier Arrays und dieselben 26
+     Einträge wie in values/arrays.xml (Paarbarkeit prüft
+     tools/validate_langues.py). Anrede mit «du».
+
+     Das Glossar steht in values-de/strings.xml. Eigennamen und
+     «blips» bleiben unübersetzt; die Zeilenumbrüche «\n» sind
+     buchstäbliche Escapesequenzen wie im Original; deutsche
+     Anführungszeichen „…“.
+-->
+<resources>
+
+    <!-- Titel der Hilfekapitel (gleiche Struktur wie im Original). -->
+    <string-array name="help_titles">
+        <item>Das Spiel</item>
+        <item>Bedienung</item>
+        <item>Schwierigkeitsgrade</item>
+        <item>Punktezählung</item>
+        <item>Tipps</item>
+    </string-array>
+
+    <!-- Texte der Hilfekapitel. -->
+    <string-array name="help_texts">
+        <item>Scrambled Net 2 ist ein einfaches Rätselspiel, in dem du
+            die Verbindungen eines Computernetzwerks ordnest, damit alle
+            Terminals mit dem Server verbunden sind. Das Netzwerk besteht
+            aus Kacheln; alle stehen an der richtigen Stelle, wurden aber
+            zufällig zu einem wirren Durcheinander gedreht.\n\nDrehe
+            einzelne Kacheln, um das Netzwerk wieder zu verbinden. Mit
+            dem Server verbundene Kacheln werden hervorgehoben. Ist
+            jedes Terminal verbunden, hast du gewonnen.</item>
+        <item>Tippe eine Kachel an, um sie im Uhrzeigersinn zu drehen.
+            Drücke eine Kachel lange, um sie zu sperren, wenn du sicher
+            bist, oder um sie zu entsperren; gesperrte Kacheln antworten
+            mit einem kurzen Klick.\n\nVerschiebe das Brett mit einem
+            Finger, zoome mit zwei Fingern.</item>
+        <item>Es gibt fünf Schwierigkeitsgrade. Höhere Grade haben
+            größere Spielfelder, die fortgeschrittensten bringen eigene
+            Kniffe:\n\n• Anfänger: ein kleines Brett.\n\n• Normal: ein
+            etwas größeres Brett.\n\n• Experte: ein großes Brett.\n\n•
+            Meister: ein großes Brett, dessen Ränder sich verbinden —
+            eine Verbindung, die am rechten Rand hinausläuft, kommt am
+            linken Rand herein, und genauso oben und unten.\n\n•
+            Verrückt: wie Meister, aber alle Kacheln mit 3 und 4
+            Anschlüssen sind unsichtbar. Für ein verrücktes Rätsel
+            brauchst du ein ganz neues Bündel von Schlussfolgerungen.</item>
+        <item>Jeder Sieg zählt deine Züge und deine Zeit, und deine
+            persönlichen Bestleistungen werden für jeden
+            Schwierigkeitsgrad aufbewahrt — aber nur, wenn du das Rätsel
+            selbst gelöst hast: ein Spiel mit benutztem Auto-Löser wird
+            nie gewertet.\n\nSiehe „Bestenliste“ im Menü.</item>
+        <item>Arbeite vom Server nach außen: bestätigte Kacheln sind
+            deine Anker, sperre sie unterwegs fest.\n\nKacheln mit einem
+            einzelnen Anschluss sind Terminals — Sackgassen; richte sie
+            auf den Nachbarn, der sie braucht.\n\nWenn du ein ruhiges
+            Spielbrett bevorzugst, kannst du die Netzwerk-Animation im
+            Menü ausschalten.</item>
+    </string-array>
+
+    <!-- Titel der Kapitel der Seite «Über das Spiel». -->
+    <string-array name="about_titles">
+        <item>Das Spiel</item>
+        <item>Der Autor</item>
+        <item>Herkunft und Lizenz</item>
+        <item>Mitmachen</item>
+        <item>Neu in dieser Version</item>
+        <item>Anders als im Original</item>
+        <item>Wie im Original bewahrt</item>
+        <item>Weg vom Original gefallen</item>
+    </string-array>
+
+    <!-- Texte der Kapitel der Seite «Über das Spiel». Die Lizenz nennt
+         die ganze Kette: KDE-Spiel, Android-Portierung, dann diese
+         Neufassung. Das Kapitel «Mitmachen» ist absichtlich
+         repräsentativer Text: die echten Links gibt es noch nicht. -->
+    <string-array name="about_texts">
+        <item>Scrambled Net 2 ist eine moderne Neufassung mit offenen
+            Quellen von Scrambled Net, einer Android-Portierung des
+            KDE-Spiels KNetWalk. Entwirre ein durcheinandergebrachtes
+            Computernetzwerk, damit jedes Terminal mit dem Server
+            verbunden ist: alle Kacheln stehen richtig, nur gedreht.
+            Drehe sie eine nach der anderen, um das Netzwerk
+            wiederaufzubauen.</item>
+        <item>Scrambled Net 2 ist das Werk von Éric Chardon, einem
+            begeisterten Liebhaber von Logik- und Rätselspielen. Anfang
+            2010 entdeckte er die berühmte Anwendung von Ian Cameron
+            Smith, die mit ihrem Quellcode ausgeliefert wurde, und 2014
+            ihre Übernahme durch Michael Mueller — in der Erwartung,
+            dass dieser das Spiel weiterentwickeln und die Spieler
+            bei der Stange halten würde. Als die Jahre ohne erfüllte
+            Hoffnungen vergingen, beschloss er, die ersehnte Fortsetzung
+            selbst zu schreiben: diese moderne Neufassung mit offenen
+            Quellen, treu zum Original.\n\nUm diese Neufassung zu
+            entwerfen und zu schreiben, stützte er sich auf Vibe, den
+            Entwicklungsassistenten von Mistral AI: die
+            Spezifikationen, die Kotlin-Spiel-Engine, die
+            Benutzeroberfläche, die Tests und die Prüfskripte wurden
+            mit seiner Hilfe geschrieben, unter seiner Richtung,
+            Durchsicht und systematischen Validierung. Der so
+            entstandene Code gelangt unter derselben Lizenz GPL-2.0 ins
+            Repository.</item>
+        <item>KNetWalk, das ursprüngliche KDE-Spiel: © 2004–2007 Andi
+            Peredri, Thomas Nagy und Fela Winkelmolen.\n\nScrambled
+            Net, die Android-Portierung: © 2007–2010 Ian Cameron
+            Smith, © 2014 Michael Mueller.\n\nDiese Neufassung,
+            Scrambled Net 2: © 2026 Éric Chardon.\n\nAlles verbreitet
+            unter der Lizenz GPL-2.0 — dieses Spiel ist freie
+            Software.\n\nQuellcode:
+            https://github.com/echardon69-collab/Scrambled-Net-2</item>
+        <item>Du kannst helfen, das Spiel zu verbessern:\n\n• Einen
+            Fehler melden — Link folgt.\n\n• Den Autor kontaktieren —
+            Link folgt.\n\n• Eine Übersetzung in eine neue Sprache
+            vorschlagen — Link folgt.\n\n• Ein neues Kachel-Thema
+            vorschlagen — Link folgt.</item>
+        <item>Gegenüber dem Original fügt diese Neufassung hinzu:\n\n•
+            Die Endlos-Familie: drei neue Schwierigkeitsgrade (Endlos,
+            Abgrund, Leere) auf einem riesigen 40-×-40-Brett, dessen
+            Ränder sich verbinden — die Kamera läuft im Kreis, beim
+            Verschieben erscheint nie ein Rand; der Abgrund verbirgt
+            die Verkabelung, die Leere fügt Nebel über dem Netzwerk
+            hinzu.\n\n• Einen Titelbildschirm mit automatischen
+            Updates von GitHub, in zwei Vertriebs-Varianten: das
+            GitHub-APK mit eingebautem Updater, das Play-Store-APK
+            ohne ihn.\n\n• Eine Elektrizitätssignatur: die
+            Server-lichter und die Daten-blips pulsieren je nach
+            Generator, der das Brett gebaut hat, in unterschiedlichem
+            Rhythmus.\n\n• Die Beschreibung jedes Schwierigkeitsgrads —
+            echte Brettgröße und Regeln — auf der
+            Einstellungsseite.\n\n• Eine Spracheinstellung
+            (Englisch, Französisch oder dem System folgen).</item>
+        <item>Möglichkeiten, die das Original hatte, jetzt anders
+            gelöst:\n\n• Quellcode: Java und Ant wurden durch Kotlin
+            und Gradle ersetzt.\n\n• Grafik: die Bitmaps des Originals
+            sind jetzt VectorDrawables — gleicher Look, in jedem Zoom
+            gestochen scharf, eine Datei für jede
+            Bildschirmdichte.\n\n• Klang: keine Sample des Originals
+            wird wiederverwendet; stattdessen werden sechs kurze
+            Effekte synthetisiert.\n\n• Darstellung: statt einer
+            ständigen Animationsschleife zeichnet das Brett nur neu,
+            wenn sich etwas ändert — schont den Akku.\n\n• Das Brett
+            füllt den Bildschirm nicht mehr gestreckt: es ist ein
+            Kamerabildausschnitt, den du mit den Fingern verschieben
+            und zoomen kannst, und der Zoom bleibt unter ihnen
+            verankert.\n\n• Brett-Erzeugung: die Hälfte der Bretter
+            stammt von einem alternativen Spannbaum-Generator, der
+            jede Zelle verbindet (der Original-Generator baut
+            weiterhin die andere Hälfte — die
+            Elektrizitätssignatur unterscheidet beide).\n\n• Menüs:
+            eine Text-Aktionsleiste ohne Titel, die Einstellungen auf
+            einer einzigen Seite statt kaskadierender Untermenüs, und
+            der Info-Dialog wurde diese Seite.</item>
+        <item>Möglichkeiten des Originals, bewusst unverändert
+            erhalten:\n\n• Die fünf ursprünglichen Schwierigkeitsgrade
+            (Anfänger bis Verrückt) mit ihren genauen Regeln — die
+            Rand-Verbindung des Meisters, die verborgene Verkabelung
+            des Verrückten.\n\n• Den Original-Generator der Bretter:
+            jedes Rätsel ist lösbar, gewonnen ist das Spiel, wenn
+            jedes Terminal verbunden ist.\n\n• Die Brettgrößen passen
+            sich Bildschirm und Ausrichtung an, genauso wie die
+            Screen-Matrix des Originals.\n\n• Tippe eine Kachel, um
+            sie zu drehen, drücke lange, um sie zu sperren oder zu
+            entsperren.\n\n• Den Auto-Löser — ein so gelöstes Spiel
+            wird nie gewertet.\n\n• Persönliche Bestleistungen (Züge
+            und Zeit) für jeden Schwierigkeitsgrad.\n\n• Das
+            gespeicherte Spiel übersteht das Schließen der Anwendung
+            oder den Ruhezustand; die Uhr friert im Hintergrund
+            ein.\n\n• Die Regel-Erinnerungen beim Eintritt in Meister
+            oder Verrückt.\n\n• Die drei Klangmodi und die
+            Animationseinstellung.\n\n• Die Hilfe im Spiel.</item>
+        <item>Möglichkeiten des Originals, die entfernt wurden, und
+            warum:\n\n• Die D-Pad-, Trackball- und
+            Tastatur-Steuerung: diese Neufassung ist rein auf
+            Berührung gebaut, für moderne Telefone und Tablets.\n\n•
+            Den dauerhaften roten Fokuszeiger, entworfen für die
+            D-Pad-Ära: bei direkter Berührung war er Rauschen statt
+            Hilfe — das Fehler-Blinken und der wandernde Zeiger des
+            Auto-Lösers übernehmen seine Aufgabe.\n\n• Jede Abhängigkeit
+            des Originals (die Bibliotheken HermitAndroid und
+            HermitLibrary, samt dem Zufallsgenerator MTRandom,
+            ersetzt durch Kotlins Standard-Generator): die Engine
+            wurde von Grund auf in Kotlin neu geschrieben, als reine,
+            unit-getestete Spiel-Engine — keine Zeile des Originals
+            wird wiederverwendet.</item>
+    </string-array>
+
+</resources>
