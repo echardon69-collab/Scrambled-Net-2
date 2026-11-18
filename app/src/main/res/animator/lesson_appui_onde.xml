@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Onde de contact : rayonne puis s'éteindre sur le cycle
+     d'appui complet (350 + 350 ms, épinglé). -->
+<objectAnimator xmlns:android="http://schemas.android.com/apk/res/android"
+    android:propertyName="alpha"
+    android:valueType="floatType"
+    android:valueFrom="0.85"
+    android:valueTo="0"
+    android:duration="700"
+    android:repeatCount="0"
+    android:repeatMode="restart"
+    android:interpolator="@android:interpolator/decelerate_quad" />

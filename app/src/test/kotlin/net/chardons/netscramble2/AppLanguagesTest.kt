@@ -16,15 +16,18 @@ import org.junit.Test
 class AppLanguagesTest {
 
     @Test
-    fun listsAllFourLanguagesInDisplayOrder() {
+    fun listsAllFiveLanguagesInDisplayOrder() {
         // Ordre d'affichage du sélecteur : continuité de la page v3
-        // (Français avant English), puis les langues ajoutées.
+        // (Français avant English), puis les langues ajoutées —
+        // le chinois simplifié du 18 nov. 2026, première
+        // passe IA expérimentale en attente de relecture native.
         assertEquals(
-            listOf("fr", "en", "co", "gsw-FR"),
+            listOf("fr", "en", "co", "gsw-FR", "zh-CN"),
             AppLanguages.ALL.map { it.tag }
         )
         assertEquals(
-            listOf("Français", "English", "Corsu", "Elsässisch"),
+            listOf("Français", "English", "Corsu", "Elsässisch",
+                   "简体中文"),
             AppLanguages.ALL.map { it.endonym }
         )
     }

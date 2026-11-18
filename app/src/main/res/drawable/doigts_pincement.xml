@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Deux mains du pincement de démonstration (décision d'eric :
+     deux doigts DESSINÉS) : la même moufle que doigt.xml, deux
+     fois, dans une fenêtre 96 x 48 — pointes à (30, 11) et
+     (66, 11), l'ancrage de FingerOverlay vise le milieu (48, 11 :
+     ANCHOR_V = 11/48 sur une largeur double, épinglé). L'écart
+     des deux mains s'anime par translateX des groupes
+     « doigt_gauche » et « doigt_droite » (0 vers ±6) : l'écart
+     passe de 36 à 48 unités de fenêtre, LE MÊME écart fermé puis
+     ouvert que les PINCH_CLOSED_DP/PINCH_OPEN_DP de l'overlay
+     (36/48 dp — le facteur de zoom par image en est dérivé,
+     validate_apprentissage épingle le miroir). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="96dp"
+    android:height="48dp"
+    android:viewportWidth="96"
+    android:viewportHeight="48">
+
+    <group android:name="doigt_gauche">
+        <path
+            android:name="main_gauche"
+            android:fillColor="#E6FFFFFF"
+            android:strokeColor="#661A1A1A"
+            android:strokeWidth="1.2"
+            android:pathData="M25.5,30 C25.5,15 25.5,11 30,11 C34.5,11 34.5,15 34.5,30 C36,30.5 37.5,31.5 38.5,33 C40,35.5 40.5,39 39,41.5 C37,44.8 33.5,46 30,46 C26.5,46 23,44.8 21,41.5 C19.5,39 20,35.5 21.5,33 C22.5,31.5 24,30.5 25.5,30 Z" />
+    </group>
+
+    <group android:name="doigt_droite">
+        <path
+            android:name="main_droite"
+            android:fillColor="#E6FFFFFF"
+            android:strokeColor="#661A1A1A"
+            android:strokeWidth="1.2"
+            android:pathData="M61.5,30 C61.5,15 61.5,11 66,11 C70.5,11 70.5,15 70.5,30 C72,30.5 73.5,31.5 74.5,33 C76,35.5 76.5,39 75,41.5 C73,44.8 69.5,46 66,46 C62.5,46 59,44.8 57,41.5 C55.5,39 56,35.5 57.5,33 C58.5,31.5 60,30.5 61.5,30 Z" />
+    </group>
+</vector>

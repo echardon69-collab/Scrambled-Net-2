@@ -304,6 +304,13 @@ reproductible + des bulles de guidance + UNE action attendue à la fois.
 | `cameraOnly` | Leçon où seule la caméra parle (Infini) : le modèle ignore taps et verrouillage, la vue traduit ses gestes en événements. | `Lessons.kt`, `LessonViewModel.kt` |
 | `onCameraScrolled` / `onCameraZoomed` | Listeners d'observation de la caméra de BoardView (deltas en cellules, pincement en facteur), branchés par l'écran de leçon. | `ui/BoardView.kt`, `LessonActivity.kt` |
 | `ZOOM_IN_DONE` / `ZOOM_OUT_DONE` | Seuils de pincement validant l'étape ZOOM : 1,3 avant cumulé, ou 0,8 arrière si le plancher le permet. | `Lessons.kt` |
+| `DemoKind` | Le geste que la démo du doigt joue à l'ouverture d'une étape : NONE, TAP_TILE, HOLD_TILE, TAP_BUTTON, PINCH, DRAG_X, DRAG_Y. | `Lessons.kt` |
+| `demoFor` / `demoTarget` | Le geste démontré pour une attente (when exhaustif sur les onze attentes) et la tuile visée par la démo (rotation : première tuile à remettre visible ; verrou : première tuile à l'aplomb — jamais un piège). | `Lessons.kt`, `LessonTest.kt` |
+| `démo / essai` | Les deux phases d'une étape d'action (refonte « doigt animé ») : la démo exécute l'action RÉELLE sans nourrir la machine, puis le doigt s'efface et l'essai attend le geste du joueur, seul à consommer l'attente. | `Lessons.kt`, `LessonViewModel.kt`, `LessonActivity.kt` |
+| `FingerOverlay` | Surimpression du doigt de démo : dessine l'AVD au bout de l'index, porte le voyage d'approche, l'alpha et les instants de contact (ValueAnimator maître) ; n'intercepte ni clic ni toucher. | `ui/FingerOverlay.kt`, `res/layout/activity_lesson.xml` |
+| `AVD du doigt` | AnimatedVectorDrawable, format vectoriel d'animation natif (pur XML, aucune dépendance) : `lesson_doigt_appui` (appui + onde), `lesson_doigt_prolonge` (appui maintenu + anneau de progression), `lesson_doigt_pincement` (deux mains dessinées, décision d'eric), `lesson_doigt_glissement` (flèche de trajectoire) ; tracés nommés dans `doigt.xml`, `doigt_glisse.xml`, `doigts_pincement.xml`, durées miroir des constantes Kotlin (épinglées par le validateur). | `res/drawable/lesson_doigt_*.xml`, `res/animator/lesson_*.xml`, `ui/FingerOverlay.kt` |
+| `cellCenter` / `demoPanBy` / `demoZoomBy` | Pilotes de démo de BoardView : centre écran d'une tuile, pan et zoom de démonstration qui bougent la caméra POUR DE VRAI sans invoquer les listeners du joueur (le voyage d'une consigne ne se mesure qu'aux gestes du joueur). | `ui/BoardView.kt`, `LessonActivity.kt` |
+| `demoAct` | Exécution réelle du geste de contact par le modèle (quart de tour, verrou, pulsation d'indice) — jamais `onEvent` : la démo ne nourrit pas la machine d'étapes. | `LessonViewModel.kt` |
 
 ---
 

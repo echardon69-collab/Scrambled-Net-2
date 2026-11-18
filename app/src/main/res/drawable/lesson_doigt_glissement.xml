@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- DÉMO DE GLISSEMENT (pan de la caméra) : la flèche de
+     trajectoire se dessine puis s'efface (trimPathEnd 0 vers 1,
+     550 ms, rejouée à l'ENVERS une fois) pendant que le doigt
+     balaie — le balayage LUI-MÊME vient de l'overlay (une
+     direction de 550 ms, tenue 150 ms, retour, épinglé) qui
+     alimente demoPanBy à chaque image : le plateau suit le
+     doigt. -->
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/doigt_glisse">
+    <!-- trimPathEnd est une propriété de TRACÉ : la cible est le
+         path, pas le groupe qui l'entoure. -->
+    <target
+        android:name="chevron_trajet"
+        android:animation="@animator/lesson_glisse_trajet" />
+</animated-vector>

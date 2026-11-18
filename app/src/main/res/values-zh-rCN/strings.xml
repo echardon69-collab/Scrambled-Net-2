@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Traduction en chinois simplifié (première passe IA du 18 nov. 2026,
+     expérimentale, à faire relire par un locuteur natif avant toute
+     officialisation — même processus que le corse et l'alsacien :
+     l'IA traduit, le relecteur corrige, les corrections réintègrent
+     par le même canal). Mêmes clés que values/strings.xml (parité
+     contrôlée par tools/validate_langues.py).
+
+     术语表 (EN → 简体中文) :
+       tile → 格子 ; board → 棋盘 ; server → 服务器 ; terminal → 终端 ;
+       network → 网络 ; wiring → 接线 ; lock/unlock → 锁定/解锁 ;
+       hint → 提示 ; hint allowance → 提示额度 ; moves → 步数 ;
+       fog → 迷雾 ; torus (edges wrap around) → 环面：边缘首尾相接 ;
+       hidden wiring → 接线不可见 ; panning → 平移 ; zoom → 缩放 ;
+       camera → 镜头 ; personal best → 个人纪录 ; settings → 设置 ;
+       skills : Novice → 新手, Normal → 普通, Expert → 专家,
+       Master → 大师, Insane → 疯狂, Endless → 无尽, Abyss → 深渊,
+       Void → 虚无. 「 blips » et les noms propres restent tels quels.
+       Paramètres %1$d / %1$s / %2$d et sauts "\n" conservés tels quels.
+-->
+<resources>
+    <!-- Nom de l'application -->
+    <string name="app_name">Scrambled Net 2</string>
+
+    <!-- Menu -->
+    <string name="menu_new">新游戏</string>
+    <string name="menu_solve">求解</string>
+    <string name="menu_settings">设置</string>
+    <string name="menu_stop_solve">停止求解</string>
+    <string name="solver_used">自动求解器已使用——本局不计入成绩。</string>
+    <string name="menu_skill">难度等级</string>
+    <string name="menu_sounds">声音</string>
+    <string name="sounds_off">静音</string>
+    <string name="sounds_quiet">轻柔</string>
+    <string name="sounds_full">完整</string>
+    <string name="menu_anim">动画</string>
+    <string name="anim_off">无动画</string>
+    <string name="anim_on">开启动画</string>
+
+    <!-- Language (settings page, v3 of Nov. 14, 2026): appcompat
+         stores the choice (autoStoreLocales) and the system carries
+         it on Android 13+ (localeConfig). Since the dynamic
+         selector (v19 of Nov. 16, 2026) the language names are
+         endonyms living in AppLanguages.kt, identical in every
+         language — the former lang_fr/lang_en strings are gone. -->
+    <string name="menu_lang">语言</string>
+    <string name="lang_system">跟随系统</string>
+
+    <!-- Descriptions des niveaux (page Réglages, v4 du 14 nov. 2026) :
+         la taille est RÉELLE, préfixée au runtime depuis la matrice
+         Screen de l'écran (mêmes règles que le jeu, chantier
+         « tailles fidèles ») ; les règles sont propres à chaque
+         niveau, la famille Infini y passe aussi (taille fixe). -->
+    <string name="skill_novice_desc">棋盘 %1$d × %2$d —— 两条支路，边缘开放</string>
+    <string name="skill_normal_desc">棋盘 %1$d × %2$d —— 两条支路，边缘开放</string>
+    <string name="skill_expert_desc">棋盘 %1$d × %2$d —— 两条支路，边缘开放</string>
+    <string name="skill_master_desc">棋盘 %1$d × %2$d —— 环面：边缘首尾相接，三条支路</string>
+    <string name="skill_insane_desc">棋盘 %1$d × %2$d —— 环面，三条支路，交叉处的接线不可见</string>
+    <string name="skill_endless_desc">棋盘 %1$d × %2$d —— 环面，无论怎么平移都看不见边缘</string>
+    <string name="skill_abyss_desc">棋盘 %1$d × %2$d —— 环面，交叉处的接线不可见</string>
+    <string name="skill_void_desc">棋盘 %1$d × %2$d —— 环面，接线不可见，网络上蒙着迷雾</string>
+
+    <!-- Endless family levels (Abyss, Void) replace the former fog
+         setting: the fog is now the mark of the Void level. -->
+
+    <!-- Aide (niveaux spéciaux) -->
+    <string name="help_master">在“大师”难度下，棋盘边缘首尾相接：右边缘的格子与左边缘的格子相连，反之亦然；上边缘与下边缘同理。</string>
+    <string name="help_insane">在“疯狂”难度下，棋盘边缘首尾相接：右边缘的格子与左边缘的格子相连，反之亦然；上边缘与下边缘同理。此外，三通或四通格子的接线不可见。祝你好运！</string>
+    <string name="help_abyss">在“深渊”难度下，棋盘没有尽头：它由 40 × 40 个格子组成，边缘首尾相接，无论怎么平移都露不出棋盘的边。此外，三通或四通格子的接线不可见。祝你好运！</string>
+    <string name="help_void">在“虚无”难度下，棋盘没有尽头：40 × 40 个格子，边缘首尾相接。三通或四通格子的接线不可见。而且，迷雾遮住了未连接到服务器网络的区域：只有已连通格子的周边保持可见。祝你好运！</string>
+    <string name="menu_scores">个人纪录</string>
+    <string name="menu_help">帮助</string>
+    <string name="menu_about">关于</string>
+
+    <!-- Niveaux de difficulté -->
+    <string name="skill_novice">新手</string>
+    <string name="skill_normal">普通</string>
+    <string name="skill_expert">专家</string>
+    <string name="skill_master">大师</string>
+    <string name="skill_insane">疯狂</string>
+    <string name="skill_endless">无尽</string>
+    <string name="skill_abyss">深渊</string>
+    <string name="skill_void">虚无</string>
+
+    <!-- Barre d'état -->
+    <string name="status_moves">步数：%1$d</string>
+    <string name="status_time">用时：%1$s</string>
+
+    <!-- Jeu -->
+    <string name="win_title">你赢了！</string>
+    <string name="win_pbest_title">新个人纪录！</string>
+    <string name="win_text">恭喜！你用 %2$d 步、用时 %1$s 解开了这道谜题。</string>
+    <string name="best_moves_text">这是你在该难度下步数最少的一局！</string>
+    <string name="best_time_text">这是你在该难度下用时最快的一局！</string>
+    <string name="best_both_text">这是你在该难度下步数最少且用时最快的一局！</string>
+    <string name="win_new">新游戏</string>
+    <string name="win_continue">继续</string>
+
+    <!-- Page titre (TitleActivity) -->
+    <string name="title_version">版本 %1$s</string>
+    <string name="title_license">基于 Scrambled Net（© 2007–2010 Ian Cameron Smith、\n© 2014 Michael Mueller），KDE 游戏 KNetWalk 的 Android 移植版。\n本版本：© 2026 Eric Chardon —— GPL-2.0。</string>
+    <string name="title_loading">正在载入已保存的棋局…</string>
+    <string name="title_checking">正在检查更新…</string>
+    <string name="title_update_available">新版本 %1$s 可用。</string>
+    <string name="title_update_button">更新</string>
+    <string name="title_play_button">开始游戏</string>
+    <string name="title_download_status">正在下载版本 %1$s…</string>
+    <string name="title_install_status">正在安装…</string>
+    <string name="title_install_permission">请先在 Android 设置中允许本应用安装未知来源应用，然后再点一次“更新”。</string>
+    <string name="title_install_failed">更新失败（%1$s）。你可以继续游戏。</string>
+
+    <!-- Lot 17 — péremption : versions de développement expirées -->
+    <string name="version_obsolete">版本已过期！</string>
+    <string name="version_obsolete_detail">此开发版本已过期。请安装正式发布版。</string>
+    <string name="version_obsolete_quitter">退出</string>
+
+    <!-- Confirmation avant d'ecraser une partie en cours -->
+    <string name="confirm_new_title">开始新游戏？</string>
+    <string name="confirm_change_title">更改难度？</string>
+    <string name="confirm_change_ok">更改难度</string>
+    <string name="confirm_progress_message">有一局游戏正在进行（%1$d 步，%2$s）。开始新游戏将丢失这局。</string>
+
+    <!-- Records personnels -->
+    <string name="scores_title">个人纪录</string>
+    <string name="scores_movestitle">最少步数</string>
+    <string name="scores_timestitle">最快用时</string>
+    <string name="scores_skill">难度等级</string>
+    <string name="scores_moves">步数</string>
+    <string name="scores_time">用时</string>
+    <string name="scores_when">日期</string>
+    <string name="menu_scores_reset">清除所有纪录</string>
+    <string name="scores_reset_confirm">抹除你所有的个人纪录？</string>
+
+    <!-- Aide à la résolution (chantier du 15 nov. 2026) : Indice
+         (cadre vert pulsé en mode Signaler, rotation + tuile scellée
+         en mode Corriger, plafond paramétrable), popup Outils
+         (Résoudre, Démonstration), records enrichis d'indices. -->
+    <string name="menu_hint">提示</string>
+    <string name="menu_hint_count">提示（%1$d）</string>
+    <string name="menu_tools">工具</string>
+    <string name="menu_demo">演示</string>
+    <string name="hint_strategy_signal">标出错误</string>
+    <string name="hint_strategy_fix">修正错误</string>
+    <string name="hint_limit_title">提示额度</string>
+    <string name="hint_limit_zero">已禁用</string>
+    <string name="hint_limit_value">%1$d%%</string>
+    <string name="demo_diff_random">随机</string>
+    <string name="demo_diff_progressive">递进</string>
+    <string name="demo_skill_title">难度</string>
+    <string name="demo_speed_title">速度</string>
+    <string name="demo_speed_slow">慢速</string>
+    <string name="demo_speed_normal">正常</string>
+    <string name="demo_speed_fast">快速</string>
+    <string name="hints_section">提示数</string>
+    <string name="hints_total">已用提示格数：%1$d</string>
+    <string name="hints_none">无提示</string>
+    <string name="hints_n">%1$d 次提示</string>
+    <string name="hints_column_tiles">提示数</string>
+    <string name="demo_touch_return">触摸屏幕返回游戏</string>
+    <string name="demo_level_banner">演示难度 %1$s</string>
+
+    <!-- Mode Apprentissage (chantier du 17 nov. 2026) : sept
+         leçons interactives sous le popup Outils, rejouables à
+         volonté, coche persistée. Bulles de guidance, une action
+         attendue à la fois ; les textes vivent ICI, la leçon ne
+         porte que leurs identifiants (Lessons.kt) ; le doigt animé
+         montre chaque geste avant de le demander (v2 du 18 nov. 2026). -->
+    <string name="menu_lessons">教程</string>
+    <string name="lesson_1_title">旋转与连接</string>
+    <string name="lesson_2_title">方法与锁定</string>
+    <string name="lesson_3_title">辅助工具</string>
+    <string name="lesson_4_title">环形棋盘</string>
+    <string name="lesson_5_title">不可见的格子</string>
+    <string name="lesson_6_title">无尽棋盘</string>
+    <string name="lesson_7_title">迷雾</string>
+    <string name="lesson_l1_b1">点击格子，把它旋转四分之一圈。把网络从服务器一路接通到终端。</string>
+    <string name="lesson_l1_b2">继续吧：每个连到服务器的格子都会点亮。</string>
+    <string name="lesson_l1_b3">干得好，网络解开了！每一局都是这样赢的：旋转、连接、点亮。</string>
+    <string name="lesson_l2_b1">方法：从服务器出发，顺着已接通的线缆，一个邻居接一个邻居。先旋转一块格子开始吧。</string>
+    <string name="lesson_l2_b2">长按一块朝向正确的格子：锁定能保护它不被误转。</string>
+    <string name="lesson_l2_b3">一个邻居接着一个邻居直到胜利，把你有把握的格子随时锁定。</string>
+    <string name="lesson_l2_b4">在大棋盘上，锁定是你的盟友：坚持这个方法。</string>
+    <string name="lesson_l3_b1">提示（标记模式）会指出一块要修正的格子（绿框）。点击“提示”。</string>
+    <string name="lesson_l3_b2">提示（修正模式）会把格子摆正并封存它（最终锁定）。点击“提示”。</string>
+    <string name="lesson_l3_b3">“求解”会替你一格一格玩下去；这样解开的棋局不计入纪录。点击“求解”。</string>
+    <string name="lesson_l3_b4">辅助工具用来解围，不是用来代玩：由你决定。</string>
+    <string name="lesson_l4_b1">大师棋盘：边缘首尾相接。棋盘是一个环面：右边连着左边，上边连着下边。</string>
+    <string name="lesson_l4_b2">解开它：至少有一根线缆越过棋盘边缘，连接到另一侧。</string>
+    <string name="lesson_l4_b3">从大师难度起，环面无处不在：把棋盘想象成没有边缘。</string>
+    <string name="lesson_l5_b1">疯狂难度：有些格子是不可见的。从它们的邻居推断朝向，然后旋转一块可见的格子。</string>
+    <string name="lesson_l5_b2">继续吧：每个邻居都进一步约束隐藏的格子，只有胜利才会揭示一切。</string>
+    <string name="lesson_l5_b3">修正提示会揭示一块被遮住的格子：只是演给你看，不会替你转。</string>
+    <string name="lesson_l6_b1">无尽棋盘：40 × 40 的环面，镜头对准服务器。把视野横向平移整整一圈，直到重新找到服务器。</string>
+    <string name="lesson_l6_b2">棋盘永远循环：没有灰色的边界。现在纵向平移整整一圈。</string>
+    <string name="lesson_l6_b3">双指捏合即可缩放：窗口就是你的镜头，世界始终不变。</string>
+    <string name="lesson_l6_b4">无尽模式靠镜头来玩：棋盘没有边缘，只有窗口。</string>
+    <string name="lesson_l7_b1">虚无难度：迷雾遮住了棋盘。每接通一条连线，雾就退一步。旋转一块可见的格子。</string>
+    <string name="lesson_l7_b2">继续吧：每赢下一条连线，都会点亮它周围。</string>
+    <string name="lesson_l7_b3">迷雾要一格一格地赢：光随着网络延伸。</string>
+    <string name="lesson_completed">完成</string>
+    <string name="lesson_continue">继续</string>
+
+    <!-- À propos : la fenêtre de dialogue est devenue la page
+         autonome AboutActivity (refonte du 14 nov. 2026) — le
+         contenu vit dans about_titles / about_texts
+         (arrays.xml), about_title et about_message sont
+         retirées. -->
+</resources>

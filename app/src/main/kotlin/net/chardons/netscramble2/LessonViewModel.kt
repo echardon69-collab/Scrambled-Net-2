@@ -28,7 +28,10 @@ data class LessonUiState(
     val kind: ExpectKind? = null,
     val hintIndex: Int = -1,
     val hintRequestId: Int = 0,
-    val lessonDone: Boolean = false
+    val lessonDone: Boolean = false,
+    val demoKind: DemoKind = DemoKind.NONE,
+    val demoIndex: Int = -1,
+    val demoRequestId: Int = 0
 ) {
     // Tableau dans une data class : on compare les contenus, pas les
     // références.
@@ -43,7 +46,10 @@ data class LessonUiState(
                 kind == other.kind &&
                 hintIndex == other.hintIndex &&
                 hintRequestId == other.hintRequestId &&
-                lessonDone == other.lessonDone
+                lessonDone == other.lessonDone &&
+                demoKind == other.demoKind &&
+                demoIndex == other.demoIndex &&
+                demoRequestId == other.demoRequestId
     }
 
     override fun hashCode(): Int {
@@ -58,6 +64,9 @@ data class LessonUiState(
         result = 31 * result + hintIndex
         result = 31 * result + hintRequestId
         result = 31 * result + lessonDone.hashCode()
+        result = 31 * result + demoKind.hashCode()
+        result = 31 * result + demoIndex
+        result = 31 * result + demoRequestId
         return result
     }
 }
@@ -97,6 +106,21 @@ class LessonViewModel : ViewModel() {
     /** Génération de pulsation d'indice, incrémentée à CHAQUE demande. */
     private var hintPulseId = 0
 
+    // --- Démo du doigt (refonte « doigt animé ») : armée UNE fois
+    //     par étape, exécutée SANS nourrir la machine. ---
+
+    /** Index de la dernière étape publiée : -1 force l'armement du premier. */
+    private var lastStepIndex = -1
+
+    /** Geste de la démo courante (NONE : rien à montrer). */
+    private var armedDemoKind = DemoKind.NONE
+
+    /** Tuile visée par la démo courante, -1 si aucune. */
+    private var armedDemoIndex = -1
+
+    /** Génération de la démo, incrémentée à CHAQUE changement d'étape. */
+    private var demoArmId = 0
+
     /** Solveur gelé quand l'app n'est plus visible. */
     private var paused = false
 
@@ -114,6 +138,9 @@ class LessonViewModel : ViewModel() {
         solveQueue = null
         focusIndex = -1
         hintIndex = -1
+        lastStepIndex = -1
+        armedDemoKind = DemoKind.NONE
+        armedDemoIndex = -1
         paused = false
         publish()
     }
@@ -281,9 +308,91 @@ class LessonViewModel : ViewModel() {
         if (b.isSolved()) r.onEvent(LessonEvent.Victory)
     }
 
+    /**
+     * Démo du doigt, appelée par la vue à l'instant du contact :
+     * l'action s'exécute VRAIMENT (quart de tour, verrou, pulsation
+     * d'indice) mais la machine d'étapes n'est PAS nourrie — seul
+     * le geste du joueur consomme l'attente. Les attentes de
+     * bouton se contentent de la pulsation : l'effet réel (le
+     * correctif, le solveur) est PRÉCISÉMENT ce que le joueur doit
+     * presser, l'exécuter à sa place viderait l'étape de son sens
+     * et pourrait résoudre le plateau sous la consigne Résoudre.
+     */
+    fun demoAct(kind: DemoKind, index: Int) {
+        when (kind) {
+            DemoKind.TAP_TILE -> demoTapAt(index)
+            DemoKind.HOLD_TILE -> demoLongPressAt(index)
+            DemoKind.TAP_BUTTON -> demoHintButton()
+            else -> return
+        }
+    }
+
+    /**
+     * Démo de l'appui simple : un quart de tour RÉEL, montré au
+     * doigt. Garde du joueur reprise telle quelle (tuile
+     * verrouillée, scellée, libre ou vide : rien ne bouge) ; la
+     * victoire n'est PAS vérifiée : la démo ne consomme rien.
+     */
+    private fun demoTapAt(index: Int) {
+        val b = board ?: return
+        if (lesson.board.cameraOnly) return
+        if (index < 0 || index >= b.size) return
+        if (b.isSolved() || b.locked[index] || b.isSealed(index) || b.isEmpty(index)) return
+        b.rotateCell(index, 1, byPlayer = true)
+        publish()
+    }
+
+    /**
+     * Démo du verrouillage : verrou RÉEL sur la cible (une tuile à
+     * l'aplomb, choisie par [demoTarget] — verrouiller une tuile
+     * fausse rendrait le plateau insoluble).
+     */
+    private fun demoLongPressAt(index: Int) {
+        val b = board ?: return
+        if (lesson.board.cameraOnly) return
+        if (index < 0 || index >= b.size) return
+        if (b.isSolved() || b.isEmpty(index) || b.locked[index] || b.isSealed(index)) return
+        if (!b.toggleLock(index)) return
+        publish()
+    }
+
+    /**
+     * Démo du bouton Indice : le MÊME signe que pour le joueur (la
+     * cible du moteur, pulsation armée par sa génération), sans
+     * nourrir la machine — le correctif et le solveur restent au
+     * geste du joueur.
+     */
+    private fun demoHintButton() {
+        val r = runner ?: return
+        val b = board ?: return
+        if (r.kind != ExpectKind.HINT_SIGNAL && r.kind != ExpectKind.HINT_FIX) return
+        val index = b.hintTarget()
+        if (index < 0) return
+        hintIndex = index
+        ++hintPulseId
+        publish()
+    }
+
     private fun publish() {
         val b = board ?: return
         val r = runner ?: return
+        // Armement de la démo : à CHAQUE changement d'étape (la
+        // génération avance même vers NONE — l'activité annule la
+        // démo en cours, la leçon refermée ne lâche pas un doigt
+        // orphelin sur l'étape suivante).
+        if (r.index != lastStepIndex) {
+            lastStepIndex = r.index
+            val step = r.step
+            if (step == null) {
+                armedDemoKind = DemoKind.NONE
+                armedDemoIndex = -1
+            } else {
+                armedDemoKind = demoFor(step.kind)
+                armedDemoIndex =
+                    if (lesson.board.cameraOnly) -1 else demoTarget(b, step.kind)
+            }
+            ++demoArmId
+        }
         _uiState.value = LessonUiState(
             board = b,
             connected = b.connectedCells(),
@@ -293,7 +402,10 @@ class LessonViewModel : ViewModel() {
             kind = r.kind,
             hintIndex = hintIndex,
             hintRequestId = hintPulseId,
-            lessonDone = r.finished
+            lessonDone = r.finished,
+            demoKind = armedDemoKind,
+            demoIndex = armedDemoIndex,
+            demoRequestId = demoArmId
         )
     }
 

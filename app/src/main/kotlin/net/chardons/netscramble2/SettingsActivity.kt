@@ -80,7 +80,7 @@ import net.chardons.netscramble2.ui.EdgeToEdge
  *
  * V7 (chantier « drapeaux du sélecteur », Lot 15 du 16 nov. 2026) :
  *  chaque radio de langue porte le DRAPEAU choisi par eric — France,
- *  Union Jack, tête de Maure corse, Alsace historique — à gauche de
+ *  Union Jack, tête de Maure corse, Alsace historique, Chine — à gauche de
  *  son endonyme (drawable 15 dp de haut, régénéré par tools/flags/
  *  convert-flags.sh depuis svg/flags). La correspondance langue ->
  *  drawable est EXPLICITE ([langFlagFor]) : pas de getIdentifier
@@ -436,6 +436,7 @@ class SettingsActivity : AppCompatActivity() {
         "en" -> R.drawable.flag_en
         "co" -> R.drawable.flag_co
         "gsw-FR" -> R.drawable.flag_gsw_fr
+        "zh-CN" -> R.drawable.flag_zh
         else -> 0
     }
 

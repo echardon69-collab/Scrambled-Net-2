@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Appui de la main : descente puis relever (rejouée à l'envers
+     une fois). Durées épinglées avec FingerOverlay.PRESS_MS. -->
+<objectAnimator xmlns:android="http://schemas.android.com/apk/res/android"
+    android:propertyName="translateY"
+    android:valueType="floatType"
+    android:valueFrom="0"
+    android:valueTo="7"
+    android:duration="350"
+    android:repeatCount="1"
+    android:repeatMode="reverse"
+    android:interpolator="@android:interpolator/accelerate_decelerate" />

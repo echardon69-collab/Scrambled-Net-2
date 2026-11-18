@@ -281,7 +281,7 @@ def element_names(el):
     return (label or data or eid, aliases)
 
 
-def _opacity_factor(el):
+def opacity_factor(el):
     """Facteur d'alpha d'un élément : opacity puis fill-opacity."""
     factor = 1.0
     for attr in ('opacity', 'fill-opacity'):
@@ -408,7 +408,7 @@ def walk_layer(group, matrix, grads, src, all_paths, notices):
                            'VectorDrawable ne connaît pas les modes de '
                            'fusion — rendu approché en alpha simple'
                            % (element_names(child)[0] or display))
-        factor = _opacity_factor(child)
+        factor = opacity_factor(child)
         f, even_odd = ct.path_fill(child, grads, src, allow_stroke=True)
         f = apply_opacity(f, factor)
         stroke = parse_stroke(child, factor, src)

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- DÉMO D'APPUI PROLONGÉ (verrouillage) : la main descend (300
+     ms) et RESTE enfoncée — l'anneau de progression se remplit
+     autour de l'index pendant la tenue (trimPathEnd 0 vers 1,
+     1 300 ms, accéléré : il n'évoque que lorsque le doigt est
+     posé), la main ne se relève jamais : le verrou posé, la démo
+     s'efface (fondu de l'overlay). Contact de FingerOverlay à la
+     FIN de l'anneau (RING_MS = 1 300, épinglé). -->
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/doigt">
+    <target
+        android:name="corps"
+        android:animation="@animator/lesson_prolonge_corps" />
+    <!-- trimPathEnd est une propriété de TRACÉ : la cible est le
+         path, pas le groupe qui l'entoure. -->
+    <target
+        android:name="arc_anneau"
+        android:animation="@animator/lesson_prolonge_anneau" />
+</animated-vector>

@@ -84,4 +84,15 @@
                 android:visibility="gone" />
         </LinearLayout>
     </LinearLayout>
+
+    <!-- Surimpression du doigt de démo (refonte « doigt animé ») :
+         AU-DESSUS de tout (dernier enfant), pleine vue, elle
+         n'intercepte NI clic NI toucher — le plateau et les
+         boutons restent vivants sous la main. L'activité pose la
+         démo une fois par étape (génération du modèle) et
+         l'annule au changement d'étape ou au départ de l'écran. -->
+    <net.chardons.netscramble2.ui.FingerOverlay
+        android:id="@+id/lesson_finger"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 </FrameLayout>

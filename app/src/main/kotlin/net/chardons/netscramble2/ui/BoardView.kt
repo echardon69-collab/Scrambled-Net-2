@@ -1039,6 +1039,65 @@ class BoardView @JvmOverloads constructor(
         }
     }
 
+    // --- Mode Apprentissage, pilotes de démo du doigt (refonte
+    //     « doigt animé », 17 nov. 2026) : la DÉMO bouge la caméra
+    //     POUR DE VRAI — le contenu glisse sous le doigt, le zoom
+    //     s'ancre au centre de la vue — mais SANS invoquer les
+    //     listeners du joueur : le voyage d'une consigne ne se
+    //     mesure qu'aux gestes du joueur (LessonRunner), jamais à
+    //     la démonstration (garde-fou validate_apprentissage). ---
+
+    /**
+     * Centre ÉCRAN d'une tuile (coordonnées de cette vue), null si
+     * la vue ou la tuile n'est pas encore mesurable : le doigt de
+     * démo vise ce point.
+     */
+    fun cellCenter(index: Int): FloatArray? {
+        val b = board ?: return null
+        if (index < 0 || index >= b.size) return null
+        if (cellPx <= 0f || width == 0 || height == 0) return null
+        val x = panX + (index % b.width) * cellPx + cellPx / 2f
+        val y = panY + (index / b.width) * cellPx + cellPx / 2f
+        return floatArrayOf(x, y)
+    }
+
+    /**
+     * Pan de démo, en PIXELS d'écran : le contenu suit le doigt
+     * (même convention que le geste du joueur, sans son
+     * l'inversion de onScroll qui traduit le doigt en cellules).
+     * Aucun listener : l'accumulateur de la consigne reste au
+     * joueur.
+     */
+    fun demoPanBy(dxPx: Float, dyPx: Float) {
+        if (cellPx <= 0f) return
+        panX += dxPx
+        panY += dyPx
+        panAnimating = false
+        clampPan()
+        invalidate()
+    }
+
+    /**
+     * Zoom de démo par FACTEUR, ancré au CENTRE de la vue (le
+     * pincement du doigt s'y joue), borné plancher/plafond — même
+     * mathématique que onScale, aucun listener.
+     */
+    fun demoZoomBy(ratio: Float) {
+        val b = board ?: return
+        if (cellPx <= 0f || ratio <= 0f) return
+        val newCellPx = (cellPx * ratio).coerceIn(floorCellPx(b), maxCellPx)
+        val growth = newCellPx / cellPx
+        if (growth == 1f) return
+        val focusX = width / 2f
+        val focusY = height / 2f
+        panX = focusX - (focusX - panX) * growth
+        panY = focusY - (focusY - panY) * growth
+        cellPx = newCellPx
+        panAnimating = false
+        clampPan()
+        invalidate()
+    }
+
     /**
      * Tuile « empty » pré-rendue en bitmap à la taille de case courante
      * (cache régénéré seulement quand la taille entière change, donc

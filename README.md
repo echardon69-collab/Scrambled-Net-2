@@ -286,9 +286,29 @@ Feuille de route (validée)
   de la fenêtre jusqu'à retrouver le serveur (la propriété
   torique se VIT), puis pincements zoom/dézoom, aucune tuile à
   tourner ; 7) le brouillard sur un 6 x 6 Néant. Moteur pur
-  (Lessons.kt) testé en JVM (LessonTest, 18 tests), validateur
-  dédié validate_apprentissage.py (64 contrôles), BoardView
-  observé par des listeners de caméra pour la leçon Infini
+  (Lessons.kt) testé en JVM (LessonTest, 22 tests), validateur
+  dédié validate_apprentissage.py (95 contrôles), BoardView
+  observé par des listeners de caméra pour la leçon Infini.
+  Refonte « doigt animé » du 17 nov. 2026 au soir (retour
+  utilisateurs : l'apparence ne montrait pas les gestes) : chaque
+  étape d'action s'ouvre sur une DÉMO RÉELLE — une main animée
+  (AnimatedVectorDrawable, format vectoriel natif, aucune
+  dépendance) rejoint la cible, joue le geste et l'action
+  s'exécute VRAIMENT sur le plateau (la tuile tourne, le verrou
+  se pose, la caméra glisse sous le doigt), puis s'efface :
+  l'essai est au joueur, la machine d'étapes ne se nourrit QUE de
+  lui. Cinq gestes : appui simple (rotation, bouton Indice),
+  appui prolongé (verrouillage, anneau de progression),
+  pincement de DEUX doigts dessinés (zoom), glissement (pan,
+  flèche de trajectoire) ; les cibles de la démo ne piègent
+  jamais la leçon (rotation sur une tuile fausse visible,
+  verrou sur une tuile à l'aplomb, plateau garanti soluble le
+  verrou posé — épinglé par LessonTest). Correctif CI du lot :
+  MissingTranslation passe en avertissement, les langues
+  partielles sont admises jusqu'au prochain tour de traduction
+  (décision d'eric, option A : les 34 chaînes du mode et les
+  prochaines se traduiront en corse et alsacien en une seule
+  fois, après la refonte)
 - Publication des APK sur GitHub : la CI bâtit les deux saveurs à
   chaque poussée mais ne les publie pas — ajouter un artifact de
   run (APK téléchargeable depuis les Actions) et un job qui crée

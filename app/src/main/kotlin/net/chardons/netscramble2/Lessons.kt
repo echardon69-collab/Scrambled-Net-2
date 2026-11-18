@@ -72,6 +72,85 @@ enum class ExpectKind {
 data class LessonStep(val bubbleId: String, val kind: ExpectKind)
 
 /**
+ * LE GESTE que la DÉMO du doigt joue à l'ouverture d'une étape
+ * (refonte « doigt animé », validée par eric le 17 nov. 2026) :
+ * chaque étape d'action s'ouvre sur une démonstration RÉELLE — le
+ * doigt anime le geste et l'action s'exécute VRAIMENT sur le
+ * plateau (la tuile tourne, le verrou se pose, la caméra glisse) —
+ * puis le doigt s'efface et l'étape attend le MÊME geste du
+ * joueur. La démo ne consomme JAMAIS l'attente : elle ne nourrit
+ * pas la machine d'étapes, seul le geste du joueur l'avance.
+ *
+ *  - [NONE] : rien à montrer (lecture, ou victoire en jeu libre) ;
+ *  - [TAP_TILE] : appui simple sur une tuile, un quart de tour ;
+ *  - [HOLD_TILE] : appui prolongé sur une tuile, verrouillage ;
+ *  - [TAP_BUTTON] : appui simple sur le bouton de l'étape ;
+ *  - [PINCH] : pincement de deux doigts, zoom ;
+ *  - [DRAG_X] / [DRAG_Y] : doigt posé puis déplacé, la fenêtre suit.
+ */
+enum class DemoKind { NONE, TAP_TILE, HOLD_TILE, TAP_BUTTON, PINCH, DRAG_X, DRAG_Y }
+
+/**
+ * Le geste démontré pour une attente : when EXHAUSTIF, épingle par
+ * validate_apprentissage — toute nouvelle attente se prononce
+ * ici, en conscience.
+ */
+fun demoFor(kind: ExpectKind): DemoKind = when (kind) {
+    ExpectKind.CONTINUE -> DemoKind.NONE
+    ExpectKind.ROTATE -> DemoKind.TAP_TILE
+    ExpectKind.LOCK -> DemoKind.HOLD_TILE
+    ExpectKind.UNLOCK -> DemoKind.HOLD_TILE
+    ExpectKind.HINT_SIGNAL -> DemoKind.TAP_BUTTON
+    ExpectKind.HINT_FIX -> DemoKind.TAP_BUTTON
+    ExpectKind.SOLVE -> DemoKind.TAP_BUTTON
+    ExpectKind.VICTORY -> DemoKind.NONE
+    ExpectKind.PAN_X -> DemoKind.DRAG_X
+    ExpectKind.PAN_Y -> DemoKind.DRAG_Y
+    ExpectKind.ZOOM -> DemoKind.PINCH
+}
+
+/**
+ * La tuile que la DÉMO désigne pour une attente de tuile, ou -1
+ * (aucune cible : la démo ne se joue pas). Règles de la démo
+ * réelle (solvabilité GARANTIE, la démo ne piège jamais la
+ * leçon) :
+ *
+ *  - ROTATE : la première tuile à remettre de la file du solveur,
+ *    VISIBLE de préférence (les tuiles masquées du Dément et la
+ *    brume du Néant tournent sans se montrer) — la démo la tourne
+ *    d'UN SEUL QUART, le geste pur, jamais jusqu'à l'aplomb : le
+ *    quart de tour reste à vivre par le joueur ;
+ *  - LOCK : la première tuile DÉJÀ à l'aplomb et verrouillable —
+ *    verrouiller une tuile fausse rendrait le plateau insoluble ;
+ *  - les attentes de bouton vivent hors plateau : le doigt vise
+ *    le bouton visible de l'étape, aucune tuile à désigner.
+ *
+ * PURE : [ LessonTest] épingle la validité de la cible pour
+ * chaque étape de tuile des sept leçons (bornes, tuile non vide,
+ * tuile à l'aplomb pour le verrou, plateau rester soluble le
+ * verrou posé).
+ */
+fun demoTarget(board: Board, kind: ExpectKind): Int {
+    when (demoFor(kind)) {
+        DemoKind.TAP_TILE -> {
+            val moves = board.solveMoves()
+            return moves.firstOrNull { !board.isHidden(it) }
+                ?: moves.firstOrNull() ?: -1
+        }
+        DemoKind.HOLD_TILE -> {
+            for (i in 0 until board.size) {
+                if (board.isEmpty(i) || board.isSealed(i) || board.locked[i]) continue
+                if (i == board.serverIndex || board.isTerminal(i)) continue
+                if (board.isHidden(i)) continue
+                if ((4 - board.rotations[i]) % 4 == 0) return i
+            }
+            return -1
+        }
+        else -> return -1
+    }
+}
+
+/**
  * Plateau d'une leçon, entièrement reproductible : niveau (règles :
  * tore, masquage), dimensions explicites — le moteur accepte des
  * tailles hors matrice Screen, une leçon vit sur 3 x 3 ou 5 x 5

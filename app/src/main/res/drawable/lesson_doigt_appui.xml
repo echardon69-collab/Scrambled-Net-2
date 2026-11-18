@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- DÉMO D'APPUI SIMPLE (tuile comme bouton) : la main s'enfonce
+     d'un cran puis se relève (translateY 0 vers 7, 350 ms,
+     rejouée à l'ENVERS une fois : descente puis relever), l'onde
+     de contact rayonne et s'éteindre (alpha 0,85 vers 0, 700 ms,
+     la durée du cycle complet). Contact de FingerOverlay à la
+     FIN de la descente (PRESS_MS = 350, épinglé). -->
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/doigt">
+    <target
+        android:name="corps"
+        android:animation="@animator/lesson_appui_corps" />
+    <target
+        android:name="onde"
+        android:animation="@animator/lesson_appui_onde" />
+</animated-vector>

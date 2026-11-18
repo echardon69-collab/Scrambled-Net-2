@@ -16,7 +16,7 @@ aucune : il réutilise
     couple largeur x hauteur pour les drapeaux plus larges que hauts) ;
   - tools/graphics/generate_graphics.py (gg) : shape_to_path_d
     (rect, line, polyline, polygon, circle, ellipse), parse_stroke,
-    _opacity_factor, apply_opacity.
+    opacity_factor, apply_opacity.
 
 Ce que ce convertisseur ajoute par rapport à convert_tiles.parse_svg :
 les drapeaux d'eric sont des SVG de dessin vectoriel génériques, avec
@@ -38,7 +38,9 @@ Refus explicite (le VectorDrawable ne sait pas les représenter,
 message clair) : clip-path, transform, gradients, <image>, <use>.
 Pour l'Union Jack le clipPath d'eric est impossible : svg/flags/
 flag_en.svg est la réécriture équivalente sans clip (voir son
-en-tête).
+en-tête). Les DÉGRADÉS du SVG restent refusés ; l'OMBRE de bordure
+(voir OMBRE_LARGEUR_DP) est SYNTHÉTIQUE : le convertisseur la
+fabrique en dernier, il n'en lit aucune dans le SVG.
 
 Python 3 standard, aucune dépendance. Usage :
 
@@ -63,6 +65,15 @@ import generate_graphics as gg                          # noqa: E402
 SVG_NS = 'http://www.w3.org/2000/svg'
 
 HAUTEUR_DP = 15.0
+
+# Ombrage des drapeaux pâles : sur un fond blanc, un drapeau blanc
+# ne se détache pas (retour d'eric, nov. 2026). Un bandau de dégradé
+# noir translucide, qui s'éteint vers l'intérieur, se pose sous les
+# bordures DROITE et BASSE : le drapeau paraît posé, sa géométrie et
+# ses couleurs restent celles du SVG source, l'ombre se dessine
+# PAR-DESSUS, en DERNIER. Les deux constantes se règlent ici.
+OMBRE_LARGEUR_DP = 1.0   # épaisseur du bandau, en dp
+OMBRE_ALPHA = 0x26       # 38/255 : ~15 % de noir au ras du bord
 
 # Propriétés CSS/attributs hérités par les enfants, résolus par ce
 # convertisseur (le reste — d, points, x, y... — reste un attribut
@@ -90,7 +101,7 @@ def _texte(el):
                    if n.nodeType == n.TEXT_NODE)
 
 
-def collecte_classes(doc, src):
+def collecte_classes(doc):
     """Classes CSS du document -> {nom: {propriété: valeur}}.
 
     Les <style> sont parcourus dans l'ordre du document ; une classe
@@ -161,7 +172,7 @@ def _element_vd(node, props, src):
     else:
         d = gg.shape_to_path_d(clone, src)
 
-    facteur = gg._opacity_factor(clone)
+    facteur = gg.opacity_factor(clone)
 
     fill = props.get('fill', 'black')  # défaut SVG : noir
     if fill == 'none':
@@ -180,10 +191,10 @@ def _element_vd(node, props, src):
         raise ValueError('%s : tracé sans fill ni stroke (invisible) '
                           '— retirer l\u2019élément' % src)
     if f is None:
-        return ('path', d, None, even_odd, stroke)
+        return "path", d, None, even_odd, stroke
     if stroke is None:
-        return ('path', d, f, even_odd)
-    return ('path', d, f, even_odd, stroke)
+        return "path", d, f, even_odd
+    return "path", d, f, even_odd, stroke
 
 
 def _parcours(el, heritees, classes, elements, src):
@@ -217,7 +228,7 @@ def parse_flag(path):
     if len(vb) != 4 or float(vb[0]) != 0 or float(vb[1]) != 0:
         raise ValueError('%s : viewBox attendu "0 0 L H", lu %r'
                          % (path, root.getAttribute('viewBox')))
-    classes = collecte_classes(doc, path)
+    classes = collecte_classes(doc)
     elements = []
     _parcours(root, {}, classes, elements, path)
     if not elements:
@@ -229,16 +240,68 @@ def dp_drapeau(vp):
     """(largeur, hauteur) en dp : hauteur uniforme 15 dp, largeur
     proportionnelle au ratio du drapeau."""
     ratio = float(vp[0]) / float(vp[1])
-    return ('%g' % (HAUTEUR_DP * ratio), '%g' % HAUTEUR_DP)
+    return '%g' % (HAUTEUR_DP * ratio), '%g' % HAUTEUR_DP
+
+
+def _gradeau(x1, y1, x2, y2, alpha):
+    """Gradient linéaire maison (transparent -> noir translucide).
+
+    Représentation de convert_tiles.Gradient, source unique des
+    règles d'écriture ; les coordonnées du VD vivent dans le
+    viewport, comme celles des tracés.
+    """
+    g = ct.Gradient()
+    g.kind = 'linear'
+    g.attrs = {'startX': '%g' % x1, 'startY': '%g' % y1,
+               'endX': '%g' % x2, 'endY': '%g' % y2}
+    g.stops = [(0, '#000000', 0), (1, '#000000', alpha)]
+    return g
+
+
+def ombres_drapeau(vp):
+    """Les DEUX éléments d'ombre (bas, droite) à ajouter en DERNIER.
+
+    Chaque bandau garde la MÊME épaisseur en dp d'un drapeau à
+    l'autre : la hauteur rendue est uniforme (HAUTEUR_DP), le
+    viewport est réduit proportionnellement, donc une dp vaut le
+    même nombre d'unités sur les deux axes — hauteur du viewport /
+    HAUTEUR_DP. Le
+    rectangle du BAS est pleine largeur, celui de la DROITE pleine
+    hauteur : au coin, les deux bandaux se superposent, l'ombre y
+    est simplement un peu plus dense (naturel pour un coin posé).
+    """
+    largeur, hauteur = float(vp[0]), float(vp[1])
+    unites = hauteur / HAUTEUR_DP       # unités viewport par dp
+    bande = OMBRE_LARGEUR_DP * unites   # épaisseur en unités
+    bas = ('path',
+           'M0,%g L%g,%g L%g,%g L0,%g Z'
+           % (hauteur - bande, largeur, hauteur - bande,
+              largeur, hauteur, hauteur),
+           ('grad', _gradeau(0, hauteur - bande, 0, hauteur,
+                             OMBRE_ALPHA)),
+           False)
+    droite = ('path',
+              'M%g,0 L%g,0 L%g,%g L%g,%g Z'
+              % (largeur - bande, largeur, largeur, hauteur,
+                 largeur - bande, hauteur),
+              ('grad', _gradeau(largeur - bande, 0, largeur, 0,
+                                OMBRE_ALPHA)),
+              False)
+    return [bas, droite]
 
 
 def convert_flag(path, out_dir):
-    """Convertit un svg/flags/flag_<tag>.svg en drawable du dépôt."""
+    """Convertit un svg/flags/flag_<tag>.svg en drawable du dépôt :
+    drapeau d'abord, ombre SOUS ses bordures droite et basse en
+    DERNIER (au-dessus du contenu, elle détache les drapeaux pâles
+    du fond blanc sans retoucher leurs couleurs)."""
     vp, elements = parse_flag(path)
+    dp = dp_drapeau(vp)
+    elements.extend(ombres_drapeau(vp))
     out = os.path.join(out_dir,
                        os.path.splitext(os.path.basename(path))[0]
                        + '.xml')
-    ct.write_vd(out, vp, elements, False, dp_drapeau(vp))
+    ct.write_vd(out, vp, elements, False, dp)
     return out
 
 

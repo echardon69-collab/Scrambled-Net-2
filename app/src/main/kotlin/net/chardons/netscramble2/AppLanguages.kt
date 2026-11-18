@@ -41,6 +41,10 @@ object AppLanguages {
         AppLanguage("en", "English"),
         AppLanguage("co", "Corsu"),
         AppLanguage("gsw-FR", "Elsässisch"),
+        // Chinois simplifié (18 nov. 2026) : première passe IA
+        // expérimentale — relecteur natif attendu avant toute
+        // officialisation, comme le corse et l'alsacien.
+        AppLanguage("zh-CN", "简体中文"),
     )
 
     /**

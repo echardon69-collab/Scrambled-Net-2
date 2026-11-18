@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Main du doigt de démonstration (refonte « doigt animé », 17
+     nov. 2026) : une moufle stylisée, l'index en l'air, pointe du
+     doigt à (24, 11) dans une fenêtre 48 x 48 — l'ancrage de
+     FingerOverlay vise exactement cette pointe (ANCHOR_V = 11/48,
+     épinglé par validate_apprentissage). Tracés NOMMÉS, animés
+     par les AVD lesson_doigt_* :
+       - « corps » : la moufle entière, l'appui s'y enfonce
+         (translateY des AVD d'appui) ;
+       - « onde » : le cercle de contact au bout de l'index, alpha
+         nul au repos : il ne vit QUE dans la démo d'appui ;
+       - « anneau » : l'anneau de progression de l'appui prolongé,
+         trimPathEnd nul au repos : il ne vit QUE dans la démo du
+         verrouillage.
+     Translucide et contour fin : le plateau reste lisible sous la
+     main, sur fond clair comme sur fond sombre. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+
+    <!-- La moufle : index en l'air depuis le poing, d'un seul tracé. -->
+    <group android:name="corps" android:pivotX="24" android:pivotY="24">
+        <path
+            android:name="main"
+            android:fillColor="#E6FFFFFF"
+            android:strokeColor="#661A1A1A"
+            android:strokeWidth="1.2"
+            android:pathData="M19.5,30 C19.5,15 19.5,11 24,11 C28.5,11 28.5,15 28.5,30 C30,30.5 31.5,31.5 32.5,33 C34,35.5 34.5,39 33,41.5 C31,44.8 27.5,46 24,46 C20.5,46 17,44.8 15,41.5 C13.5,39 14,35.5 15.5,33 C16.5,31.5 18,30.5 19.5,30 Z" />
+    </group>
+
+    <!-- Onde de contact : cercle plein autour de la pointe, alpha nul
+         au repos (la démo d'appui le fait rayonner puis s'éteindre). -->
+    <group android:name="onde" android:alpha="0" android:pivotX="24" android:pivotY="12">
+        <path
+            android:name="cercle_onde"
+            android:fillColor="#00000000"
+            android:strokeColor="#B3FFFFFF"
+            android:strokeWidth="1.6"
+            android:pathData="M18,12 C18,8.7 20.7,6 24,6 C27.3,6 30,8.7 30,12 C30,15.3 27.3,18 24,18 C20.7,18 18,15.3 18,12 Z" />
+    </group>
+
+    <!-- Anneau de progression de l'appui prolongé : cercle ouvert
+         (sans Z) pour que trimPathEnd le dessine de gauche à droite
+         autour de la pointe, nul au repos. -->
+    <group android:name="anneau">
+        <path
+            android:name="arc_anneau"
+            android:fillColor="#00000000"
+            android:strokeColor="#E6FFFFFF"
+            android:strokeWidth="2.4"
+            android:trimPathStart="0"
+            android:trimPathEnd="0"
+            android:pathData="M16,12 C16,7.6 19.6,4 24,4 C28.4,4 32,7.6 32,12 C32,16.4 28.4,20 24,20 C19.6,20 16,16.4 16,12" />
+    </group>
+</vector>

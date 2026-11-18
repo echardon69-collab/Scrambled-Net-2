@@ -192,8 +192,8 @@ check("Runner : VICTORY ne se consomme que par l'événement victoire",
 # 3. LessonViewModel — gestes, indices, solveur, caméra.
 # ---------------------------------------------------------------------------
 
-check("VM : cameraOnly ignore taps ET appuis longs (leçon Infini)",
-      lvm.count("if (lesson.board.cameraOnly) return") == 2)
+check("VM : cameraOnly ignore taps ET appuis longs (leçon Infini) — joueur (v1) et démo (v2)",
+      lvm.count("if (lesson.board.cameraOnly) return") == 4)
 
 check("VM : rotation JOUÉE (byPlayer) et victoire vérifiée",
       "b.rotateCell(index, 1, byPlayer = true)" in lvm
@@ -437,9 +437,202 @@ check("Test : LessonTest épingle graines, scénarios et machine",
 
 test_names = re.findall(r"fun `([^`]*)`\(", lesson_test)
 bad_names = [n for n in test_names if "'" in n or ":" in n]
-check("Test : 18 tests, aucun deux-points ni apostrophe dans les noms",
-      len(test_names) == 18 and not bad_names,
+check("Test : 22 tests, aucun deux-points ni apostrophe dans les noms",
+      len(test_names) == 22 and not bad_names,
       f"n={len(test_names)} bannis={bad_names}")
+
+# ---------------------------------------------------------------------------
+# 11. Démo du doigt (refonte « doigt animé », validée par eric le
+#     17 nov. 2026) — gestes AVD, cibles pures, pilotes de caméra,
+#     orchestration de l'activité, correctif CI MissingTranslation.
+# ---------------------------------------------------------------------------
+
+overlay = read(KOTLIN / "ui/FingerOverlay.kt")
+doigt = read(RES / "drawable/doigt.xml")
+doigt_glisse = read(RES / "drawable/doigt_glisse.xml")
+doigts_pincement = read(RES / "drawable/doigts_pincement.xml")
+avd_appui = read(RES / "drawable/lesson_doigt_appui.xml")
+avd_prolonge = read(RES / "drawable/lesson_doigt_prolonge.xml")
+avd_pincement = read(RES / "drawable/lesson_doigt_pincement.xml")
+avd_glissement = read(RES / "drawable/lesson_doigt_glissement.xml")
+anims = {
+    name: read(RES / f"animator/lesson_{name}.xml")
+    for name in [
+        "appui_corps", "appui_onde", "prolonge_corps", "prolonge_anneau",
+        "pince_gauche", "pince_droite", "glisse_trajet",
+    ]
+}
+gradle_app = read(ROOT / "app/build.gradle.kts")
+
+
+def kotlin_fun(src, signature):
+    """Corps d'une fonction Kotlin : de l'accolade ouvrante qui suit
+    la signature à sa fermante appariée (compte les accolades)."""
+    i = src.find(signature)
+    if i < 0:
+        return ""
+    start = src.find("{", i)
+    if start < 0:
+        return ""
+    depth = 0
+    for j in range(start, len(src)):
+        if src[j] == "{":
+            depth += 1
+        elif src[j] == "}":
+            depth -= 1
+            if depth == 0:
+                return src[start:j + 1]
+    return ""
+
+
+def xml_attr(st, name):
+    m = re.search(rf'{name}="([^"]+)"', st)
+    return m.group(1) if m else ""
+
+
+def avd_targets(st):
+    return re.findall(r'target\s+android:name="(\w+)"', st)
+
+
+check("Démo : les sept gestes de DemoKind dans l'ordre de la refonte",
+      "enum class DemoKind { NONE, TAP_TILE, HOLD_TILE, TAP_BUTTON, "
+      "PINCH, DRAG_X, DRAG_Y }" in lessons)
+
+demo_for_body = kotlin_fun(lessons, "fun demoFor(kind: ExpectKind)")
+check("Démo : demoFor prononce les ONZE attentes (when exhaustif)",
+      len(re.findall(r"ExpectKind\.\w+ ->", demo_for_body)) == 11
+      and "ExpectKind.PAN_Y -> DemoKind.DRAG_Y" in demo_for_body
+      and "ExpectKind.ZOOM -> DemoKind.PINCH" in demo_for_body)
+
+demo_target_body = kotlin_fun(lessons, "fun demoTarget(board: Board, kind: ExpectKind)")
+check("Démo : la rotation désigne la première tuile à remettre, VISIBLE de préférence",
+      "board.solveMoves()" in demo_target_body
+      and "firstOrNull { !board.isHidden(it) }" in demo_target_body)
+check("Démo : le verrou exige l'aplomb, jamais un piège (ni serveur ni terminal)",
+      "(4 - board.rotations[i]) % 4 == 0" in demo_target_body
+      and "i == board.serverIndex || board.isTerminal(i)" in demo_target_body)
+
+check("VM : la démo s'arme à CHAQUE changement d'étape (la génération avance aussi vers NONE)",
+      "if (r.index != lastStepIndex)" in lvm and "++demoArmId" in lvm)
+
+demo_bodies = [
+    kotlin_fun(lvm, "fun demoTapAt(index: Int)"),
+    kotlin_fun(lvm, "fun demoLongPressAt(index: Int)"),
+    kotlin_fun(lvm, "fun demoHintButton()"),
+    kotlin_fun(lvm, "fun demoAct(kind: DemoKind, index: Int)"),
+]
+check("VM : la démo ne nourrit JAMAIS la machine (aucun onEvent dans les quatre corps)",
+      all(b for b in demo_bodies)
+      and all("onEvent" not in b for b in demo_bodies),
+      f"corps vides={sum(1 for b in demo_bodies if not b)}")
+check("VM : demoAct route le contact vers l'action réelle du geste",
+      "DemoKind.TAP_TILE -> demoTapAt(index)" in demo_bodies[3]
+      and "DemoKind.HOLD_TILE -> demoLongPressAt(index)" in demo_bodies[3]
+      and "DemoKind.TAP_BUTTON -> demoHintButton()" in demo_bodies[3])
+check("VM : la démo d'indice se contente de la pulsation (le correctif reste au joueur)",
+      "if (r.kind != ExpectKind.HINT_SIGNAL && r.kind != ExpectKind.HINT_FIX) return"
+      in demo_bodies[2]
+      and "b.hintTarget()" in demo_bodies[2]
+      and "seal" not in demo_bodies[2])
+check("VM : l'état porte la démo (geste, cible, génération) — equals et hashCode complets",
+      "demoKind = armedDemoKind" in lvm
+      and "demoIndex = armedDemoIndex" in lvm
+      and "demoRequestId = demoArmId" in lvm
+      and "demoRequestId == other.demoRequestId" in lvm
+      and "31 * result + demoRequestId" in lvm)
+
+check("BoardView : les trois pilotes de démo exposés (cellCenter, demoPanBy, demoZoomBy)",
+      "fun cellCenter(index: Int): FloatArray?" in bv
+      and "fun demoPanBy(dxPx: Float, dyPx: Float)" in bv
+      and "fun demoZoomBy(ratio: Float)" in bv)
+demo_pan_body = kotlin_fun(bv, "fun demoPanBy(dxPx: Float, dyPx: Float)")
+demo_zoom_body = kotlin_fun(bv, "fun demoZoomBy(ratio: Float)")
+check("BoardView : les pilotes de démo n'invoquent JAMAIS les listeners du joueur",
+      "onCameraScrolled" not in demo_pan_body and "onCameraZoomed" not in demo_pan_body
+      and "onCameraScrolled" not in demo_zoom_body
+      and "onCameraZoomed" not in demo_zoom_body)
+check("BoardView : le zoom de démo s'ancre au CENTRE de la vue (miroir de onScale)",
+      "val focusX = width / 2f" in demo_zoom_body
+      and "panX = focusX - (focusX - panX) * growth" in demo_zoom_body)
+
+check("Overlay : FingerOverlay pose l'AVD au bout de l'index (ancrage, alpha, rotation)",
+      "class FingerOverlay" in overlay
+      and "canvas.withTranslation(fx - ax, fy - ay) {" in overlay
+      and "canvas.rotate(rotDeg, ax, ay)" in overlay
+      and "ANCHOR_V = 11f / 48f" in overlay)
+check("Overlay : le doigt n'intercepte RIEN (la leçon reste jouable sous la main)",
+      "onTouchEvent" not in overlay and "isClickable" not in overlay)
+check("Overlay : le voyage d'approche freine à l'arrivée, un ValueAnimator maître linéaire",
+      "LinearInterpolator()" in overlay
+      and "DecelerateInterpolator()" in overlay
+      and "anim.animatedFraction * totalMs" in overlay)
+
+check("AVD : les quatre genres de geste existent (appui, prolongé, pincement, glissement)",
+      'android:drawable="@drawable/doigt"' in avd_appui
+      and 'android:drawable="@drawable/doigt"' in avd_prolonge
+      and 'android:drawable="@drawable/doigts_pincement"' in avd_pincement
+      and 'android:drawable="@drawable/doigt_glisse"' in avd_glissement)
+check("AVD : chaque cible nommée existe dans son drawable (tracés nommés)",
+      set(avd_targets(avd_appui)) == {"corps", "onde"}
+      and 'android:name="corps"' in doigt
+      and 'android:name="onde"' in doigt
+      # trimPathEnd anime un TRACÉ : la cible est le path, jamais le groupe.
+      and set(avd_targets(avd_prolonge)) == {"corps", "arc_anneau"}
+      and 'android:name="arc_anneau"' in doigt
+      and set(avd_targets(avd_pincement)) == {"doigt_gauche", "doigt_droite"}
+      and 'android:name="doigt_gauche"' in doigts_pincement
+      and 'android:name="doigt_droite"' in doigts_pincement
+      and set(avd_targets(avd_glissement)) == {"chevron_trajet"}
+      and 'android:name="chevron_trajet"' in doigt_glisse)
+check("AVD : les durées XML sont le MIROIR des constantes Kotlin (épinglées ensemble)",
+      xml_attr(anims["appui_corps"], "android:duration") == "350"
+      and "PRESS_MS = 350f" in overlay
+      and xml_attr(anims["prolonge_anneau"], "android:duration") == "1300"
+      and "RING_MS = 1300f" in overlay
+      and xml_attr(anims["pince_gauche"], "android:duration") == "550"
+      and "PINCH_MS = 550f" in overlay
+      and xml_attr(anims["glisse_trajet"], "android:duration") == "550"
+      and "SWEEP_MS = 550f" in overlay)
+check("AVD : l'appui descend puis se relève, l'onde s'éteint sur le cycle complet",
+      xml_attr(anims["appui_corps"], "android:propertyName") == "translateY"
+      and xml_attr(anims["appui_corps"], "android:repeatMode") == "reverse"
+      and xml_attr(anims["appui_onde"], "android:propertyName") == "alpha"
+      and xml_attr(anims["appui_corps"], "android:duration") == "350")
+check("AVD : l'appui prolongé RESTE enfoncé, l'anneau se remplit (accéléré)",
+      xml_attr(anims["prolonge_corps"], "android:repeatCount") == "0"
+      and xml_attr(anims["prolonge_anneau"], "android:propertyName") == "trimPathEnd"
+      and xml_attr(anims["prolonge_anneau"], "android:interpolator")
+      == "@android:interpolator/accelerate_quad")
+check("Pincement : écart épinglé des DEUX côtés (36 vers 48 dp, deux mains dessinées)",
+      xml_attr(anims["pince_gauche"], "android:valueTo") == "-6"
+      and xml_attr(anims["pince_droite"], "android:valueTo") == "6"
+      and "PINCH_CLOSED_DP = 36f" in overlay
+      and "PINCH_OPEN_DP = 48f" in overlay
+      and "lesson_doigt_pincement" in overlay)
+
+check("Layout : la surimpression du doigt au-dessus de tout (dernier enfant, pleine vue)",
+      "net.chardons.netscramble2.ui.FingerOverlay" in layout_lesson
+      and layout_lesson.find("lesson_finger") > layout_lesson.find("lesson_solve_btn")
+      and 'android:id="@+id/lesson_finger"' in layout_lesson)
+
+check("Activity : la démo se pose UNE fois par étape, annulée au changement et au départ",
+      "state.demoRequestId != lastDemoRequestId" in lact
+      and lact.count("lessonFinger.cancel()") == 2
+      and "armDemoWhenReady" in lact)
+check("Activity : le contact exécute l'action RÉELLE du modèle, la caméra suit les images",
+      "viewModel.demoAct(state.demoKind, state.demoIndex)" in lact
+      and "demoPanBy(dx, dy)" in lact
+      and "demoZoomBy(ratio)" in lact)
+check("Activity : la cible se résout par genre (tuile, bouton de l'étape, centre de la vue)",
+      "binding.lessonBoard.cellCenter(state.demoIndex)" in lact
+      and "buttonCenter(binding.lessonHintBtn)" in lact
+      and "buttonCenter(binding.lessonSolveBtn)" in lact
+      and "root.height / 2.2f" in lact)
+check("Activity : le doigt attend la MESURE (cellCenter null avant le premier layout)",
+      "armDemoWhenReady(state)" in lact and "return@post" in lact)
+
+check("CI : MissingTranslation en AVERTISSEMENT (option A d'eric, langues partielles admises)",
+      'warning += "MissingTranslation"' in gradle_app)
 
 # ---------------------------------------------------------------------------
 

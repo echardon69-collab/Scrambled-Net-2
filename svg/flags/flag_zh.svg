@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Drapeau de la République populaire de Chine — chantier traduction
+     (mandarin expérimental, 18 nov. 2026). Géométrie officielle sur
+     grille 30 × 20 reportée dans un viewBox 900 × 600 (ratios × 30) :
+     champ rouge, grande étoile au centre (150, 150) de rayon
+     circonscrit 90, quatre petites étoiles de rayon 30 aux centres
+     (300, 60), (360, 120), (360, 210), (300, 270) ; chaque petite
+     étoile a un sommet pointé vers le centre de la grande. Polygones
+     à cinq branches : rayon intérieur = R × sin(18°) / sin(54°).
+     Pas de dégradé ni de clip : le convertisseur accepte des
+     remplissages unis seulement (l'ombrage est synthétique). -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600">
+  <title>Flag of China</title>
+  <g id="zh-chine">
+    <rect id="zh-champ" x="0" y="0" width="900" height="600" fill="#DE2910"/>
+    <polygon id="zh-grande-etoile" points="150.00,60.00 129.79,122.19 64.40,122.19 117.31,160.62 97.10,222.81 150.00,184.38 202.90,222.81 182.69,160.62 235.60,122.19 170.21,122.19" fill="#FFDE00"/>
+    <polygon id="zh-petite-1" points="274.28,44.57 288.59,61.01 277.37,79.70 297.43,71.17 311.74,87.61 309.83,65.90 329.88,57.37 308.64,52.48 306.73,30.76 295.52,49.45" fill="#FFDE00"/>
+    <polygon id="zh-petite-2" points="330.30,115.76 349.87,125.36 346.79,146.93 361.96,131.29 381.53,140.89 371.34,121.62 386.52,105.98 365.05,109.71 354.86,90.44 351.78,112.02" fill="#FFDE00"/>
+    <polygon id="zh-petite-3" points="331.15,218.24 352.94,219.02 358.92,239.98 366.40,219.51 388.18,220.29 371.02,206.85 378.49,186.38 360.41,198.55 343.25,185.11 349.24,206.07" fill="#FFDE00"/>
+    <polygon id="zh-petite-4" points="276.57,288.74 296.97,281.05 310.58,298.07 309.57,276.30 329.97,268.61 308.95,262.84 307.94,241.07 295.96,259.28 274.94,253.51 288.55,270.53" fill="#FFDE00"/>
+  </g>
+</svg>

@@ -49,6 +49,9 @@ class LessonActivity : AppCompatActivity() {
     /** Dernière valeur de leçon terminée rendue (la sauvegarde ne se pose qu'une fois). */
     private var lastLessonDone = false
 
+    /** Dernière génération de démo rendue : le doigt se pose une fois par étape. */
+    private var lastDemoRequestId = 0
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         EdgeToEdge.apply(window)
@@ -95,7 +98,9 @@ class LessonActivity : AppCompatActivity() {
 
     override fun onStop() {
         // Le solveur de leçon gèle en arrière-plan : aucun coup joué
-        // dans le dos de l'écran.
+        // dans le dos de l'écran ; le doigt de démo n'y survit pas
+        // non plus (il réapparaîtrait figé au retour).
+        binding.lessonFinger.cancel()
         viewModel.setPaused(true)
         super.onStop()
     }
@@ -186,6 +191,73 @@ class LessonActivity : AppCompatActivity() {
             Settings.saveLessonDone(this, ordinal)
             finish()
         }
+        // Démo du doigt : armée UNE fois par étape (la génération
+        // avance aussi vers NONE — l'étape de lecture annule la
+        // démo en cours, aucun doigt orphelin sur la bulle suivante).
+        if (state.demoRequestId != lastDemoRequestId) {
+            lastDemoRequestId = state.demoRequestId
+            binding.lessonFinger.cancel()
+            if (!state.lessonDone && state.demoKind != DemoKind.NONE) {
+                armDemoWhenReady(state)
+            }
+        }
+    }
+
+    /**
+     * Attend que la vue du plateau soit MESURÉE avant de viser la
+     * cible (la première démo s'arme au onCreate, avant le premier
+     * layout : cellCenter répond alors null — on repose la demande
+     * à la trame suivante, la génération protège des étalons).
+     */
+    private fun armDemoWhenReady(state: LessonUiState) {
+        binding.lessonBoard.post {
+            if (lastDemoRequestId != state.demoRequestId || state.lessonDone) return@post
+            val target = demoTargetPoint(state)
+            if (target == null) {
+                armDemoWhenReady(state)
+                return@post
+            }
+            binding.lessonFinger.demo(
+                state.demoKind, target[0], target[1],
+                onAct = { viewModel.demoAct(state.demoKind, state.demoIndex) },
+                onPanFrame = { dx, dy -> binding.lessonBoard.demoPanBy(dx, dy) },
+                onZoomFrame = { ratio -> binding.lessonBoard.demoZoomBy(ratio) }
+            )
+        }
+    }
+
+    /**
+     * Le point visé par la démo : le centre de la tuile cible
+     * ([BoardView.cellCenter]), le bouton que l'étape montre, ou
+     * le centre de la vue pour les gestes de caméra. Null tant que
+     * la cible n'est pas mesurable.
+     */
+    private fun demoTargetPoint(state: LessonUiState): FloatArray? = when (state.demoKind) {
+        DemoKind.TAP_TILE, DemoKind.HOLD_TILE ->
+            binding.lessonBoard.cellCenter(state.demoIndex)
+        DemoKind.TAP_BUTTON -> when (state.kind) {
+            ExpectKind.HINT_SIGNAL, ExpectKind.HINT_FIX ->
+                buttonCenter(binding.lessonHintBtn)
+            ExpectKind.SOLVE -> buttonCenter(binding.lessonSolveBtn)
+            else -> null
+        }
+        DemoKind.PINCH, DemoKind.DRAG_X, DemoKind.DRAG_Y -> {
+            val root = binding.lessonRoot
+            floatArrayOf(root.width / 2f, root.height / 2.2f)
+        }
+        DemoKind.NONE -> null
+    }
+
+    /** Centre d'un bouton du bandeau, en coordonnées de la vue racine. */
+    private fun buttonCenter(button: android.view.View): FloatArray {
+        val rootLoc = IntArray(2)
+        val btnLoc = IntArray(2)
+        binding.lessonRoot.getLocationInWindow(rootLoc)
+        button.getLocationInWindow(btnLoc)
+        return floatArrayOf(
+            btnLoc[0] + button.width / 2f - rootLoc[0],
+            btnLoc[1] + button.height / 2f - rootLoc[1]
+        )
     }
 
     companion object {

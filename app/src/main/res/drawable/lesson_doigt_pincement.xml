@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- DÉMO DE PINCEMENT (zoom, deux doigts dessinés, décision
+     d'eric) : les deux mains s'écartent puis se rapprochent
+     (translateX 0 vers ±6, 550 ms, rejouées à l'ENVERS une fois :
+     écart puis retour — la caméra zoome puis revient, net nul).
+     FingerOverlay suit du MÊME écart (36 vers 48 dp, une
+     direction de 550 ms, épinglé) et alimente demoZoomBy à chaque
+     image : l'écart écran et l'AVD restent jumeaux. -->
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/doigts_pincement">
+    <target
+        android:name="doigt_gauche"
+        android:animation="@animator/lesson_pince_gauche" />
+    <target
+        android:name="doigt_droite"
+        android:animation="@animator/lesson_pince_droite" />
+</animated-vector>

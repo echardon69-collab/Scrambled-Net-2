@@ -463,19 +463,21 @@ check("Manifest : SettingsActivity déclarée, interne, titrée "
                 r'android:label="@string/menu_settings"[^>]*'
                 r'android:parentActivityName="\.MainActivity"',
                 manifest_src, re.S) is not None)
-# Corse puis alsacien ajoutés (chantier traduction, 16 nov. 2026) :
-# localeConfig déclare QUATRE langues — en base ; fr, co et
-# gsw-FR (alsacien) traductions. Le pin exige le compte exact
-# pour qu'une cinquième langue n'entre pas sans que ce check
-# soit relu.
-check("Manifest : localeConfig déclare exactement les quatre langues "
-      "de l'app (en base ; fr, co et gsw-FR traductions)",
+# Corse puis alsacien ajoutés (chantier traduction, 16 nov. 2026),
+# puis chinois simplifié (18 nov. 2026, traduction expérimentale
+# en attente de relecture native) : localeConfig déclare CINQ
+# langues — en base ; fr, co, gsw-FR (alsacien) et zh-CN
+# traductions. Le pin exige le compte exact pour qu'une sixième
+# langue n'entre pas sans que ce check soit relu.
+check("Manifest : localeConfig déclare exactement les cinq langues "
+      "de l'app (en base ; fr, co, gsw-FR et zh-CN traductions)",
       'android:localeConfig="@xml/locales_config"' in manifest_src
       and '<locale android:name="en" />' in locales_src
       and '<locale android:name="fr" />' in locales_src
       and '<locale android:name="co" />' in locales_src
       and '<locale android:name="gsw-FR" />' in locales_src
-      and locales_src.count("<locale ") == 4)
+      and '<locale android:name="zh-CN" />' in locales_src
+      and locales_src.count("<locale ") == 5)
 check("Manifest : auto-stockage appcompat de la langue "
       "(AppLocalesMetadataHolderService, marqueur autoStoreLocales, "
       "jamais exporté)",

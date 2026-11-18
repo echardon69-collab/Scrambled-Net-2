@@ -37,8 +37,8 @@ comportement.
 Extension « drapeaux du sélecteur » (Lot 15, v20 du 16 nov. 2026) :
 chaque radio porte le drapeau choisi par eric (svg/flags/flag_*.svg
 -> drawable via tools/flags/convert_flags.py, hauteur uniforme
-15 dp, largeur proportionnelle). Sont pinnés : les 4 sources et
-leurs 4 drawables (viewport et tailles dp exacts), flag_en RÉÉCRIT
+15 dp, largeur proportionnelle). Sont pinnés : les 5 sources et
+leurs 5 drawables (viewport et tailles dp exacts), flag_en RÉÉCRIT
 sans clipPath (le VectorDrawable ne sait pas recadrer — voir
 l'en-tête du SVG), la correspondance EXPLICITE langFlagFor dans
 SettingsActivity, l'équilibre des comptes (autant de drapeaux que
@@ -47,12 +47,32 @@ réutilise convert_tiles, jamais de règles retapées). La géométrie
 fine de l'Union Jack est elle, épinglee par le banc d'essai
 tools/flags/test_convert_flags.py.
 
+Extension « traduction en mandarin » (18 nov. 2026, expérimentale) :
+première passe IA de chinois simplifié (zh-CN), intégrée COMPLÈTE
+— les trois sources ensemble, jamais l'une sans les autres : le
+dossier values-zh-rCN, la locale zh-CN dans locales_config, la
+ligne AppLanguage et le drapeau de la Chine (dessiné sur la grille
+officielle 30 × 20, polygones à cinq branches). Relecture native
+attendue avant toute officialisation, même processus que le corse
+et l'alsacien.
+
+Extension « ombrage des drapeaux pâles » (nov. 2026, retour
+d'eric : les drapeaux blancs ne se démarquent pas sur fond blanc) :
+le convertisseur POSE en dernier, par-dessus le contenu, deux
+bandeaux de dégradé linéaire (transparent vers l'intérieur,
+#26000000 au ras du bord), sous les bordures droite et basse, de
+1 dp d'épaisseur TOUJOURS (quelle que soit la taille du drapeau).
+Pinné ici : présence et ordre (les DEUX derniers tracés, PARSÉS),
+épaisseur en dp des deux axes, et l'alpha en miroir du
+convertisseur (OMBRE_ALPHA).
+
 Usage : python3 tools/validate_selecteur.py
 """
 
 import re
 import sys
 from pathlib import Path
+from xml.etree import ElementTree
 
 ROOT = Path(__file__).resolve().parents[1]
 KOTLIN = ROOT / "app/src/main/kotlin/net/chardons/netscramble2"
@@ -97,11 +117,12 @@ check("AppLanguages : objet AppLanguages avec ALL en liste",
                 r"val ALL: List<AppLanguage> = listOf\(", al_src,
                 re.S) is not None)
 pairs = re.findall(r'AppLanguage\("([^"]+)",\s*"([^"]+)"\),?', al_src)
-check("AppLanguages : les quatre langues, tags et endonymes "
-      "épinglés (fr, en, co, gsw-FR — continuité de la page v3 "
+check("AppLanguages : les cinq langues, tags et endonymes "
+      "épinglés (fr, en, co, gsw-FR, zh-CN — continuité de la page v3 "
       "puis langues ajoutées)",
       pairs == [("fr", "Français"), ("en", "English"),
-                ("co", "Corsu"), ("gsw-FR", "Elsässisch")],
+                ("co", "Corsu"), ("gsw-FR", "Elsässisch"),
+                ("zh-CN", "简体中文")],
       str(pairs))
 check("AppLanguages : byTag en correspondance EXACTE (premier tag "
       "égal, pas de préfixe ni de langue seule)",
@@ -119,8 +140,8 @@ locale_tags = re.findall(r'<locale android:name="([^"]+)" />',
                         locales_src)
 app_tags = [tag for tag, _ in pairs]
 check("Cohérence : locales_config et AppLanguages portent les "
-      "MÊMES langues (set, compte exact 4)",
-      len(locale_tags) == 4
+      "MÊMES langues (set, compte exact 5)",
+      len(locale_tags) == 5
       and set(locale_tags) == set(app_tags),
       f"locales_config={locale_tags} AppLanguages={app_tags}")
 
@@ -209,6 +230,7 @@ lang_files = {
     "values-fr": RES / "values-fr/strings.xml",
     "values-co": RES / "values-co/strings.xml",
     "values-gsw-rFR": RES / "values-gsw-rFR/strings.xml",
+    "values-zh-rCN": RES / "values-zh-rCN/strings.xml",
 }
 for name, path in sorted(lang_files.items()):
     src = read(path)
@@ -226,9 +248,9 @@ check("Tests JVM : AppLanguagesTest existe et épingle le piège "
       (TESTS / "AppLanguagesTest.kt").exists()
       and '"gsw-FR"' in test_src
       and 'assertNull(AppLanguages.byTag("gsw"))' in test_src)
-check("Tests JVM : les quatre langues et endonymes épinglés, "
+check("Tests JVM : les cinq langues et endonymes épinglés, "
       "correspondance exacte et endonymes sains",
-      "listsAllFourLanguagesInDisplayOrder" in test_src
+      "listsAllFiveLanguagesInDisplayOrder" in test_src
       and "byTagIsExactMatchOnly" in test_src
       and "endonymsAreNotBlankAndDistinct" in test_src)
 
@@ -237,7 +259,8 @@ check("Tests JVM : les quatre langues et endonymes épinglés, "
 flag_tags = (("fr", "flag_fr", "22.5", "900", "600"),
              ("en", "flag_en", "30", "1200", "600"),
              ("co", "flag_co", "25", "750", "450"),
-             ("gsw-FR", "flag_gsw_fr", "22.5", "900", "600"))
+             ("gsw-FR", "flag_gsw_fr", "22.5", "900", "600"),
+             ("zh-CN", "flag_zh", "22.5", "900", "600"))
 for tag, name, w, vw, vh in flag_tags:
     svg = FLAGS_SVG / f"{name}.svg"
     check(f"Drapeau {tag} : source svg/flags/{name}.svg présente",
@@ -253,6 +276,61 @@ for tag, name, w, vw, vh in flag_tags:
           f"SettingsActivity (correspondance explicite)",
           re.search(r'"%s" -> R\.drawable\.%s' % (re.escape(tag), name),
                     sa_src) is not None)
+
+_ANDROID = "{http://schemas.android.com/apk/res/android}"
+_AAPT = "{http://schemas.android.com/aapt}"
+
+
+def _gradient_de(trace):
+    """Le gradient linéaire du tracé (PARSÉ), sinon None."""
+    for enfant in trace:
+        if enfant.tag != _AAPT + "attr":
+            continue
+        for grad in enfant:
+            if (grad.tag == "gradient"
+                    and grad.get(_ANDROID + "type") == "linear"):
+                return grad
+    return None
+
+
+for tag, name, w, vw, vh in flag_tags:
+    arbre = ElementTree.parse(RES / f"drawable/{name}.xml")
+    traces = [e for e in arbre.getroot() if e.tag == "path"]
+    ombres = [t for t in traces if _gradient_de(t)]
+    check(f"Drapeau {tag} : ombrage des drapeaux pâles — les DEUX "
+          f"derniers tracés sont des bandeaux à dégradé (posés "
+          f"en dernier, par-dessus le contenu, une seule fois)",
+          len(ombres) == 2 and traces[-2:] == ombres)
+    epaisseurs = []
+    for trace in ombres:
+        grad = _gradient_de(trace)
+        stops = [(item.get(_ANDROID + "offset"),
+                  item.get(_ANDROID + "color"))
+                 for item in grad]
+        nums = [float(v)
+                for v in re.findall(r"[-+]?[\d.]+",
+                                    trace.get(_ANDROID + "pathData"))]
+        if nums[0] == 0.0:      # bandeau du BAS : M0,y ... pleine largeur
+            ep = (nums[5] - nums[1]) * 15.0 / float(vh)
+        else:                   # bandeau de la DROITE : Mx,0 ... Mx,vh
+            # axe HORIZONTAL : une dp vaut vw/w unités (largeur dp du
+            # drapeau), PAS vh/15 comme sur l'axe vertical.
+            ep = (nums[2] - nums[0]) * float(w) / float(vw)
+        epaisseurs.append((ep, stops))
+    check(f"Drapeau {tag} : bandeaux de 1 dp sur les DEUX axes, "
+          f"gradient linéaire transparent -> #26000000 au bord",
+          all(abs(ep - 1.0) < 1e-4 and stops == [("0", "#00000000"),
+                                                 ("1", "#26000000")]
+              for ep, stops in epaisseurs))
+
+outil_drapeaux = (ROOT / "tools/flags/convert_flags.py").read_text(
+    encoding="utf-8")
+check("Drapeaux : miroir des constantes du convertisseur — "
+      "bandau de 1 dp et alpha 0x26 (retouchables là, épinglés ici)",
+      re.search(r"^OMBRE_LARGEUR_DP = 1\.0", outil_drapeaux, re.M)
+      is not None
+      and re.search(r"^OMBRE_ALPHA = 0x26", outil_drapeaux, re.M)
+      is not None)
 
 check("Drapeaux : l'Union Jack est RÉÉCRIT sans clipPath (non "
       "représentable en VectorDrawable), réécriture documentée "
@@ -270,12 +348,12 @@ check("Drapeaux : les radios les portent (drawable relatif + "
       and "compoundDrawablePadding" in sa_src
       and re.search(r"\.getIdentifier\(", sa_src) is None)
 flags_svg = sorted(f.name for f in FLAGS_SVG.glob("flag_*.svg"))
-check("Drapeaux : autant de sources que de langues (compte exact 4 "
+check("Drapeaux : autant de sources que de langues (compte exact 5 "
       "des deux côtés)",
-      len(flags_svg) == 4
+      len(flags_svg) == 5
       and len([t for t in locale_tags if t in
                dict((tag, name) for tag, name, *_ in flag_tags)])
-      == 4)
+      == 5)
 check("Drapeaux : la source unique des règles — convert_flags "
       "réutilise convert_tiles ET generate_graphics, jamais de "
       "règles retapées",

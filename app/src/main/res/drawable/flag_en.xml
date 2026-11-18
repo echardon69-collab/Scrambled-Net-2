@@ -45,4 +45,30 @@
     android:strokeColor="#FFC8102E"
     android:strokeWidth="120"
       />
+  <path
+    android:pathData="M0,560 L1200,560 L1200,600 L0,600 Z"
+      >
+    <aapt:attr name="android:fillColor">
+        <gradient
+        android:type="linear"
+        android:startX="0" android:startY="560"
+        android:endX="0" android:endY="600">
+        <item android:offset="0" android:color="#00000000"/>
+        <item android:offset="1" android:color="#26000000"/>
+        </gradient>
+    </aapt:attr>
+  </path>
+  <path
+    android:pathData="M1160,0 L1200,0 L1200,600 L1160,600 Z"
+      >
+    <aapt:attr name="android:fillColor">
+        <gradient
+        android:type="linear"
+        android:startX="1160" android:startY="0"
+        android:endX="1200" android:endY="0">
+        <item android:offset="0" android:color="#00000000"/>
+        <item android:offset="1" android:color="#26000000"/>
+        </gradient>
+    </aapt:attr>
+  </path>
 </vector>

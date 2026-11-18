@@ -8,7 +8,9 @@
      fill="none" (contour seul : PAS de fillColor), contours
      (strokeColor/strokeWidth/strokeLineCap), héritage par <g>
      (fill ET fill-rule), fill-rule evenodd, <line> -> M...L...,
-     tailles dp rectangulaires (largeur x hauteur) ;
+     tailles dp rectangulaires (largeur x hauteur), OMBRAGE des
+     drapeaux pâles : bandeaux dégradés sous les bordures droite
+     et basse, épaisseur TOUJOURS 1 dp, posés en DERNIER ;
   2. vérifie les refus explicites : clip-path, transform, tracé sans
      fill ni stroke (le VectorDrawable ne sait pas les représenter) ;
   3. ORACLE : convertit les 4 VRAIS drapeaux (svg/flags/flag_fr,
@@ -81,10 +83,24 @@ SVG_INVISIBLE = """<?xml version="1.0" encoding="UTF-8"?>
 </svg>
 """
 
+SVG_OMBRE = """<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 30">
+  <rect x="0" y="0" width="60" height="30" fill="#ffffff"/>
+  <circle cx="30" cy="15" r="10" fill="#dd0000"/>
+</svg>
+"""
+
+SVG_RATIO = """<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 20">
+  <rect x="0" y="0" width="60" height="20" fill="#ffffff"/>
+</svg>
+"""
+
 
 def lit(out):
     with open(out, encoding='utf-8') as fh:
-        return fh.read()
+        contenu = fh.read()
+    return contenu
 
 
 def check(ok, label, condition, detail=''):
@@ -109,8 +125,8 @@ def main():
     datas = re.findall(r'android:pathData="([^"]*)"', xml)
     blocs = re.findall(r'<path\n(.*?)\n      />', xml, re.S)
 
-    ok = check(ok, '5 tracés convertis', len(datas) == 5,
-               '(lu %d)' % len(datas))
+    ok = check(ok, '7 tracés : 5 du SVG + 2 d ombre',
+               len(datas) == 7, '(lu %d)' % len(datas))
     ok = check(ok, 'rect classe CSS -> fill #FF0000',
                'android:fillColor="#FFFF0000"' in blocs[0],
                '(bloc0=%r)' % blocs[0])
@@ -132,6 +148,78 @@ def main():
     ok = check(ok, 'dp rectangulaire 100x50 -> 30dp x 15dp',
                ('android:width="30dp"' in xml
                 and 'android:height="15dp"' in xml), '')
+
+    print('== 1 bis. Ombrage des drapeaux pâles ==')
+    # Retour d'eric : certains drapeaux blancs ne se démarquent pas
+    # sur un fond blanc. L'ombre se pose SOUS les bordures droite
+    # et basse, PAR-DESSUS le contenu, en DERNIER : la géométrie et
+    # les couleurs du SVG restent les siennes.
+    blanc = os.path.join(WORK, 'essais', 'flag_blanc.svg')
+    with open(blanc, 'w', encoding='utf-8') as fh:
+        fh.write(SVG_OMBRE)
+    cf.convert_flag(blanc, os.path.join(WORK, 'sortie'))
+    ombre = lit(os.path.join(WORK, 'sortie', 'flag_blanc.xml'))
+    d_ombre = re.findall(r'android:pathData="([^"]*)"', ombre)
+    blocs_ombre = re.findall(r'<path\n(.*?)\n  </path>', ombre, re.S)
+    ok = check(ok, 'drapeau blanc : 30 dp x 15 dp, viewport 60 x 30',
+               ('android:width="30dp"' in ombre
+                and 'android:height="15dp"' in ombre
+                and 'android:viewportWidth="60"' in ombre
+                and 'android:viewportHeight="30"' in ombre), '')
+    ok = check(ok, '4 tracés : 2 du SVG + 2 d ombre, rien d autre',
+               len(d_ombre) == 4, '(lu %d)' % len(d_ombre))
+    ok = check(ok, 'le contenu du SVG précède les ombres',
+               ombre.index('android:fillColor="#FFFFFFFF"')
+               < ombre.index('<aapt:attr'),
+               '')
+    ok = check(ok, 'ombre du BAS pleine largeur : hauteur 28->30'
+               ' = 1 dp (2 unités, viewport 60 x 30)',
+               d_ombre[2] == 'M0,28 L60,28 L60,30 L0,30 Z',
+               '(lu %r)' % d_ombre[2])
+    ok = check(ok, 'ombre de la DROITE pleine hauteur : '
+               '58->60 = 1 dp du bord',
+               d_ombre[3] == 'M58,0 L60,0 L60,30 L58,30 Z',
+               '(lu %r)' % d_ombre[3])
+    ok = check(ok, 'les DEUX ombres sont des tracés à dégradé aapt'
+               ' (les seuls)',
+               len(blocs_ombre) == 2, '(lu %d)' % len(blocs_ombre))
+    ok = check(ok, 'dégradé linéaire : transparent vers l intérieur,'
+               ' #26000000 au ras du bord, les DEUX bandaux',
+               all(('android:type="linear"' in b
+                    and '<item android:offset="0"'
+                    ' android:color="#00000000"/>' in b
+                    and '<item android:offset="1"'
+                    ' android:color="#26000000"/>' in b)
+                   for b in blocs_ombre),
+               '(blocs=%r)' % [b[:60] for b in blocs_ombre])
+    ok = check(ok, 'gradient du BAS vertical (28->30), gradient de'
+               ' la DROITE horizontal (58->60)',
+               ('android:startX="0" android:startY="28"'
+                in blocs_ombre[0]
+                and 'android:endX="0" android:endY="30"'
+                in blocs_ombre[0]
+                and 'android:startX="58" android:startY="0"'
+                in blocs_ombre[1]
+                and 'android:endX="60" android:endY="0"'
+                in blocs_ombre[1]),
+               '')
+    ok = check(ok, 'constantes réglables épinglées : bandau 1 dp,'
+               ' alpha 0x26 (38/255, environ 15 %)',
+               (cf.OMBRE_LARGEUR_DP == 1.0
+                and cf.OMBRE_ALPHA == 0x26), '')
+    # Épaisseur TOUJOURS 1 dp : un ratio différent reçoit un bandau
+    # PLUS FIN en unités de viewport, IDENTIQUE en dp.
+    ratio3 = os.path.join(WORK, 'essais', 'flag_ratio.svg')
+    with open(ratio3, 'w', encoding='utf-8') as fh:
+        fh.write(SVG_RATIO)
+    cf.convert_flag(ratio3, os.path.join(WORK, 'sortie'))
+    ombre_r = lit(os.path.join(WORK, 'sortie', 'flag_ratio.xml'))
+    d_r = re.findall(r'android:pathData="([^"]*)"', ombre_r)
+    nums = [float(v) for v in re.findall(r'[-+]?[\d.]+', d_r[-2])]
+    ep_dp = (nums[5] - nums[1]) * 15.0 / 20.0
+    ok = check(ok, 'épaisseur constante : viewport 60 x 20 (dp 45 x'
+               ' 15) -> bandau 4/3 unités = toujours 1 dp',
+               abs(ep_dp - 1.0) < 1e-4, '(lu %r dp)' % ep_dp)
 
     print('== 2. Refus explicites (VectorDrawable) ==')
     for label, svg, attendu in (

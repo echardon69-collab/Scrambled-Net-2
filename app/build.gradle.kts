@@ -79,6 +79,19 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+
+    // CI rouge du 17 nov. 2026 (lot Apprentissage) : les 34 chaînes
+    // du mode Apprentissage vivent en anglais et français, la
+    // complétion par delta du corse et de l'alsacien attend le
+    // prochain tour de traduction (kits à régénérer — décision
+    // d'eric, option A). validate_langues admet DEJA les langues
+    // partielles ; lint, lui, refuse MissingTranslation par défaut
+    // et a fait échouer la CI. La politique de la maison s'écrit
+    // ici UNE fois : l'avertissement reste SIGNALÉ dans les
+    // rapports lint, il n'échoue plus le build.
+    lint {
+        warning += "MissingTranslation"
+    }
 }
 
 kotlin {

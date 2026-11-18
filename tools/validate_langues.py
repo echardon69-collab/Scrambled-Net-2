@@ -31,7 +31,7 @@ Usage : python3 tools/validate_langues.py
 
 import re
 import sys
-import xml.etree.ElementTree as ET
+from xml.etree.ElementTree import ParseError, fromstring
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -92,7 +92,7 @@ def read_xml(path):
     fichiers sont parsés (jamais de retapage à la main ici)."""
     raw = path.read_bytes()
     text = raw.decode("utf-8")  # UnicodeDecodeError si encodage cassé
-    root = ET.fromstring(text)  # ParseError si XML cassé
+    root = fromstring(text)  # ParseError si XML cassé
     strings = {}
     for node in root.findall("string"):
         strings[node.get("name")] = "".join(node.itertext())
@@ -174,8 +174,8 @@ def main():
     # --- Base anglaise : parse, comptes pinés. ---
     try:
         base_strings, _ = read_xml(BASE / "strings.xml")
-    except (UnicodeDecodeError, ET.ParseError) as e:
-        sys.exit(f"Base anglaise illisible : {e}")
+    except (UnicodeDecodeError, ParseError) as e:
+        raise SystemExit(f"Base anglaise illisible : {e}")
     check(len(base_strings) == PINNED_STRINGS,
           f"Base : {len(base_strings)} strings au lieu de "
           f"{PINNED_STRINGS} — PIN du chantier : si le jeu a "
@@ -183,8 +183,8 @@ def main():
           f"régénérer les kits")
     try:
         _, base_arrays = read_xml(BASE / "arrays.xml")
-    except (UnicodeDecodeError, ET.ParseError) as e:
-        sys.exit(f"Base arrays.xml illisible : {e}")
+    except (UnicodeDecodeError, ParseError) as e:
+        raise SystemExit(f"Base arrays.xml illisible : {e}")
     n_items = sum(len(v) for v in base_arrays.values())
     check(len(base_arrays) == PINNED_ARRAYS,
           f"Base : {len(base_arrays)} tableaux au lieu de "
@@ -215,7 +215,7 @@ def main():
         reference = name == "values-fr"
         try:
             loc_strings, _ = read_xml(RES / name / "strings.xml")
-        except (UnicodeDecodeError, ET.ParseError) as e:
+        except (UnicodeDecodeError, ParseError) as e:
             errors.append(f"{name} : strings.xml illisible : {e}")
             continue
         try:
@@ -224,7 +224,7 @@ def main():
             loc_arrays = {}
             warnings.append(f"{name} : pas d'arrays.xml (aide et "
                              f"À propos resteront en anglais)")
-        except (UnicodeDecodeError, ET.ParseError) as e:
+        except (UnicodeDecodeError, ParseError) as e:
             errors.append(f"{name} : arrays.xml illisible : {e}")
             continue
         if reference:

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Traduction en chinois simplifié (première passe IA du 18 nov. 2026) :
+     mêmes tableaux que values/arrays.xml (parité contrôlée par
+     tools/validate_langues.py). Les sauts "\n" et les puces • sont
+     conservés tels quels ; les noms propres et l'URL restent en
+     clair ; le tiret chinois —— remplace le tiret cadratin anglais.
+-->
+<resources>
+
+    <!-- Titres des sections de l'aide (même structure que l'original). -->
+    <string-array name="help_titles">
+        <item>游戏</item>
+        <item>操作</item>
+        <item>难度等级</item>
+        <item>计分</item>
+        <item>提示</item>
+    </string-array>
+
+    <!-- Textes des sections de l'aide. -->
+    <string-array name="help_texts">
+        <item>Scrambled Net 2 是一款简单的解谜游戏：你要理清一个计算机网络中的连接，让所有终端都连上服务器。网络由格子组成；它们的位置都对，只是被随机转成了一团乱麻。\n\n逐个旋转格子，重新接通网络。连着服务器的格子会高亮显示。当每个终端都连通时，你就赢了。</item>
+        <item>点击格子，它会顺时针旋转四分之一圈。当你确定一块格子正确时，长按可以锁定它（再长按可解锁）；锁定的格子会以一声短促的咔嗒回应。\n\n单指拖动可平移棋盘，双指捏合可缩放。</item>
+        <item>游戏共有五个难度等级。越高的等级棋盘越大，最高的几个还有特殊的花样：\n\n• 新手：小棋盘。\n\n• 普通：稍大的棋盘。\n\n• 专家：大棋盘。\n\n• 大师：大棋盘，而且边缘首尾相接——一根连线从右边缘出去，就会从左边缘进来，上下边缘同理。\n\n• 疯狂：与大师相同，但所有三通和四通格子都不可见。解开疯狂棋盘需要一套全新的推理。</item>
+        <item>每次胜利都会记录你的步数和用时，并为每个难度保存个人纪录——但前提是谜题由你自己解开：使用过自动求解器的棋局一律不计入成绩。\n\n参见菜单中的“个人纪录”。</item>
+        <item>从服务器向外推进：确认过朝向的格子就是你的锚点，边走边锁定。\n\n只有一个连接的格子是终端——它们是网络的死胡同；把它们的接口指向需要它们的那个邻居。\n\n如果你喜欢安静的棋盘，可以在设置里关闭网络动画。</item>
+    </string-array>
+
+    <!-- Titres des sections de la page « À propos » (refonte du
+         14 nov. 2026 : la fenêtre de dialogue devient une page
+         autonome). -->
+    <string-array name="about_titles">
+        <item>游戏</item>
+        <item>作者</item>
+        <item>来源与许可</item>
+        <item>参与其中</item>
+        <item>重制版的新内容</item>
+        <item>相对原版的变化</item>
+        <item>与原版相同之处</item>
+        <item>相对原版的移除</item>
+    </string-array>
+
+    <!-- Textes des sections de la page « À propos ». La licence
+         cite la chaîne complète : jeu KDE d'origine, portage
+         Android, puis cette refonte. La section « Get involved »
+         est volontairement en texte représentatif : les liens
+         réels ne sont pas encore disponibles (évolution
+         « Renseigner les liens de À propos » de la feuille de
+         route). -->
+    <string-array name="about_texts">
+        <item>Scrambled Net 2 是对 Scrambled Net（KDE 游戏 KNetWalk 的 Android 移植版）的现代、开源重制版。理顺一个被打乱的网络，让每个终端都连上服务器：所有格子的位置都对，只是被随机旋转了。逐个旋转它们，重建网络。</item>
+        <item>Scrambled Net 2 出自 Éric Chardon 之手，他是一位终生热爱逻辑与解谜游戏的爱好者。2010 年初，他发现了 Ian Cameron Smith 那款随源码一起发布的有名应用；2014 年又见证了它由 Michael Mueller 接手——他期待后者能为游戏带来更多演进、留住玩家。多年过去，这些期待未能实现，他决定亲手写出等待中的续作：这个忠实于原版的现代、开源重制版。\n\n为了设计和编写这个重制版，他借助了 Mistral AI 的开发助手 Vibe：规格、Kotlin 游戏引擎、界面、测试和校验脚本都在它的协助下完成，并由他指导、审阅和逐项验收。这样产出的代码以同样的 GPL-2.0 许可证加入本仓库。</item>
+        <item>KNetWalk，最初的 KDE 游戏：© 2004–2007 Andi Peredri、Thomas Nagy 和 Fela Winkelmolen。\n\nScrambled Net，Android 移植版：© 2007–2010 Ian Cameron Smith，© 2014 Michael Mueller。\n\n本重制版 Scrambled Net 2：© 2026 Éric Chardon。\n\n全部以 GPL-2.0 许可证分发——本游戏是自由软件。\n\n源代码：https://github.com/echardon69-collab/Scrambled-Net-2</item>
+        <item>你可以帮助改进这款游戏：\n\n• 报告缺陷——链接待补。\n\n• 联系作者——链接待补。\n\n• 提议一种新语言的翻译——链接待补。\n\n• 提议一套新的格子皮肤——链接待补。</item>
+        <item>与原版相比，这个重制版新增了：\n\n• 无尽家族：三个新难度（无尽、深渊、虚无），棋盘是 40 × 40 的巨型棋盘，边缘首尾相接——镜头会循环，无论怎么平移都看不见边缘；深渊隐藏接线，虚无在网络之上再加迷雾。\n\n• 带自动更新的标题页（从 GitHub 更新），有两种发行版本：内置更新器的 GitHub APK，和不带更新器的 Play 商店 APK。\n\n• 电力特征：根据棋盘生成器的不同，服务器的灯光与数据脉冲以不同的节奏闪烁。\n\n• 设置页里每个难度的说明——真实的棋盘尺寸和规则。\n\n• 语言设置（英语、法语或跟随系统）。</item>
+        <item>原版已有、如今换了做法的功能：\n\n• 源代码：Java 和 Ant 换成了 Kotlin 和 Gradle。\n\n• 图形：原版的位图换成了 VectorDrawable——外观不变，任何缩放下都完美锐利，一个文件适配所有屏幕密度。\n\n• 声音：没有复用原版的任何采样，而是合成了六个短音效。\n\n• 渲染：棋盘不再靠常驻的动画循环重绘，只在有变化时才重绘——更省电。\n\n• 棋盘不再拉伸铺满屏幕：它变成了可以用手指拖动和缩放的镜头视口，缩放始终锚定在指尖之下。\n\n• 棋盘生成：一半棋盘来自另一个能连通所有格子的生成树生成器（另一半仍由原版生成器构建——电力特征能把它们区别开来）。\n\n• 菜单：无标题的文字操作栏，设置收进单页而不是层层级联的子菜单，“关于”对话框变成了这个页面。</item>
+        <item>原版保留不变的功能：\n\n• 五个原版难度（新手到疯狂）及其精确规则——大师的环绕边缘、疯狂的隐藏接线。\n\n• 原版的棋盘生成器：每个谜题都可赢，所有终端连通即获胜。\n\n• 棋盘尺寸随屏幕和横竖屏自适应，与原版的 Screen 矩阵完全一致。\n\n• 点击格子旋转它，长按锁定或解锁。\n\n• 自动求解器——用它解开的游戏一律不计成绩。\n\n• 每个难度的个人纪录（步数和用时）。\n\n• 保存的棋局在关闭应用或休眠后依然存活；后台时时钟冻结。\n\n• 进入大师或疯狂难度时的规则提醒。\n\n• 三种声音模式和动画设置。\n\n• 游戏内的帮助。</item>
+        <item>原版中已移除的功能，以及原因：\n\n• 方向键、轨迹球和键盘操作：这个重制版只支持触摸，为现代手机和平板而生。\n\n• 常驻的红色焦点光标，那是为方向键时代设计的：在直接触摸面前它只是噪音而非帮助——警报闪烁和自动求解器的移动光标已经覆盖了它的用途。\n\n• 原版的全部依赖（HermitAndroid 和 HermitLibrary 库，包括 MTRandom 随机数生成器，都换成了 Kotlin 的标准生成器）：引擎用 Kotlin 从零重写为一个纯净的、带单元测试的游戏引擎——没有复用原版的任何代码。</item>
+    </string-array>
+
+</resources>

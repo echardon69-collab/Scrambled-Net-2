@@ -299,4 +299,107 @@ class LessonTest {
         assertEquals(1.3f, LessonRunner.ZOOM_IN_DONE)
         assertEquals(0.8f, LessonRunner.ZOOM_OUT_DONE)
     }
+
+    // -------------------------------------------------------------
+    // Démo du doigt (refonte « doigt animé ») : la cible de la
+    // démonstration ne piège JAMAIS la leçon — la démo est réelle
+    // (elle tourne, verrouille, pulse) mais le geste du joueur
+    // reste seul à nourrir la machine.
+    // -------------------------------------------------------------
+
+    @Test
+    fun `demo mapping pronounces every expectation`() {
+        // when exhaustif du module pur : les onze attentes se
+        // prononcent ici, aucune ne tombe dans l oubli.
+        assertEquals(DemoKind.NONE, demoFor(ExpectKind.CONTINUE))
+        assertEquals(DemoKind.TAP_TILE, demoFor(ExpectKind.ROTATE))
+        assertEquals(DemoKind.HOLD_TILE, demoFor(ExpectKind.LOCK))
+        assertEquals(DemoKind.HOLD_TILE, demoFor(ExpectKind.UNLOCK))
+        assertEquals(DemoKind.TAP_BUTTON, demoFor(ExpectKind.HINT_SIGNAL))
+        assertEquals(DemoKind.TAP_BUTTON, demoFor(ExpectKind.HINT_FIX))
+        assertEquals(DemoKind.TAP_BUTTON, demoFor(ExpectKind.SOLVE))
+        assertEquals(DemoKind.NONE, demoFor(ExpectKind.VICTORY))
+        assertEquals(DemoKind.DRAG_X, demoFor(ExpectKind.PAN_X))
+        assertEquals(DemoKind.DRAG_Y, demoFor(ExpectKind.PAN_Y))
+        assertEquals(DemoKind.PINCH, demoFor(ExpectKind.ZOOM))
+    }
+
+    @Test
+    fun `demo target of rotation is a tile to fix, visible first`() {
+        // La démo du quart de tour désigne une tuile FAUSSE (le
+        // geste a un sujet) et VISIBLE de préférence : les tuiles
+        // masquées du Dément et la brume du Néant tournent sans se
+        // montrer, la main ne les choisit que lorsqu il n y a
+        // que ça.
+        for ((id, _, seed, lessonSteps) in Lessons.ALL) {
+            val board = seed.build()
+            for ((_, kind) in lessonSteps) {
+                if (kind != ExpectKind.ROTATE) continue
+                val target = demoTarget(board, kind)
+                assertTrue("leçon ${id} : cible de rotation", target >= 0)
+                assertTrue(
+                    "leçon ${id} : la cible est fausse",
+                    (4 - board.rotations[target]) % 4 != 0
+                )
+                if (board.isHidden(target)) {
+                    val moves = board.solveMoves()
+                    assertTrue(
+                        "leçon ${id} : la main ne choisit pas une tuile" +
+                            " masquée alors qu une visible est à remettre",
+                        moves.all { board.isHidden(it) }
+                    )
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `demo target of lock is aligned and the lesson stays solvable`() {
+        // La démo du verrouillage pose un verrou RÉEL : il ne peut
+        // se poser que sur une tuile à l aplomb, sinon le plateau
+        // deviendrait insoluble sous les yeux du joueur — et le
+        // plateau reste soluble, verrou posé, jusqu à la victoire.
+        for ((id, _, seed, lessonSteps) in Lessons.ALL) {
+            val board = seed.build()
+            for ((_, kind) in lessonSteps) {
+                if (kind != ExpectKind.LOCK) continue
+                val target = demoTarget(board, kind)
+                assertTrue("leçon ${id} : cible de verrou", target >= 0)
+                assertEquals(
+                    "leçon ${id} : la cible est à l aplomb",
+                    0,
+                    (4 - board.rotations[target]) % 4
+                )
+                assertTrue("leçon ${id} : pas déjà verrouillée", !board.locked[target])
+                assertTrue("leçon ${id} : pas scellée", !board.isSealed(target))
+                assertTrue("leçon ${id} : pas vide", !board.isEmpty(target))
+                assertTrue("leçon ${id} : pas le serveur", target != board.serverIndex)
+                assertTrue("leçon ${id} : pas un terminal", !board.isTerminal(target))
+                assertTrue("leçon ${id} : visible", !board.isHidden(target))
+                // Verrou posé par la démo : le solveur passe quand
+                // même — la leçon ne se piège pas elle-même.
+                assertTrue(board.toggleLock(target))
+                for (i in board.solveMoves()) {
+                    val steps = (4 - board.rotations[i]) % 4
+                    if (steps != 0) board.rotateCell(i, steps)
+                }
+                assertTrue("leçon ${id} : soluble verrou posé", board.isSolved())
+            }
+        }
+    }
+
+    @Test
+    fun `demo target stays off buttons readings and victory`() {
+        // Les attentes hors plateau ne désignent AUCUNE tuile :
+        // le doigt vise le bouton visible ou le centre de la vue.
+        val board = Lessons.ALL[0].board.build()
+        assertEquals(-1, demoTarget(board, ExpectKind.CONTINUE))
+        assertEquals(-1, demoTarget(board, ExpectKind.VICTORY))
+        assertEquals(-1, demoTarget(board, ExpectKind.HINT_SIGNAL))
+        assertEquals(-1, demoTarget(board, ExpectKind.HINT_FIX))
+        assertEquals(-1, demoTarget(board, ExpectKind.SOLVE))
+        assertEquals(-1, demoTarget(board, ExpectKind.PAN_X))
+        assertEquals(-1, demoTarget(board, ExpectKind.PAN_Y))
+        assertEquals(-1, demoTarget(board, ExpectKind.ZOOM))
+    }
 }
