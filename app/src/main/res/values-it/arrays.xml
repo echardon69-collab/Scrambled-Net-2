@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Traduzione in italiano (prima passata di IA del 18 nov. 2026):
+     stessi array di values/arrays.xml (parità controllata da
+     tools/validate_langues.py). Gli a capo "\n" e i punti elenco •
+     restano tale e quale; i nomi propri e l'URL restano in chiaro;
+     le citazioni usano i virgolettati « », con spazio; gli
+     apostrofi dritti sono protetti con \'.
+-->
+<resources>
+
+    <!-- Titoli delle sezioni della guida (stessa struttura dell'originale). -->
+    <string-array name="help_titles">
+        <item>Il gioco</item>
+        <item>I comandi</item>
+        <item>I livelli di difficoltà</item>
+        <item>Il punteggio</item>
+        <item>Gli suggerimenti</item>
+    </string-array>
+
+    <!-- Testi delle sezioni della guida. -->
+    <string-array name="help_texts">
+        <item>Scrambled Net 2 è un gioco rompicapo molto semplice: bisogna
+            rimettere in ordine le connessioni di una rete informatica
+            perché tutti i terminali restino collegati al server. La rete
+            è fatta di caselle; sono tutte al loro posto, ma sono state
+            girate a caso fino a formare un pasticcio inutile.\n\nGira le
+            caselle una a una per ricollegare la rete. Le caselle
+            collegate al server appaiono evidenziate. Quando ogni
+            terminale è collegato, vinci.</item>
+        <item>Tocca una casella per girarla di un quarto di giro in senso
+            orario. Tieni premuta una casella per bloccarla quando sei
+            sicuro che sia corretta, o per sbloccarla; le caselle
+            bloccate rispondono con un piccolo clic.\n\nTrascina con un
+            dito per spostare il tabellone, pizzica con due dita per
+            fare zoom.</item>
+        <item>Ci sono cinque livelli di difficoltà. I livelli alti hanno
+            tabelloni più grandi, e i più avanzati aggiungono pieghe
+            speciali:\n\n• Principiante: un tabellone piccolo.\n\n•
+            Normale: un tabellone un po\' più grande.\n\n• Esperto:
+            un tabellone grande.\n\n• Maestro: un tabellone grande i
+            cui bordi si collegano tra loro — una connessione che esce
+            dal bordo destro entra dal bordo sinistro, e lo stesso
+            vale per i bordi superiore e inferiore.\n\n• Folle: come
+            Maestro, ma tutte le caselle con 3 o 4 connessioni sono
+            invisibili. Servirà un repertorio tutto nuovo di deduzioni
+            per completare un tabellone folle.</item>
+        <item>Ogni vittoria conta le tue mosse e il tuo tempo, e i tuoi
+            record personali restano salvati per ogni livello — ma solo
+            se hai risolto il rompicapo da solo: una partita in cui è
+            stato usato il risolutore automatico non vale mai
+            punteggio.\n\nVedi « Migliori punteggi » nel menu.</item>
+        <item>Lavora partendo dal server verso l\'esterno: le caselle
+            confermate sono i tuoi punti d\'appoggio, bloccale man
+            mano che avanzi.\n\nLe caselle con una sola connessione
+            sono terminali — vicoli ciechi: puntale verso il vicino
+            che ne ha bisogno.\n\nSe preferisci un tabellone
+            tranquillo, puoi spegnere l\'animazione della rete nel
+            menu.</item>
+    </string-array>
+
+    <!-- Titoli delle sezioni della pagina « Informazioni » (rifacimento
+         del 14 nov. 2026: la finestra di dialogo è diventata una
+         pagina autonoma). -->
+    <string-array name="about_titles">
+        <item>Il gioco</item>
+        <item>L\'autore</item>
+        <item>Origine e licenza</item>
+        <item>Partecipare</item>
+        <item>Novità di questa nuova versione</item>
+        <item>Funzioni dell\'originale modificate</item>
+        <item>Funzioni dell\'originale conservate</item>
+        <item>Funzioni dell\'originale ritirate</item>
+    </string-array>
+
+    <!-- Testi delle sezioni della pagina « Informazioni ». La licenza
+         cita la catena completa: gioco originale di KDE, port
+         Android, poi questo rifacimento. La sezione « Partecipare »
+         è di proposito testo rappresentativo: i link reali non sono
+         ancora disponibili (evoluzione « Indicare i link di
+         Informazioni » della tabella di marcia). -->
+    <string-array name="about_texts">
+        <item>Scrambled Net 2 è una nuova versione moderna e libera di
+            Scrambled Net, un port Android del gioco KNetWalk di KDE.
+            Sbriga una rete informatica ingarbugliata perché ogni
+            terminale resti collegato al server: tutte le caselle sono
+            al loro posto, ma girate a caso. Girale una a una per
+            ricostruire la rete.</item>
+        <item>Scrambled Net 2 è opera di Éric Chardon, appassionato da
+            sempre dei giochi di logica e dei rompicapo. All\'inizio
+            del 2010 scoprì la famosa applicazione di Ian Cameron
+            Smith, distribuita con il suo codice sorgente, e nel 2014
+            il suo passaggio di mano a Michael Mueller — si aspettava
+            che quest\'ultimo portasse più evoluzioni al gioco e
+            tenesse vivo l\'interesse dei giocatori. Vedendo gli anni
+            passare senza che quelle speranze si concretizzassero,
+            decise di scrivere lui stesso il seguito atteso: questa
+            nuova versione moderna e libera, fedele
+            all\'originale.\n\nPer progettare e scrivere questa nuova versione si
+            è appoggiato a Vibe, l\'assistente di sviluppo di Mistral
+            AI: le specifiche, il motore di gioco in Kotlin,
+            l\'interfaccia, le prove e i validatori sono stati scritti
+            con il suo aiuto, sotto la sua direzione, la sua revisione
+            e la sua validazione sistematica. Il codice così prodotto
+            entra nel deposito sotto la stessa licenza GPL-2.0.</item>
+        <item>KNetWalk, il gioco originale di KDE: © 2004–2007 Andi
+            Peredri, Thomas Nagy e Fela Winkelmolen.\n\nScrambled
+            Net, il port Android: © 2007–2010 Ian Cameron Smith,
+            © 2014 Michael Mueller.\n\nQuesta nuova versione,
+            Scrambled Net 2: © 2026 Éric Chardon.\n\nTutto è
+            distribuito sotto la licenza GPL-2.0 — questo gioco è
+            software libero.\n\nCodice sorgente:
+            https://github.com/echardon69-collab/Scrambled-Net-2</item>
+        <item>Puoi aiutare a migliorare il gioco:\n\n• Segnalare un
+            errore — link in arrivo.\n\n• Contattare l\'autore —
+            link in arrivo.\n\n• Proporre una traduzione in una nuova
+            lingua — link in arrivo.\n\n• Proporre un nuovo aspetto
+            delle caselle — link in arrivo.</item>
+        <item>Rispetto al gioco originale, questa nuova versione
+            aggiunge:\n\n• La famiglia Infinito: tre nuovi livelli
+            (Infinito, Abisso, Vuoto) su un tabellone gigante di
+            40 × 40 i cui bordi si collegano tra loro — la telecamera
+            torna su se stessa, lo spostamento non mostra mai un
+            bordo; Abisso nasconde il cablaggio, Vuoto aggiunge anche
+            una nebbia sulla rete.\n\n• Una pagina del titolo con
+            aggiornamenti automatici da GitHub, in due versioni di
+            distribuzione: l\'APK di GitHub con l\'aggiornatore
+            integrato, l\'APK del Play Store senza.\n\n• Una firma
+            elettrica: i LED del server e i blips di dati pulsano con
+            un ritmo diverso secondo il generatore che ha costruito
+            il tabellone.\n\n• La descrizione di ogni livello di
+            difficoltà — dimensione reale del tabellone e regole —
+            nella pagina Impostazioni.\n\n• Un\'impostazione della
+            lingua (inglese, francese o secondo il sistema).</item>
+        <item>Funzioni dell\'originale, ora fatte in un\'altra
+            maniera:\n\n• Codice sorgente: Java e Ant sono stati
+            sostituiti da Kotlin e Gradle.\n\n• Grafica: le bitmap
+            dell\'originale sono ora VectorDrawables — lo stesso
+            aspetto, nitidezza perfetta a ogni zoom, un solo file
+            per tutte le densità di schermo.\n\n• Suono: nessun
+            campione dell\'originale è riusato; al suo posto si
+            sintetizzano sei effetti brevi.\n\n• Resa: invece di un
+            ciclo di animazione permanente, il tabellone si ridisegna
+            solo quando qualcosa cambia — più parsimonioso con la
+            batteria.\n\n• Il tabellone non si stira più per
+            riempire lo schermo: è una telecamera che puoi
+            trascinare e regolare con le dita, e lo zoom resta
+            ancorato sotto di esse.\n\n• Generazione dei tabelloni:
+            la metà proviene da un generatore alternativo ad albero
+            di copertura che collega tutte le caselle (il generatore
+            dell\'originale costruisce l\'altra metà — la firma
+            elettrica li distingue).\n\n• Menu: una barra d\'azioni
+            di testo senza titolo, le impostazioni su una sola
+            pagina invece di sottomenu a cascata, e la finestra
+            Informazioni è diventata questa pagina.</item>
+        <item>Funzioni dell\'originale, conservate tale e
+            quale:\n\n• I cinque livelli originali (da Principiante a
+            Folle) con le loro regole esatte — bordi che si chiudono
+            in Maestro, cablaggio invisibile in Folle.\n\n• Il
+            generatore di tabelloni dell\'originale: ogni rompicapo
+            si può vincere, e si vince quando ogni terminale è
+            collegato.\n\n• Le dimensioni del tabellone si adattano
+            al tuo schermo e al suo orientamento, esattamente come
+            faceva la matrice Screen dell\'originale.\n\n• Toccare
+            una casella la gira; tenerla premuta la blocca o la
+            sblocca.\n\n• Il risolutore automatico — una partita
+            risolta da lui non vale mai punteggio.\n\n• I record
+            personali (mosse e tempo) per ogni livello.\n\n• La
+            partita salvata sopravvive alla chiusura
+            dell\'applicazione o al riposo; il cronometro si congela
+            in sottofondo.\n\n• I promemoria delle regole all\'ingresso
+            in Maestro o in Folle.\n\n• I tre modi di suono e
+            l\'impostazione dell\'animazione.\n\n• La guida del
+            gioco.</item>
+        <item>Funzioni dell\'originale che sono sparite, e
+            perché:\n\n• I comandi con croce direzionale, trackball e
+            tastiera: questa nuova versione è solo touch, pensata
+            per i telefoni e i tablet moderni.\n\n• Il cursore rosso
+            di messa a fuoco persistente, disegnato per l\'era della
+            croce direzionale: col tocco diretto era rumore più che
+            aiuto — il lampeggio d\'avviso e il cursore mobile del
+            risolutore automatico ne coprono il ruolo.\n\n• Tutte le
+            dipendenze dell\'originale (le librerie HermitAndroid e
+            HermitLibrary, incluso il generatore casuale MTRandom,
+            sostituito dal generatore standard di Kotlin): il motore
+            è stato riscritto da zero in Kotlin come motore di gioco
+            puro con prove unitarie — nessun codice dell\'originale
+            è riusato.</item>
+    </string-array>
+
+</resources>

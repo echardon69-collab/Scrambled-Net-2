@@ -16,18 +16,20 @@ import org.junit.Test
 class AppLanguagesTest {
 
     @Test
-    fun listsAllFiveLanguagesInDisplayOrder() {
+    fun listsAllEightLanguagesInDisplayOrder() {
         // Ordre d'affichage du sélecteur : continuité de la page v3
-        // (Français avant English), puis les langues ajoutées —
-        // le chinois simplifié du 18 nov. 2026, première
-        // passe IA expérimentale en attente de relecture native.
+        // (Français avant English), puis les langues ajoutées dans
+        // l'ordre chronologique — le chinois simplifié, l'espagnol,
+        // le portugais puis l'italien du 18 nov. 2026, premières
+        // passes IA expérimentales en attente de relecture native.
         assertEquals(
-            listOf("fr", "en", "co", "gsw-FR", "zh-CN"),
+            listOf("fr", "en", "co", "gsw-FR",
+                   "zh-CN", "es", "pt", "it"),
             AppLanguages.ALL.map { it.tag }
         )
         assertEquals(
             listOf("Français", "English", "Corsu", "Elsässisch",
-                   "简体中文"),
+                   "简体中文", "Español", "Português", "Italiano"),
             AppLanguages.ALL.map { it.endonym }
         )
     }
@@ -65,6 +67,9 @@ class AppLanguagesTest {
         assertNull(AppLanguages.byTag("fr")?.drapeauPays)
         assertNull(AppLanguages.byTag("en")?.drapeauPays)
         assertNull(AppLanguages.byTag("zh-CN")?.drapeauPays)
+        assertNull(AppLanguages.byTag("es")?.drapeauPays)
+        assertNull(AppLanguages.byTag("pt")?.drapeauPays)
+        assertNull(AppLanguages.byTag("it")?.drapeauPays)
     }
 
     @Test

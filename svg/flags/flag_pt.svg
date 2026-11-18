@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Drapeau du Portugal — chantier traduction (portugais
+     expérimental, 18 nov. 2026). Bandes officielles en ratio 2:3
+     sur un viewBox 600 × 400 : vert #046A38 aux 2/5 gauches
+     (largeur 240), rouge #DA0000 aux 3/5 droits (largeur 360). La
+     sphère armillaire des armoiries est schématisée en un simple
+     anneau jaune #FFE900 posé SUR la frontière des deux couleurs
+     (centre 240, 200, rayon 80, cercle en trait plein sans
+     remplissage, épaisseur 20) : à 15 dp de haut, l'original
+     (sphère, éclats, écu) ne ferait qu'une tache. L'écu aux
+     armes royales est omis pour la même raison : la version
+     sans écu reste un drapeau national légitime du Portugal.
+     Pas de dégradé ni de clip : le convertisseur accepte
+     des remplissages unis et des traits pleins seulement (l'ombrage
+     est synthétique). -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400">
+  <rect x="0" y="0" width="240" height="400" fill="#046A38"/>
+  <rect x="240" y="0" width="360" height="400" fill="#DA0000"/>
+  <circle cx="240" cy="200" r="80" fill="none" stroke="#FFE900"
+          stroke-width="20"/>
+</svg>

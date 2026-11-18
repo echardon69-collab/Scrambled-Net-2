@@ -56,6 +56,31 @@ officielle 30 × 20, polygones à cinq branches). Relecture native
 attendue avant toute officialisation, même processus que le corse
 et l'alsacien.
 
+Extension « traduction en italien » (18 nov. 2026,
+expérimentale) : première passe IA d'italien (it), intégrée
+COMPLÈTE comme le mandarin — le dossier values-it, la locale it
+dans locales_config, la ligne AppLanguage et le drapeau
+d'Italie (tricolore officiel 2:3, trois bandes verticales
+égales aux teintes officielles, sans emblème : il n'en a pas).
+Relecture native attendue avant toute officialisation.
+
+Extension « traduction en portugais » (18 nov. 2026,
+expérimentale) : première passe IA de portugais (pt, registre
+brésilien neutre documenté dans l'en-tête de values-pt), intégrée
+COMPLÈTE comme le mandarin — le dossier values-pt, la locale pt
+dans locales_config, la ligne AppLanguage et le drapeau du
+Portugal (bandes officielles 2:3, sphère armillaire schématisée
+en anneau jaune posé sur la frontière, SANS écu : illisible à
+15 dp). Relecture native attendue avant toute officialisation.
+
+Extension « traduction en espagnol » (18 nov. 2026, expérimentale) :
+première passe IA d'espagnol (es), intégrée COMPLÈTE comme le
+mandarin — les trois sources ensemble, jamais l'une sans les
+autres : le dossier values-es, la locale es dans locales_config,
+la ligne AppLanguage et le drapeau d'Espagne (bandes officielles
+1:2:1, SANS emblème : illisible à 15 dp, c'est le drapeau civil).
+Relecture native attendue avant toute officialisation.
+
 Extension « ombrage des drapeaux pâles » (nov. 2026, retour
 d'eric : les drapeaux blancs ne se démarquent pas sur fond blanc) :
 le convertisseur POSE en dernier, par-dessus le contenu, deux
@@ -141,12 +166,15 @@ check("AppLanguages : objet AppLanguages avec ALL en liste",
 pairs = [(t, e, d or None) for t, e, d in re.findall(
     r'AppLanguage\("([^"]+)",\s*"([^"]+)"'
     r'(?:,\s*drapeauPays\s*=\s*"([^"]*)")?\),?', al_src)]
-check("AppLanguages : les cinq langues, tags, endonymes et "
-      "drapeaux pays épinglés (fr, en, co, gsw-FR, zh-CN — "
-      "continuité de la page v3 puis langues ajoutées)",
+check("AppLanguages : les huit langues, tags, endonymes et "
+      "drapeaux pays épinglés (fr, en, co, gsw-FR, zh-CN, es, pt, "
+      "it — continuité de la page v3 puis langues ajoutées)",
       pairs == [("fr", "Français", None), ("en", "English", None),
                 ("co", "Corsu", "fr"), ("gsw-FR", "Elsässisch", "fr"),
-                ("zh-CN", "简体中文", None)],
+                ("zh-CN", "简体中文", None),
+                ("es", "Español", None),
+                ("pt", "Português", None),
+                ("it", "Italiano", None)],
       str(pairs))
 check("AppLanguages : drapeau NATIONAL réservé aux langues "
       "SECONDAIRES d'un pays (v21, demande d'eric : corse et "
@@ -170,8 +198,8 @@ locale_tags = re.findall(r'<locale android:name="([^"]+)" />',
                         locales_src)
 app_tags = [tag for tag, _, _ in pairs]
 check("Cohérence : locales_config et AppLanguages portent les "
-      "MÊMES langues (set, compte exact 5)",
-      len(locale_tags) == 5
+      "MÊMES langues (set, compte exact 8)",
+      len(locale_tags) == 8
       and set(locale_tags) == set(app_tags),
       f"locales_config={locale_tags} AppLanguages={app_tags}")
 
@@ -304,6 +332,9 @@ lang_files = {
     "values-co": RES / "values-co/strings.xml",
     "values-gsw-rFR": RES / "values-gsw-rFR/strings.xml",
     "values-zh-rCN": RES / "values-zh-rCN/strings.xml",
+    "values-es": RES / "values-es/strings.xml",
+    "values-pt": RES / "values-pt/strings.xml",
+    "values-it": RES / "values-it/strings.xml",
 }
 for dossier, chemin in sorted(lang_files.items()):
     src = read(chemin)
@@ -321,14 +352,14 @@ check("Tests JVM : AppLanguagesTest existe et épingle le piège "
       (TESTS / "AppLanguagesTest.kt").exists()
       and '"gsw-FR"' in test_src
       and 'assertNull(AppLanguages.byTag("gsw"))' in test_src)
-check("Tests JVM : les cinq langues et endonymes épinglés, "
+check("Tests JVM : les huit langues et endonymes épinglés, "
       "correspondance exacte et endonymes sains",
-      "listsAllFiveLanguagesInDisplayOrder" in test_src
+      "listsAllEightLanguagesInDisplayOrder" in test_src
       and "byTagIsExactMatchOnly" in test_src
       and "endonymsAreNotBlankAndDistinct" in test_src)
 check("Tests JVM : drapeau NATIONAL pour les seules langues "
-      "secondaires (v21 : co et gsw-FR portent « fr », fr, en et "
-      "zh-CN n'en portent PAS)",
+      "secondaires (v21 : co et gsw-FR portent « fr », fr, en, "
+      "zh-CN, es, pt et it n'en portent PAS)",
       "countryFlagsOnlyOnSecondaryLanguages" in test_src
       and "?.drapeauPays" in test_src)
 
@@ -338,7 +369,10 @@ flag_tags = (("fr", "flag_fr", "22.5", "900", "600"),
              ("en", "flag_en", "30", "1200", "600"),
              ("co", "flag_co", "25", "750", "450"),
              ("gsw-FR", "flag_gsw_fr", "22.5", "900", "600"),
-             ("zh-CN", "flag_zh", "22.5", "900", "600"))
+             ("zh-CN", "flag_zh", "22.5", "900", "600"),
+             ("es", "flag_es", "22.5", "750", "500"),
+             ("pt", "flag_pt", "22.5", "600", "400"),
+             ("it", "flag_it", "22.5", "600", "400"))
 for tag, drawable, w, vw, vh in flag_tags:
     svg = FLAGS_SVG / f"{drawable}.svg"
     check(f"Drapeau {tag} : source svg/flags/{drawable}.svg "
@@ -429,12 +463,12 @@ check("Drapeaux : les items de la feuille et l'entrée résumé "
       and "compoundDrawablePadding" in sa_src
       and re.search(r"\.getIdentifier\(", sa_src) is None)
 flags_svg = sorted(f.name for f in FLAGS_SVG.glob("flag_*.svg"))
-check("Drapeaux : autant de sources que de langues (compte exact 5 "
+check("Drapeaux : autant de sources que de langues (compte exact 8 "
       "des deux côtés)",
-      len(flags_svg) == 5
+      len(flags_svg) == 8
       and len([t for t in locale_tags if t in
                dict((tag, drawable) for tag, drawable, *_ in flag_tags)])
-      == 5)
+      == 8)
 check("Drapeaux : la source unique des règles — convert_flags "
       "réutilise convert_tiles ET generate_graphics, jamais de "
       "règles retapées",

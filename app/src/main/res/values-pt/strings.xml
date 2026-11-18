@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Tradução ao português (primeira passada de IA do 18 nov. de 2026,
+     experimental, dependente de revisão por um lusófono antes de toda
+     oficialização — mesmo processo que o corso, o alsaciano, o chinês
+     simplificado e o espanhol: a IA traduz, o revisor corrige, as
+     correções voltam pelo mesmo canal). Português do BRASIL em
+     registro neutro: é a maior comunidade lusófona e o público
+     provável do jogo; o revisor poderá puxar a norma europeia se
+     preferir. Mesmas chaves que values/strings.xml (paridade
+     controlada por tools/validate_langues.py). Tratamento por
+     « você », como é norma nos videogames.
+
+     Glossário (EN → PT) :
+       tile → célula ; board → tabuleiro ; server → servidor ;
+       terminal → terminal ; network → rede ; wiring → fiação ;
+       lock/unlock → travar/destravar ; hint → dica ; hint
+       allowance → limite de dicas ; moves → movimentos ; fog →
+       névoa ; torus (edges wrap around) → toro: as bordas se
+       conectam entre si ; hidden wiring → fiação oculta ; panning
+       → deslocamento ; zoom → zoom ; camera → câmera ; personal
+       best → recorde pessoal ; settings → configurações ;
+       skills : Novice → Iniciante, Normal → Normal, Expert →
+       Especialista, Master → Mestre, Insane → Insano, Endless →
+       Infinito, Abyss → Abismo, Void → Vazio. Os « blips » e os
+       nomes próprios ficam como estão. Os parâmetros %1$d / %1$s /
+       %2$d e as quebras "\n" ficam como estão. Sem espaço antes
+       da pontuação, como manda a norma; as citações usam os
+       guillemets « » com espaço, por coerência com as outras
+       traduções do aplicativo.
+-->
+<resources>
+    <string name="app_name">Scrambled Net 2</string>
+
+    <string name="menu_new">Novo jogo</string>
+    <string name="menu_solve">Resolver</string>
+    <string name="menu_settings">Configurações</string>
+    <string name="menu_stop_solve">Parar a resolução</string>
+    <string name="solver_used">Resolvedor automático usado — este jogo não valerá pontuação.</string>
+    <string name="menu_skill">Nível de dificuldade</string>
+    <string name="menu_sounds">Sons</string>
+    <string name="sounds_off">Silenciados</string>
+    <string name="sounds_quiet">Suaves</string>
+    <string name="sounds_full">Completos</string>
+    <string name="menu_anim">Animação</string>
+    <string name="anim_off">Sem animação</string>
+    <string name="anim_on">Animação</string>
+
+    <string name="menu_lang">Idioma</string>
+    <string name="lang_system">Seguir o sistema</string>
+
+    <string name="skill_novice_desc">Tabuleiro %1$d × %2$d — duas ramificações, bordas abertas</string>
+    <string name="skill_normal_desc">Tabuleiro %1$d × %2$d — duas ramificações, bordas abertas</string>
+    <string name="skill_expert_desc">Tabuleiro %1$d × %2$d — duas ramificações, bordas abertas</string>
+    <string name="skill_master_desc">Tabuleiro %1$d × %2$d — toro: as bordas se conectam, três ramificações</string>
+    <string name="skill_insane_desc">Tabuleiro %1$d × %2$d — toro, três ramificações, fiação oculta nas junções</string>
+    <string name="skill_endless_desc">Tabuleiro %1$d × %2$d — toro, o deslocamento nunca mostra uma borda</string>
+    <string name="skill_abyss_desc">Tabuleiro %1$d × %2$d — toro, fiação oculta nas junções</string>
+    <string name="skill_void_desc">Tabuleiro %1$d × %2$d — toro, fiação oculta, névoa sobre a rede</string>
+
+    <string name="help_master">No nível Mestre, as bordas do tabuleiro se conectam
+        entre si: as células da borda direita se conectam às da borda
+        esquerda, e vice-versa. O mesmo vale para as bordas superior e
+        inferior.</string>
+    <string name="help_insane">No nível Insano, as bordas do tabuleiro se conectam
+        entre si: as células da borda direita se conectam às da borda
+        esquerda, e vice-versa. O mesmo vale para as bordas superior e
+        inferior. Mas, além disso, nas células de 3 ou 4 conexões a
+        fiação é invisível. Boa sorte!</string>
+    <string name="help_abyss">No nível Abismo, o tabuleiro é infinito: ele cobre
+        40 por 40 células e suas bordas se conectam entre si, de modo que
+        o deslocamento nunca mostra uma borda. Além disso, nas células
+        de 3 ou 4 conexões a fiação é invisível. Boa sorte!</string>
+    <string name="help_void">No nível Vazio, o tabuleiro é infinito: ele cobre
+        40 por 40 células e suas bordas se conectam entre si. Nas células
+        de 3 ou 4 conexões a fiação é invisível. E, além disso, uma
+        névoa esconde as células distantes da rede conectada ao
+        servidor: só as imediações das células conectadas continuam
+        visíveis. Boa sorte!</string>
+    <string name="menu_scores">Melhores pontuações</string>
+    <string name="menu_help">Ajuda</string>
+    <string name="menu_about">Sobre</string>
+
+    <string name="skill_novice">Iniciante</string>
+    <string name="skill_normal">Normal</string>
+    <string name="skill_expert">Especialista</string>
+    <string name="skill_master">Mestre</string>
+    <string name="skill_insane">Insano</string>
+    <string name="skill_endless">Infinito</string>
+    <string name="skill_abyss">Abismo</string>
+    <string name="skill_void">Vazio</string>
+
+    <string name="status_moves">Movimentos: %1$d</string>
+    <string name="status_time">Tempo: %1$s</string>
+
+    <string name="win_title">Você ganhou!</string>
+    <string name="win_pbest_title">Novo recorde pessoal!</string>
+    <string name="win_text">Parabéns! Você resolveu o quebra-cabeça em %1$s com %2$d movimentos.</string>
+    <string name="best_moves_text">É o seu menor número de movimentos neste nível!</string>
+    <string name="best_time_text">É o seu tempo mais rápido neste nível!</string>
+    <string name="best_both_text">É o seu menor número de movimentos e o seu tempo mais rápido neste nível!</string>
+    <string name="win_new">Novo jogo</string>
+    <string name="win_continue">Continuar</string>
+
+    <string name="title_version">Versão %1$s</string>
+    <string name="title_license">Baseado em Scrambled Net (© 2007–2010 Ian Cameron Smith,\n© 2014 Michael Mueller), um port do jogo KNetWalk do KDE.\nEsta versão: © 2026 Eric Chardon — GPL-2.0.</string>
+    <string name="title_loading">Carregando o jogo salvo…</string>
+    <string name="title_checking">Verificando atualizações…</string>
+    <string name="title_update_available">A versão %1$s está disponível.</string>
+    <string name="title_update_button">Atualizar</string>
+    <string name="title_play_button">Jogar</string>
+    <string name="title_download_status">Baixando a versão %1$s…</string>
+    <string name="title_install_status">Instalando…</string>
+    <string name="title_install_permission">Permita a instalação de aplicativos desconhecidos nas configurações do Android e toque em Atualizar de novo.</string>
+    <string name="title_install_failed">A atualização falhou (%1$s). Você pode continuar jogando.</string>
+
+    <string name="version_obsolete">Versão desatualizada!</string>
+    <string name="version_obsolete_detail">Esta versão de desenvolvimento expirou. Instale a versão oficial.</string>
+    <string name="version_obsolete_quitter">Sair</string>
+
+    <string name="confirm_new_title">Novo jogo?</string>
+    <string name="confirm_change_title">Mudar de nível?</string>
+    <string name="confirm_change_ok">Mudar de nível</string>
+    <string name="confirm_progress_message">Há um jogo em andamento (%1$d movimentos, %2$s). Ele será perdido.</string>
+
+    <string name="scores_title">Recordes pessoais</string>
+    <string name="scores_movestitle">Menos movimentos</string>
+    <string name="scores_timestitle">Tempo mais rápido</string>
+    <string name="scores_skill">Nível</string>
+    <string name="scores_moves">Movimentos</string>
+    <string name="scores_time">Tempo</string>
+    <string name="scores_when">Data</string>
+    <string name="menu_scores_reset">Apagar todos os recordes</string>
+    <string name="scores_reset_confirm">Apagar todos os seus recordes pessoais?</string>
+
+    <string name="menu_hint">Dica</string>
+    <string name="menu_hint_count">Dica (%1$d)</string>
+    <string name="menu_tools">Ferramentas</string>
+    <string name="menu_demo">Demonstração</string>
+    <string name="hint_strategy_signal">Apontar o erro</string>
+    <string name="hint_strategy_fix">Corrigir o erro</string>
+    <string name="hint_limit_title">Limite de dicas</string>
+    <string name="hint_limit_zero">Desativado</string>
+    <string name="hint_limit_value">%1$d%%</string>
+    <string name="demo_diff_random">Aleatória</string>
+    <string name="demo_diff_progressive">Progressiva</string>
+    <string name="demo_skill_title">Níveis</string>
+    <string name="demo_speed_title">Ritmo</string>
+    <string name="demo_speed_slow">Lento</string>
+    <string name="demo_speed_normal">Normal</string>
+    <string name="demo_speed_fast">Rápido</string>
+    <string name="hints_section">Dicas</string>
+    <string name="hints_total">Células tratadas pela dica: %1$d</string>
+    <string name="hints_none">sem dica</string>
+    <string name="hints_n">%1$d dicas</string>
+    <string name="hints_column_tiles">Dicas</string>
+    <string name="demo_touch_return">Toque na tela para voltar ao jogo</string>
+    <string name="demo_level_banner">Demonstração, nível %1$s</string>
+
+    <string name="menu_lessons">Aprendizado</string>
+    <string name="lesson_1_title">Girar e conectar</string>
+    <string name="lesson_2_title">O método e o travamento</string>
+    <string name="lesson_3_title">As ajudas</string>
+    <string name="lesson_4_title">O tabuleiro toroidal</string>
+    <string name="lesson_5_title">As células invisíveis</string>
+    <string name="lesson_6_title">O tabuleiro infinito</string>
+    <string name="lesson_7_title">A névoa</string>
+    <string name="lesson_l1_b1">Toque numa célula para girá-la um quarto de volta. Conecte a rede do servidor ao terminal.</string>
+    <string name="lesson_l1_b2">Continue assim: cada célula conectada ao servidor se acende.</string>
+    <string name="lesson_l1_b3">Muito bem, rede resolvida! Todo jogo se ganha assim: girar, conectar, iluminar.</string>
+    <string name="lesson_l2_b1">Método: comece pelo servidor e siga os cabos já conectados, de vizinho em vizinho. Gire uma célula para começar.</string>
+    <string name="lesson_l2_b2">Toque longo numa célula bem orientada: o travamento a protege de um giro infeliz.</string>
+    <string name="lesson_l2_b3">Continue de vizinho em vizinho até a vitória, travando aquilo de que você tem certeza.</string>
+    <string name="lesson_l2_b4">O travamento é seu aliado nos tabuleiros grandes: guarde o método.</string>
+    <string name="lesson_l3_b1">A dica informativa aponta uma célula a corrigir (moldura verde). Toque em Dica.</string>
+    <string name="lesson_l3_b2">A dica corretiva endireita a célula e a sela (travamento definitivo). Toque em Dica.</string>
+    <string name="lesson_l3_b3">Resolver joga por você, uma jogada de cada vez; um jogo resolvido assim nunca conta para os recordes. Toque em Resolver.</string>
+    <string name="lesson_l3_b4">As ajudas estão aí para destravar você, não para jogar: você decide.</string>
+    <string name="lesson_l4_b1">Tabuleiro Mestre: as bordas se conectam entre si. O tabuleiro é um TORO: a direita se une à esquerda, o topo se une à base.</string>
+    <string name="lesson_l4_b2">Resolva: pelo menos um cabo atravessa a borda do tabuleiro para conectar do outro lado.</string>
+    <string name="lesson_l4_b3">O toro está presente a partir de Mestre: pense o tabuleiro sem bordas.</string>
+    <string name="lesson_l5_b1">Nível Insano: algumas células são INVISÍVEIS. Deduza sua orientação pelos vizinhos, depois gire uma célula visível.</string>
+    <string name="lesson_l5_b2">Continue assim: cada vizinho restringe as células ocultas, só a vitória revela tudo.</string>
+    <string name="lesson_l5_b3">A dica corretiva revela uma célula mascarada: uma jogada mostrada, nunca jogada.</string>
+    <string name="lesson_l6_b1">Tabuleiro Infinito: um toro de 40 x 40, enquadrado no servidor. Desloque a janela um giro completo na horizontal, até ENCONTRAR o servidor de novo.</string>
+    <string name="lesson_l6_b2">O tabuleiro se repete para sempre: nunca um anel cinzento. Agora viaje na vertical, um giro completo.</string>
+    <string name="lesson_l6_b3">Junte e separe os dedos para aproximar e afastar o zoom: a janela é sua câmera, o mundo não muda.</string>
+    <string name="lesson_l6_b4">O modo Infinito se joga com a câmera: o tabuleiro não tem bordas, apenas janelas.</string>
+    <string name="lesson_l7_b1">Nível Vazio: a NÉVOA esconde o tabuleiro. Cada conexão empurra a bruma para trás. Gire uma célula visível.</string>
+    <string name="lesson_l7_b2">Continue assim: cada conexão ganha acende a área ao seu redor.</string>
+    <string name="lesson_l7_b3">A névoa se ganha célula a célula: a luz segue a rede.</string>
+    <string name="lesson_completed">Concluída</string>
+    <string name="lesson_continue">Continuar</string>
+</resources>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Drapeau d'Espagne — chantier traduction (espagnol expérimental,
+     18 nov. 2026). Bandes officielles en ratio 1:2:1 sur grille 3:2,
+     reportées dans un viewBox 750 × 500 : rouge #AA151B (quart
+     supérieur, 187,5 de haut), jaune #F1BF00 (moitié centrale),
+     rouge #AA151B (quart inférieur). L'emblème héraldique national
+     est omis : illisible à 15 dp de haut, il ne ferait qu'une tache
+     ; on affiche ainsi le drapeau civil, comme l'Espagne le fait sur
+     ses bâtiments non officiels. Pas de dégradé ni de clip : le
+     convertisseur accepte des remplissages unis seulement (l'ombrage
+     est synthétique). -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 750 500">
+  <rect x="0" y="0" width="750" height="500" fill="#AA151B"/>
+  <rect x="0" y="125" width="750" height="250" fill="#F1BF00"/>
+</svg>

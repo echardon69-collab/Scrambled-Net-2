@@ -69,6 +69,18 @@ object AppLanguages {
         // expérimentale — relecteur natif attendu avant toute
         // officialisation, comme le corse et l'alsacien.
         AppLanguage("zh-CN", "简体中文"),
+        // Español (18 nov. 2026) : première passe IA expérimentale —
+        // relecteur natif attendu avant toute officialisation, comme
+        // le chinois simplifié.
+        AppLanguage("es", "Español"),
+        // Português (18 nov. 2026, registre brésilien neutre) :
+        // première passe IA expérimentale — relecteur natif
+        // attendu avant toute officialisation, comme l'espagnol.
+        AppLanguage("pt", "Português"),
+        // Italiano (18 nov. 2026) : première passe IA
+        // expérimentale — relecteur natif attendu avant toute
+        // officialisation, comme l'espagnol et le portugais.
+        AppLanguage("it", "Italiano"),
     )
 
     /**

@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Traducción al español (primera pasada de IA del 18 nov. 2026,
+     experimental, pendiente de revisión por un hispanohablante
+     antes de toda oficialización — mismo proceso que el corso,
+     el alsaciano y el chino simplificado: la IA traduce, el
+     revisor corrige, las correcciones se reintegran por el mismo
+     canal). Mismas claves que values/strings.xml (paridad
+     controlada por tools/validate_langues.py). Tuteo de la
+     interfaz, como suele ser norma en los videojuegos.
+
+     Glosario (EN → ES) :
+       tile → casilla ; board → tablero ; server → servidor ;
+       terminal → terminal ; network → red ; wiring → cableado ;
+       lock/unlock → bloquear/desbloquear ; hint → pista ;
+       hint allowance → límite de pistas ; moves → movimientos ;
+       fog → niebla ; torus (edges wrap around) → toroide: los
+       bordes se conectan entre sí ; hidden wiring → cableado
+       oculto ; panning → desplazamiento ; zoom → zoom ;
+       camera → cámara ; personal best → récord personal ;
+       settings → ajustes ;
+       skills : Novice → Novato, Normal → Normal, Expert → Experto,
+       Master → Maestro, Insane → Demencial, Endless → Infinito,
+       Abyss → Abismo, Void → Vacío. Los « blips » y los nombres
+       propios se quedan tal cual. Los parámetros %1$d / %1$s /
+       %2$d y los saltos "\n" se conservan tal cual.
+-->
+<resources>
+    <string name="app_name">Scrambled Net 2</string>
+
+    <string name="menu_new">Nueva partida</string>
+    <string name="menu_solve">Resolver</string>
+    <string name="menu_settings">Ajustes</string>
+    <string name="menu_stop_solve">Detener la resolución</string>
+    <string name="solver_used">Solucionador automático usado — esta partida no contará para la puntuación.</string>
+    <string name="menu_skill">Nivel de dificultad</string>
+    <string name="menu_sounds">Sonidos</string>
+    <string name="sounds_off">Silenciados</string>
+    <string name="sounds_quiet">Suaves</string>
+    <string name="sounds_full">Completos</string>
+    <string name="menu_anim">Animación</string>
+    <string name="anim_off">Sin animación</string>
+    <string name="anim_on">Animación</string>
+
+    <string name="menu_lang">Idioma</string>
+    <string name="lang_system">Según el sistema</string>
+
+    <string name="skill_novice_desc">Tablero %1$d × %2$d — dos ramas, bordes abiertos</string>
+    <string name="skill_normal_desc">Tablero %1$d × %2$d — dos ramas, bordes abiertos</string>
+    <string name="skill_expert_desc">Tablero %1$d × %2$d — dos ramas, bordes abiertos</string>
+    <string name="skill_master_desc">Tablero %1$d × %2$d — toroide: los bordes se conectan, tres ramas</string>
+    <string name="skill_insane_desc">Tablero %1$d × %2$d — toroide, tres ramas, cableado oculto en los cruces</string>
+    <string name="skill_endless_desc">Tablero %1$d × %2$d — toroide, el desplazamiento nunca muestra un borde</string>
+    <string name="skill_abyss_desc">Tablero %1$d × %2$d — toroide, cableado oculto en los cruces</string>
+    <string name="skill_void_desc">Tablero %1$d × %2$d — toroide, cableado oculto, niebla sobre la red</string>
+
+    <string name="help_master">En el nivel Maestro, los bordes del tablero se conectan
+        entre sí: las casillas del borde derecho se conectan con las del borde
+        izquierdo, y viceversa. Lo mismo con los bordes superior e inferior.</string>
+    <string name="help_insane">En el nivel Demencial, los bordes del tablero se conectan
+        entre sí: las casillas del borde derecho se conectan con las del borde
+        izquierdo, y viceversa. Lo mismo con los bordes superior e
+        inferior. Pero además, en las casillas de 3 o 4 conexiones, el
+        cableado es invisible. ¡Buena suerte!</string>
+    <string name="help_abyss">En el nivel Abismo, el tablero es infinito: cubre 40
+        por 40 casillas y sus bordes se conectan entre sí, de modo que el
+        desplazamiento nunca muestra un borde. Además, en las casillas de 3 o 4
+        conexiones, el cableado es invisible. ¡Buena suerte!</string>
+    <string name="help_void">En el nivel Vacío, el tablero es infinito: cubre 40 por 40
+        casillas y sus bordes se conectan entre sí. En las casillas de 3 o 4
+        conexiones, el cableado es invisible. Y además, una niebla oculta las
+        casillas alejadas de la red conectada al servidor: solo los alrededores
+        de las casillas conectadas siguen visibles. ¡Buena suerte!</string>
+    <string name="menu_scores">Mejores puntuaciones</string>
+    <string name="menu_help">Ayuda</string>
+    <string name="menu_about">Acerca de</string>
+
+    <string name="skill_novice">Novato</string>
+    <string name="skill_normal">Normal</string>
+    <string name="skill_expert">Experto</string>
+    <string name="skill_master">Maestro</string>
+    <string name="skill_insane">Demencial</string>
+    <string name="skill_endless">Infinito</string>
+    <string name="skill_abyss">Abismo</string>
+    <string name="skill_void">Vacío</string>
+
+    <string name="status_moves">Movimientos: %1$d</string>
+    <string name="status_time">Tiempo: %1$s</string>
+
+    <string name="win_title">¡Has ganado!</string>
+    <string name="win_pbest_title">¡Nuevo récord personal!</string>
+    <string name="win_text">¡Enhorabuena! Has resuelto el puzzle en %1$s con %2$d movimientos.</string>
+    <string name="best_moves_text">¡Es tu mejor número de movimientos en este nivel!</string>
+    <string name="best_time_text">¡Es tu tiempo más rápido en este nivel!</string>
+    <string name="best_both_text">¡Es tu mejor número de movimientos y tu tiempo más rápido en este nivel!</string>
+    <string name="win_new">Nueva partida</string>
+    <string name="win_continue">Continuar</string>
+
+    <string name="title_version">Versión %1$s</string>
+    <string name="title_license">Basado en Scrambled Net (© 2007–2010 Ian Cameron Smith,\n© 2014 Michael Mueller), un puerto del juego de KDE KNetWalk.\nEsta versión: © 2026 Eric Chardon — GPL-2.0.</string>
+    <string name="title_loading">Cargando la partida guardada…</string>
+    <string name="title_checking">Buscando actualizaciones…</string>
+    <string name="title_update_available">La versión %1$s está disponible.</string>
+    <string name="title_update_button">Actualizar</string>
+    <string name="title_play_button">Jugar</string>
+    <string name="title_download_status">Descargando la versión %1$s…</string>
+    <string name="title_install_status">Instalando…</string>
+    <string name="title_install_permission">Permite instalar aplicaciones desconocidas en los ajustes de Android y vuelve a pulsar Actualizar.</string>
+    <string name="title_install_failed">La actualización ha fallado (%1$s). Puedes seguir jugando.</string>
+
+    <string name="version_obsolete">¡Versión anticuada!</string>
+    <string name="version_obsolete_detail">Esta versión de desarrollo ha caducado. Instala la versión oficial.</string>
+    <string name="version_obsolete_quitter">Salir</string>
+
+    <string name="confirm_new_title">¿Nueva partida?</string>
+    <string name="confirm_change_title">¿Cambiar de nivel?</string>
+    <string name="confirm_change_ok">Cambiar de nivel</string>
+    <string name="confirm_progress_message">Hay una partida en curso (%1$d movimientos, %2$s). Se perderá.</string>
+
+    <string name="scores_title">Récords personales</string>
+    <string name="scores_movestitle">Menos movimientos</string>
+    <string name="scores_timestitle">Tiempo más rápido</string>
+    <string name="scores_skill">Nivel</string>
+    <string name="scores_moves">Movimientos</string>
+    <string name="scores_time">Tiempo</string>
+    <string name="scores_when">Fecha</string>
+    <string name="menu_scores_reset">Borrar todos los récords</string>
+    <string name="scores_reset_confirm">¿Borrar todos tus récords personales?</string>
+
+    <string name="menu_hint">Pista</string>
+    <string name="menu_hint_count">Pista (%1$d)</string>
+    <string name="menu_tools">Herramientas</string>
+    <string name="menu_demo">Demostración</string>
+    <string name="hint_strategy_signal">Señalar el error</string>
+    <string name="hint_strategy_fix">Corregir el error</string>
+    <string name="hint_limit_title">Límite de pistas</string>
+    <string name="hint_limit_zero">Desactivado</string>
+    <string name="hint_limit_value">%1$d%%</string>
+    <string name="demo_diff_random">Aleatoria</string>
+    <string name="demo_diff_progressive">Progresiva</string>
+    <string name="demo_skill_title">Niveles</string>
+    <string name="demo_speed_title">Ritmo</string>
+    <string name="demo_speed_slow">Lento</string>
+    <string name="demo_speed_normal">Normal</string>
+    <string name="demo_speed_fast">Rápido</string>
+    <string name="hints_section">Pistas</string>
+    <string name="hints_total">Casillas tratadas por la pista: %1$d</string>
+    <string name="hints_none">sin pista</string>
+    <string name="hints_n">%1$d pistas</string>
+    <string name="hints_column_tiles">Pistas</string>
+    <string name="demo_touch_return">Toca la pantalla para volver al juego</string>
+    <string name="demo_level_banner">Demostración, nivel %1$s</string>
+
+    <string name="menu_lessons">Aprendizaje</string>
+    <string name="lesson_1_title">Girar y conectar</string>
+    <string name="lesson_2_title">El método y el bloqueo</string>
+    <string name="lesson_3_title">Las ayudas</string>
+    <string name="lesson_4_title">El tablero toroidal</string>
+    <string name="lesson_5_title">Las casillas invisibles</string>
+    <string name="lesson_6_title">El tablero infinito</string>
+    <string name="lesson_7_title">La niebla</string>
+    <string name="lesson_l1_b1">Toca una casilla para girarla un cuarto de vuelta. Conecta la red del servidor al terminal.</string>
+    <string name="lesson_l1_b2">Sigue así: cada casilla conectada al servidor se ilumina.</string>
+    <string name="lesson_l1_b3">¡Bien hecho, red resuelta! Toda partida se gana así: girar, conectar, iluminar.</string>
+    <string name="lesson_l2_b1">Método: parte del servidor y sigue los cables ya conectados, de vecino en vecino. Gira una casilla para empezar.</string>
+    <string name="lesson_l2_b2">Pulsación larga en una casilla bien orientada: el bloqueo la protege de un giro desafortunado.</string>
+    <string name="lesson_l2_b3">Continúa de vecino en vecino hasta la victoria, bloqueando aquello de lo que estás seguro.</string>
+    <string name="lesson_l2_b4">El bloqueo es tu aliado en los grandes tableros: guarda el método.</string>
+    <string name="lesson_l3_b1">La pista informativa señala una casilla que corregir (marco verde). Toca Pista.</string>
+    <string name="lesson_l3_b2">La pista correctiva endereza la casilla y la sella (bloqueo definitivo). Toca Pista.</string>
+    <string name="lesson_l3_b3">Resolver juega la partida por ti, una jugada cada vez; una partida resuelta así jamás cuenta para los récords. Toca Resolver.</string>
+    <string name="lesson_l3_b4">Las ayudas están para desatascarte, no para jugar: tú decides.</string>
+    <string name="lesson_l4_b1">Tablero Maestro: los bordes se conectan entre sí. El tablero es un TOROIDE: la derecha se une a la izquierda, el borde superior se une al inferior.</string>
+    <string name="lesson_l4_b2">Resuélvelo: al menos un cable atraviesa el borde del tablero para conectarse al otro lado.</string>
+    <string name="lesson_l4_b3">El toroide está presente a partir de Maestro: piensa el tablero sin bordes.</string>
+    <string name="lesson_l5_b1">Nivel Demencial: algunas casillas son INVISIBLES. Deduce su orientación por sus vecinas, luego gira una casilla visible.</string>
+    <string name="lesson_l5_b2">Sigue así: cada vecina limita las casillas ocultas, solo la victoria lo revela todo.</string>
+    <string name="lesson_l5_b3">La pista correctiva revela una casilla enmascarada: una jugada mostrada, nunca jugada.</string>
+    <string name="lesson_l6_b1">Tablero Infinito: un toroide de 40 x 40, encuadrado en el servidor. Desplaza la ventana un giro completo en horizontal, hasta VOLVER a encontrar el servidor.</string>
+    <string name="lesson_l6_b2">El tablero se repite para siempre: jamás un anillo gris. Viaja ahora en vertical, un giro completo.</string>
+    <string name="lesson_l6_b3">Pellizca para acercar y alejar el zoom: la ventana es tu cámara, el mundo no cambia.</string>
+    <string name="lesson_l6_b4">El modo Infinito se juega con la cámara: el tablero no tiene bordes, solo ventanas.</string>
+    <string name="lesson_l7_b1">Nivel Vacío: la NIEBLA oculta el tablero. Cada conexión hace retroceder la bruma. Gira una casilla visible.</string>
+    <string name="lesson_l7_b2">Sigue así: cada conexión ganada ilumina la zona a su alrededor.</string>
+    <string name="lesson_l7_b3">La niebla se gana casilla a casilla: la luz sigue a la red.</string>
+    <string name="lesson_completed">Completada</string>
+    <string name="lesson_continue">Continuar</string>
+</resources>

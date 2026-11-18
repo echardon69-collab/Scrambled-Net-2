@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Traduzione in italiano (prima passata di IA del 18 nov. 2026,
+     sperimentale, in attesa di revisione da parte di un italofono
+     prima di ogni ufficializzazione — stesso processo del còrso,
+     dell'alsaziano, del cinese semplificato, dello spagnolo e del
+     portoghese: l'IA traduce, il revisore corregge, le correzioni
+     rientrano dallo stesso canale). Stesse chiavi di
+     values/strings.xml (parità controllata da tools/validate_langues.py).
+     Trattamento con « tu », com'è norma nei videogiochi.
+     Gli apostrofi italiani sono dritti e protetti con \' (mai
+     l'apostrofo tipografico: la build di Android rifiuterebbe
+     quella nuda).
+
+     Glossario (EN → IT) :
+       tile → casella ; board → tabellone ; server → server ;
+       terminal → terminale ; network → rete ; wiring → cablaggio ;
+       lock/unlock → bloccare/sbloccare ; hint → suggerimento ;
+       hint allowance → limite di suggerimenti ; moves → mosse ;
+       fog → nebbia ; torus (edges wrap around) → toro: i bordi si
+       collegano tra loro ; hidden wiring → cablaggio nascosto ;
+       panning → spostamento ; zoom → zoom ; camera → telecamera ;
+       personal best → record personale ; settings → impostazioni ;
+       skills : Novice → Principiante, Normal → Normale, Expert →
+       Esperto, Master → Maestro, Insane → Folle, Endless →
+       Infinito, Abyss → Abisso, Void → Vuoto. I « blips » e i nomi
+       propri restano tale e quale. I parametri %1$d / %1$s / %2$d
+       e gli a capo "\n" restano tale e quale. Niente spazio prima
+       della punteggiatura, come vuole la norma; le citazioni usano
+       i virgolettati « », con spazio, per coerenza con le altre
+       traduzioni dell'applicazione.
+-->
+<resources>
+    <string name="app_name">Scrambled Net 2</string>
+
+    <string name="menu_new">Nuova partita</string>
+    <string name="menu_solve">Risolvi</string>
+    <string name="menu_settings">Impostazioni</string>
+    <string name="menu_stop_solve">Ferma la risoluzione</string>
+    <string name="solver_used">Risolutore automatico usato — questa partita non varrà punteggio.</string>
+    <string name="menu_skill">Livello di difficoltà</string>
+    <string name="menu_sounds">Suoni</string>
+    <string name="sounds_off">Disattivati</string>
+    <string name="sounds_quiet">Sommessi</string>
+    <string name="sounds_full">Completi</string>
+    <string name="menu_anim">Animazione</string>
+    <string name="anim_off">Senza animazione</string>
+    <string name="anim_on">Animazione</string>
+
+    <string name="menu_lang">Lingua</string>
+    <string name="lang_system">Segui il sistema</string>
+
+    <string name="skill_novice_desc">Tabellone %1$d × %2$d — due rami, bordi aperti</string>
+    <string name="skill_normal_desc">Tabellone %1$d × %2$d — due rami, bordi aperti</string>
+    <string name="skill_expert_desc">Tabellone %1$d × %2$d — due rami, bordi aperti</string>
+    <string name="skill_master_desc">Tabellone %1$d × %2$d — toro: i bordi si collegano, tre rami</string>
+    <string name="skill_insane_desc">Tabellone %1$d × %2$d — toro, tre rami, cablaggio nascosto agli incroci</string>
+    <string name="skill_endless_desc">Tabellone %1$d × %2$d — toro, lo spostamento non mostra mai un bordo</string>
+    <string name="skill_abyss_desc">Tabellone %1$d × %2$d — toro, cablaggio nascosto agli incroci</string>
+    <string name="skill_void_desc">Tabellone %1$d × %2$d — toro, cablaggio nascosto, nebbia sulla rete</string>
+
+    <string name="help_master">Al livello Maestro, i bordi del tabellone si collegano
+        tra loro: le caselle del bordo destro si collegano a quelle del bordo
+        sinistro, e viceversa. Lo stesso vale per i bordi superiore e
+        inferiore.</string>
+    <string name="help_insane">Al livello Folle, i bordi del tabellone si
+        collegano tra loro: le caselle del bordo destro si collegano a
+        quelle del bordo sinistro, e viceversa. Lo stesso vale per i
+        bordi superiore e inferiore. Ma in più, nelle caselle con 3 o 4
+        connessioni il cablaggio è invisibile. In bocca al lupo!</string>
+    <string name="help_abyss">Al livello Abisso, il tabellone è infinito: copre
+        40 per 40 caselle e i suoi bordi si collegano tra loro, così lo
+        spostamento non mostra mai un bordo. Inoltre, nelle caselle con 3
+        o 4 connessioni il cablaggio è invisibile. In bocca al lupo!</string>
+    <string name="help_void">Al livello Vuoto, il tabellone è infinito: copre
+        40 per 40 caselle e i suoi bordi si collegano tra loro. Nelle
+        caselle con 3 o 4 connessioni il cablaggio è invisibile. E in
+        più, una nebbia nasconde le caselle lontane dalla rete collegata
+        al server: solo i dintorni delle caselle collegate restano
+        visibili. In bocca al lupo!</string>
+    <string name="menu_scores">Migliori punteggi</string>
+    <string name="menu_help">Aiuto</string>
+    <string name="menu_about">Informazioni</string>
+
+    <string name="skill_novice">Principiante</string>
+    <string name="skill_normal">Normale</string>
+    <string name="skill_expert">Esperto</string>
+    <string name="skill_master">Maestro</string>
+    <string name="skill_insane">Folle</string>
+    <string name="skill_endless">Infinito</string>
+    <string name="skill_abyss">Abisso</string>
+    <string name="skill_void">Vuoto</string>
+
+    <string name="status_moves">Mosse: %1$d</string>
+    <string name="status_time">Tempo: %1$s</string>
+
+    <string name="win_title">Hai vinto!</string>
+    <string name="win_pbest_title">Nuovo record personale!</string>
+    <string name="win_text">Congratulazioni! Hai risolto il rompicapo in %1$s con %2$d mosse.</string>
+    <string name="best_moves_text">È il tuo miglior numero di mosse a questo livello!</string>
+    <string name="best_time_text">È il tuo tempo più rapido a questo livello!</string>
+    <string name="best_both_text">È il tuo miglior numero di mosse e il tuo tempo più rapido a questo livello!</string>
+    <string name="win_new">Nuova partita</string>
+    <string name="win_continue">Continua</string>
+
+    <string name="title_version">Versione %1$s</string>
+    <string name="title_license">Basato su Scrambled Net (© 2007–2010 Ian Cameron Smith,\n© 2014 Michael Mueller), un port del gioco KNetWalk di KDE.\nQuesta versione: © 2026 Eric Chardon — GPL-2.0.</string>
+    <string name="title_loading">Caricamento della partita salvata…</string>
+    <string name="title_checking">Ricerca di aggiornamenti…</string>
+    <string name="title_update_available">La versione %1$s è disponibile.</string>
+    <string name="title_update_button">Aggiorna</string>
+    <string name="title_play_button">Gioca</string>
+    <string name="title_download_status">Scaricamento della versione %1$s…</string>
+    <string name="title_install_status">Installazione…</string>
+    <string name="title_install_permission">Consenti l\'installazione di app sconosciute nelle impostazioni di Android, poi tocca di nuovo Aggiorna.</string>
+    <string name="title_install_failed">Aggiornamento non riuscito (%1$s). Puoi continuare a giocare.</string>
+
+    <string name="version_obsolete">Versione obsoleta!</string>
+    <string name="version_obsolete_detail">Questa versione di sviluppo è scaduta. Installa la versione ufficiale.</string>
+    <string name="version_obsolete_quitter">Esci</string>
+
+    <string name="confirm_new_title">Nuova partita?</string>
+    <string name="confirm_change_title">Cambiare livello?</string>
+    <string name="confirm_change_ok">Cambia livello</string>
+    <string name="confirm_progress_message">C\'è una partita in corso (%1$d mosse, %2$s). Andrà persa.</string>
+
+    <string name="scores_title">Record personali</string>
+    <string name="scores_movestitle">Meno mosse</string>
+    <string name="scores_timestitle">Tempo più rapido</string>
+    <string name="scores_skill">Livello</string>
+    <string name="scores_moves">Mosse</string>
+    <string name="scores_time">Tempo</string>
+    <string name="scores_when">Data</string>
+    <string name="menu_scores_reset">Cancella tutti i record</string>
+    <string name="scores_reset_confirm">Cancellare tutti i tuoi record personali?</string>
+
+    <string name="menu_hint">Suggerimento</string>
+    <string name="menu_hint_count">Suggerimento (%1$d)</string>
+    <string name="menu_tools">Strumenti</string>
+    <string name="menu_demo">Dimostrazione</string>
+    <string name="hint_strategy_signal">Segna l\'errore</string>
+    <string name="hint_strategy_fix">Correggi l\'errore</string>
+    <string name="hint_limit_title">Limite di suggerimenti</string>
+    <string name="hint_limit_zero">Disattivato</string>
+    <string name="hint_limit_value">%1$d%%</string>
+    <string name="demo_diff_random">Casuale</string>
+    <string name="demo_diff_progressive">Progressiva</string>
+    <string name="demo_skill_title">Livelli</string>
+    <string name="demo_speed_title">Ritmo</string>
+    <string name="demo_speed_slow">Lento</string>
+    <string name="demo_speed_normal">Normale</string>
+    <string name="demo_speed_fast">Veloce</string>
+    <string name="hints_section">Suggerimenti</string>
+    <string name="hints_total">Caselle gestite dal suggerimento: %1$d</string>
+    <string name="hints_none">nessun suggerimento</string>
+    <string name="hints_n">%1$d suggerimenti</string>
+    <string name="hints_column_tiles">Suggerimenti</string>
+    <string name="demo_touch_return">Tocca lo schermo per tornare al gioco</string>
+    <string name="demo_level_banner">Dimostrazione, livello %1$s</string>
+
+    <string name="menu_lessons">Apprendimento</string>
+    <string name="lesson_1_title">Girare e collegare</string>
+    <string name="lesson_2_title">Il metodo e il blocco</string>
+    <string name="lesson_3_title">Gli aiuti</string>
+    <string name="lesson_4_title">Il tabellone toroidale</string>
+    <string name="lesson_5_title">Le caselle invisibili</string>
+    <string name="lesson_6_title">Il tabellone infinito</string>
+    <string name="lesson_7_title">La nebbia</string>
+    <string name="lesson_l1_b1">Tocca una casella per girarla di un quarto di giro. Collega la rete dal server al terminale.</string>
+    <string name="lesson_l1_b2">Continua così: ogni casella collegata al server si illumina.</string>
+    <string name="lesson_l1_b3">Ben fatto, rete risolta! Ogni partita si vince così: girare, collegare, illuminare.</string>
+    <string name="lesson_l2_b1">Metodo: parti dal server e segui i cavi già collegati, di vicino in vicino. Gira una casella per iniziare.</string>
+    <string name="lesson_l2_b2">Tocco prolungato su una casella ben orientata: il blocco la protegge da una svolta sfortunata.</string>
+    <string name="lesson_l2_b3">Avanza di vicino in vicino fino alla vittoria, bloccando ciò di cui sei sicuro.</string>
+    <string name="lesson_l2_b4">Il blocco è tuo alleato sui grandi tabelloni: conserva il metodo.</string>
+    <string name="lesson_l3_b1">Il suggerimento informativo indica una casella da correggere (cornice verde). Tocca Suggerimento.</string>
+    <string name="lesson_l3_b2">Il suggerimento correttivo raddrizza la casella e la sigilla (blocco definitivo). Tocca Suggerimento.</string>
+    <string name="lesson_l3_b3">Risolvi gioca la partita per te, una mossa alla volta; una partita risolta così non conta mai per i record. Tocca Risolvi.</string>
+    <string name="lesson_l3_b4">Gli aiuti servono a sbloccarti, non a giocare: decidi tu.</string>
+    <string name="lesson_l4_b1">Tabellone Maestro: i bordi si collegano tra loro. Il tabellone è un TORO: la destra si unisce alla sinistra, il superiore si unisce all\'inferiore.</string>
+    <string name="lesson_l4_b2">Risolvilo: almeno un cavo attraversa il bordo del tabellone per collegarsi oltre.</string>
+    <string name="lesson_l4_b3">Il toro è ovunque dal Maestro in poi: pensa il tabellone senza bordi.</string>
+    <string name="lesson_l5_b1">Livello Folle: alcune caselle sono INVISIBILI. Deduci il loro orientamento dai vicini, poi gira una casella visibile.</string>
+    <string name="lesson_l5_b2">Continua così: ogni vicino vincola le caselle nascoste, solo la vittoria rivela tutto.</string>
+    <string name="lesson_l5_b3">Il suggerimento correttivo rivela una casella mascherata: una mossa mostrata, mai giocata.</string>
+    <string name="lesson_l6_b1">Tabellone Infinito: un toro di 40 x 40, inquadrato sul server. Scorri la finestra di un giro completo in orizzontale, finché non TROVI di nuovo il server.</string>
+    <string name="lesson_l6_b2">Il tabellone si ripete per sempre: mai un anello grigio. Ora viaggia in verticale, un giro completo.</string>
+    <string name="lesson_l6_b3">Pizzica con due dita per avvicinare e allontanare lo zoom: la finestra è la tua telecamera, il mondo resta lo stesso.</string>
+    <string name="lesson_l6_b4">La modalità Infinito si gioca con la telecamera: il tabellone non ha bordi, solo finestre.</string>
+    <string name="lesson_l7_b1">Livello Vuoto: la NEBBIA nasconde il tabellone. Ogni collegamento respinge la foschia. Gira una casella visibile.</string>
+    <string name="lesson_l7_b2">Continua così: ogni collegamento conquistato illumina la zona intorno.</string>
+    <string name="lesson_l7_b3">La nebbia si vince casella per casella: la luce segue la rete.</string>
+    <string name="lesson_completed">Completata</string>
+    <string name="lesson_continue">Continua</string>
+</resources>

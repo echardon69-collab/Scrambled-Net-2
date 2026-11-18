@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Drapeau d'Italie — chantier traduction (italien expérimental,
+     18 nov. 2026). Tricolore officiel en ratio 2:3 sur un viewBox
+     600 × 400 : trois bandes verticales égales de 200 de large —
+     vert #008C45 à gauche, blanc #F4F5F0 au centre, rouge #CD212A
+     à droite (teintes officielles de la loi du 31 mars 1965 du
+     drapeau de la République italienne ; sur ce vert plus profond
+     le blanc uni #FFFFFF aurait paru sale). Aucun emblème : le
+     drapeau de la République italienne n'en porte pas. Pas de
+     dégradé ni de clip : le convertisseur accepte des
+     remplissages unis seulement (l'ombrage est synthétique). -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400">
+  <rect x="0" y="0" width="200" height="400" fill="#008C45"/>
+  <rect x="200" y="0" width="200" height="400" fill="#F4F5F0"/>
+  <rect x="400" y="0" width="200" height="400" fill="#CD212A"/>
+</svg>

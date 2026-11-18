@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Tradução ao português (primeira passada de IA do 18 nov. de 2026):
+     mesmos arrays que values/arrays.xml (paridade controlada por
+     tools/validate_langues.py). As quebras "\n" e as marcadores •
+     ficam como estão; os nomes próprios e a URL ficam em claro; as
+     citações usam os guillemets « », com espaço.
+-->
+<resources>
+
+    <!-- Títulos das seções da ajuda (mesma estrutura que o original). -->
+    <string-array name="help_titles">
+        <item>O jogo</item>
+        <item>Os controles</item>
+        <item>Os níveis de dificuldade</item>
+        <item>A pontuação</item>
+        <item>As dicas</item>
+    </string-array>
+
+    <!-- Textos das seções da ajuda. -->
+    <string-array name="help_texts">
+        <item>Scrambled Net 2 é um jogo de quebra-cabeça bem simples:
+            é preciso reordenar as conexões de uma rede de computadores
+            para que todos os terminais fiquem ligados ao servidor.
+            A rede é feita de células; todas estão no lugar certo, mas
+            foram giradas ao acaso até formar uma bagunça inútil.\n\n
+            Gire as células uma a uma para reconectar a rede. As células
+            conectadas ao servidor aparecem destacadas. Quando todos os
+            terminais estão conectados, você ganha.</item>
+        <item>Toque numa célula para girá-la um quarto de volta no
+            sentido horário. Pressione e segure uma célula para travá-la
+            quando tiver certeza de que está correta, ou para destravá-la;
+            as células travadas respondem com um clique curto.\n\n
+            Arraste com um dedo para deslocar o tabuleiro, junte e separe
+            dois dedos para dar zoom.</item>
+        <item>Há cinco níveis de dificuldade. Os níveis altos têm
+            tabuleiros maiores, e os mais avançados têm giros
+            especiais:\n\n• Iniciante: um tabuleiro pequeno.\n\n•
+            Normal: um tabuleiro um pouco maior.\n\n• Especialista:
+            um tabuleiro grande.\n\n• Mestre: um tabuleiro grande
+            cujas bordas se conectam entre si — uma conexão que sai
+            pela borda direita entra pela esquerda, e o mesmo vale
+            para as bordas superior e inferior.\n\n• Insano: como
+            Mestre, mas todas as células de 3 ou 4 conexões são
+            invisíveis. Será preciso um repertório inteiro novo de
+            deduções para completar um tabuleiro insano.</item>
+        <item>Cada vitória conta os seus movimentos e o seu tempo, e
+            os seus recordes pessoais ficam guardados para cada nível
+            — mas só se você resolveu o quebra-cabeça por conta
+            própria: um jogo em que o resolvedor automático foi usado
+            jamais vale pontuação.\n\nVeja « Melhores pontuações » no
+            menu.</item>
+        <item>Trabalhe do servidor para fora: as células confirmadas
+            são os seus pontos de apoio, trave-as conforme avança.\n\n
+            As células de conexão única são terminais — becos sem
+            saída: aponte-as para o vizinho que precisa delas.\n\nSe
+            você prefere um tabuleiro tranquilo, dá para desligar a
+            animação da rede no menu.</item>
+    </string-array>
+
+    <!-- Títulos das seções da página « Sobre » (refeito em
+         14 nov. de 2026: a janela de diálogo virou uma página
+         autônoma). -->
+    <string-array name="about_titles">
+        <item>O jogo</item>
+        <item>O autor</item>
+        <item>Origem e licença</item>
+        <item>Participar</item>
+        <item>Novidades desta nova versão</item>
+        <item>Funções do original modificadas</item>
+        <item>Funções do original conservadas</item>
+        <item>Funções do original retiradas</item>
+    </string-array>
+
+    <!-- Textos das seções da página « Sobre ». A licença cita a
+         cadeia completa: jogo original do KDE, port Android e esta
+         nova versão. A seção « Participar » é, de propósito,
+         texto representativo: os links reais ainda não estão
+         disponíveis (evolução « Indicar os links de Sobre » da
+         folha de rota). -->
+    <string-array name="about_texts">
+        <item>Scrambled Net 2 é uma nova versão moderna e livre de
+            Scrambled Net, um port Android do jogo KNetWalk do KDE.
+            Desembarace uma rede de computadores revirada para que
+            cada terminal fique ligado ao servidor: todas as células
+            estão no lugar certo, mas giradas ao acaso. Gire-as uma a
+            uma para reconstruir a rede.</item>
+        <item>Scrambled Net 2 é obra de Éric Chardon, entusiasta de
+            sempre dos jogos de lógica e de quebra-cabeças. No começo
+            de 2010 ele descobriu o famoso aplicativo de Ian Cameron
+            Smith, distribuído com seu código fonte, e em 2014 a sua
+            passagem para Michael Mueller — esperava que este
+            trouxesse mais evoluções ao jogo e mantivesse o interesse
+            dos jogadores. Ao ver os anos passarem sem que essas
+            esperanças se concretizassem, decidiu escrever ele mesmo
+            a sequência esperada: esta nova versão moderna e livre,
+            fiel ao original.\n\nPara projetar e escrever esta nova versão ele se
+            apoiou no Vibe, o assistente de desenvolvimento da
+            Mistral AI: as especificações, o motor do jogo em Kotlin,
+            a interface, os testes e os validadores foram escritos
+            com a sua ajuda, sob a sua direção, a sua revisão e a sua
+            validação sistemática. O código assim produzido entra no
+            repositório sob a mesma licença GPL-2.0.</item>
+        <item>KNetWalk, o jogo original do KDE: © 2004–2007 Andi
+            Peredri, Thomas Nagy e Fela Winkelmolen.\n\nScrambled
+            Net, o port Android: © 2007–2010 Ian Cameron Smith,
+            © 2014 Michael Mueller.\n\nEsta nova versão, Scrambled
+            Net 2: © 2026 Éric Chardon.\n\nTudo é distribuído sob a
+            licença GPL-2.0 — este jogo é software livre.\n\nCódigo
+            fonte: https://github.com/echardon69-collab/Scrambled-Net-2</item>
+        <item>Você pode ajudar a melhorar o jogo:\n\n• Informar um
+            erro — link por vir.\n\n• Contatar o autor — link por
+            vir.\n\n• Propor uma tradução para um novo idioma —
+            link por vir.\n\n• Propor um novo visual de células —
+            link por vir.</item>
+        <item>Em comparação com o jogo original, esta nova versão
+            acrescenta:\n\n• A família Infinito: três níveis novos
+            (Infinito, Abismo, Vazio) num tabuleiro gigante de
+            40 × 40 cujas bordas se conectam entre si — a câmera
+            volta sobre si mesma, o deslocamento jamais mostra uma
+            borda; Abismo esconde a fiação, Vazio acrescenta ainda
+            uma névoa sobre a rede.\n\n• Uma tela de título com
+            atualizações automáticas do GitHub, em dois sabores de
+            distribuição: o APK do GitHub com o atualizador
+            embutido, o APK da Play Store sem ele.\n\n• Uma
+            assinatura elétrica: os LED do servidor e os blips de
+            dados pulsam com um ritmo diferente conforme o gerador
+            que construiu o tabuleiro.\n\n• A descrição de cada
+            nível de dificuldade — tamanho real do tabuleiro e
+            regras — na página Configurações.\n\n• Um ajuste de
+            idioma (inglês, francês ou segundo o sistema).</item>
+        <item>Funções do original, agora feitas de outra
+            maneira:\n\n• Código fonte: Java e Ant foram substituídos
+            por Kotlin e Gradle.\n\n• Gráficos: os bitmaps do
+            original são agora VectorDrawables — o mesmo aspecto,
+            nitidez perfeita em qualquer zoom, um só arquivo para
+            todas as densidades de tela.\n\n• Som: nenhuma amostra do
+            original é reaproveitada; em vez disso, seis efeitos
+            curtos são sintetizados.\n\n• Renderização: em vez de
+            um laço de animação permanente, o tabuleiro só é
+            redesenhado quando alguma coisa muda — mais econômico
+            para a bateria.\n\n• O tabuleiro não se estica mais para
+            preencher a tela: é uma câmera que você arrasta e ajusta
+            com os dedos, e o zoom fica ancorado sob eles.\n\n•
+            Geração de tabuleiros: metade vem de um gerador
+            alternativo de árvore de extensão que conecta todas as
+            células (o gerador do original constrói a outra metade —
+            a assinatura elétrica os distingue).\n\n• Menus: uma
+            barra de ações de texto sem título, as configurações
+            numa única página em vez de submenus em cascata, e a
+            janela Sobre virou esta página.</item>
+        <item>Funções do original, conservadas como
+            estavam:\n\n• Os cinco níveis originais (de Iniciante a
+            Insano) com as suas regras exatas — bordas fechadas em
+            Mestre, fiação invisível em Insano.\n\n• O gerador de
+            tabuleiros do original: todo quebra-cabeça pode ser
+            ganho, e ganha-se quando cada terminal está
+            conectado.\n\n• Os tamanhos de tabuleiro se adaptam à
+            sua tela e à sua orientação, exatamente como fazia a
+            matriz Screen do original.\n\n• Tocar numa célula a
+            gira; pressioná-la e segurá-la trava ou destrava.\n\n•
+            O resolvedor automático — um jogo resolvido por ele
+            jamais vale pontuação.\n\n• Os recordes pessoais
+            (movimentos e tempo) de cada nível.\n\n• O jogo salvo
+            sobrevive ao fechamento do aplicativo ou ao repouso; o
+            cronômetro congela em segundo plano.\n\n• Os lembretes
+            de regras ao entrar em Mestre ou Insano.\n\n• Os três
+            modos de som e o ajuste de animação.\n\n• A ajuda do
+            jogo.</item>
+        <item>Funções do original que desapareceram, e por
+            quê:\n\n• Os controles por direcional, trackball e
+            teclado: esta nova versão é só touch, pensada para os
+            celulares e tablets modernos.\n\n• O cursor vermelho de
+            foco persistente, projetado para a era do direcional:
+            com o toque direto ele era ruído mais que ajuda — o
+            piscar de alerta e o cursor móvel do resolvedor
+            automático cobrem o seu papel.\n\n• Todas as
+            dependências do original (as bibliotecas HermitAndroid
+            e HermitLibrary, incluindo o gerador aleatório
+            MTRandom, substituído pelo gerador padrão do Kotlin):
+            o motor foi reescrito do zero em Kotlin como motor de
+            jogo puro com testes de unidade — nenhum código do
+            original é reaproveitado.</item>
+    </string-array>
+
+</resources>
