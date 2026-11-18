@@ -54,6 +54,20 @@ class AppLanguagesTest {
     }
 
     @Test
+    fun countryFlagsOnlyOnSecondaryLanguages() {
+        // V21 (demande d'eric) : une langue SECONDAIRE d'un pays
+        // (corse, alsacien, futur breton, créoles…) porte le tag du
+        // drapeau NATIONAL affiché entre parenthèses après son
+        // endonyme dans la feuille — les langues qui parlent pour
+        // elles-mêmes (français, anglais, chinois) n'en portent PAS.
+        assertEquals("fr", AppLanguages.byTag("co")?.drapeauPays)
+        assertEquals("fr", AppLanguages.byTag("gsw-FR")?.drapeauPays)
+        assertNull(AppLanguages.byTag("fr")?.drapeauPays)
+        assertNull(AppLanguages.byTag("en")?.drapeauPays)
+        assertNull(AppLanguages.byTag("zh-CN")?.drapeauPays)
+    }
+
+    @Test
     fun byTagIsExactMatchOnly() {
         // La correspondance est EXACTE, sur le tag complet : ni la
         // langue seule, ni la casse, ni le vide ne matchent.

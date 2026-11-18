@@ -307,12 +307,19 @@
             </RadioGroup>
 
             <!-- Section 4 : langue (v3 du 14 nov., demande d'eric ;
-                 v19 du 16 nov., sélecteur dynamique). Seule la radio
-                 « Suivre le système » vit ici : les radios des
-                 langues naissent AU RUNTIME (SettingsActivity,
-                 item_lang_radio.xml, données AppLanguages) — une
-                 traduction neuve apparaît sans toucher au layout.
-                 Choix immédiat : appcompat stocke le choix
+                 v19 du 16 nov., sélecteur dynamique, radios nées au
+                 runtime ; V21 du 18 nov. 2026, chantier « feuille de
+                 langue », demande d'eric — la page prévoit de
+                 NOMBREUSES langues, la liste de radios l'obligeait à
+                 trop scroller : la section ne garde qu'UNE entrée
+                 résumé, le libellé et le drapeau de la langue en
+                 vigueur (ou « Suivre le système »), posés au runtime
+                 par SettingsActivity.bindLangEntry AU FIL de l'état
+                 RÉEL d'appcompat. L'entrée ouvre la feuille
+                 Material 3 sheet_langs.xml, plafonnée à 360 dp —
+                 au-delà, c'est la feuille qui déroule en interne,
+                 JAMAIS la page ; une langue ajoutée n'édite RIEN
+                 ici. Choix immédiat : appcompat stocke le choix
                  (autoStoreLocales, cf. manifeste) et recrée la pile
                  d'activités pour l'appliquer partout ; sur Android
                  13+, c'est le réglage système « langue par
@@ -326,19 +333,19 @@
                 android:text="@string/menu_lang"
                 android:textAppearance="?attr/textAppearanceTitleMedium" />
 
-            <RadioGroup
-                android:id="@+id/lang_group"
+            <TextView
+                android:id="@+id/lang_current"
                 android:layout_width="match_parent"
+                android:maxWidth="320dp"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
-
-                <com.google.android.material.radiobutton.MaterialRadioButton
-                    android:id="@+id/lang_system"
-                    android:layout_width="match_parent"
-                    android:maxWidth="320dp"
-                    android:layout_height="wrap_content"
-                    android:text="@string/lang_system" />
-            </RadioGroup>
+                android:gravity="center_vertical"
+                android:minHeight="48dp"
+                android:paddingStart="4dp"
+                android:paddingEnd="4dp"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
+                android:textAppearance="?attr/textAppearanceBodyLarge" />
 
             <!-- Section 5 : indice (chantier Aide à la résolution, 15
                  nov. 2026). Stratégie : SIGNAL montre l'erreur (cadre

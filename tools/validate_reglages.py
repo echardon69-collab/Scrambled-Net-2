@@ -87,6 +87,14 @@ V19 (chantier « sélecteur de langue dynamique », 16 nov. 2026) :
   ce validateur ne garde que les invariants de la page (appcompat
   reste l'unique source de vérité du réglage, aucune clé maison,
   radios bornées à 320 dp — l'item de gonflage l'est aussi).
+
+V21 (chantier « feuille de langue », 18 nov. 2026, demande
+  d'eric : la page prévoit de NOMBREUSES langues, une radio par
+  langue l'obligeait à trop scroller) : la section Langue ne
+  garde qu'UNE entrée résumé (lang_current), qui ouvre la feuille
+  Material 3 — le mécanisme reste pinné par validate_selecteur.py,
+  validateur DÉDIÉ ; seule la radio système a quitté le XML (40
+  bornes 320 dp maintenues : l'entrée résumé naît bornée pareil).
 """
 
 import re
@@ -192,15 +200,21 @@ anim_radios = (re.findall(r"@\+id/(anim_\w+)", anim_block.group(1))
                if anim_block else [])
 check("Layout : section animation (off/on)",
       anim_radios == ["anim_off", "anim_on"], str(anim_radios))
+# V21 (feuille de langue) : plus AUCUNE radio de langue dans le
+# XML — la section garde UNE entrée résumé (libellé posé au runtime
+# par bindLangEntry), la feuille sheet_langs.xml porte le choix.
 lang_block = re.search(
-    r'<RadioGroup[^>]*@\+id/lang_group(.*?)</RadioGroup>', layout_src,
-    re.S)
-lang_radios = (re.findall(r'@\+id/(lang_\w+)', lang_block.group(1))
-               if lang_block else [])
-check("Layout : section langue — seule la radio système est "
-      "statique, les langues naissent au runtime (v19, "
+    r'<TextView[^>]*@\+id/lang_current(.*?)/>', layout_src, re.S)
+check("Layout : section langue — UNE entrée résumé (v21, la "
+      "feuille Material 3 remplace le groupe de radios ; "
       "validate_selecteur.py épingle le mécanisme)",
-      lang_radios == ["lang_system"], str(lang_radios))
+      lang_block is not None
+      and 'android:maxWidth="320dp"' in lang_block.group(1)
+      and 'android:minHeight="48dp"' in lang_block.group(1)
+      and "?attr/selectableItemBackground" in lang_block.group(1)
+      and "@+id/lang_group" not in layout_src
+      and "@+id/lang_system" not in layout_src,
+      lang_block.group(0)[:160] if lang_block else "absent")
 check("Layout : les quatre en-têtes de section existent "
       "(v3 : langue ajoutée)",
       all(f'@string/{key}' in layout_src
@@ -233,7 +247,10 @@ check("Layout : chaque radio porte le libellé de son string",
 # retirées (Désactivé/10/20 seulement) — 42 bornes au total.
 # V19 (sélecteur de langue dynamique) : les radios Français et
 # English quittent le XML pour naître au runtime depuis
-# item_lang_radio.xml, borné pareil — 40 bornes au total.
+# item_lang_radio.xml, borné pareil — 40 bornes au total. V21
+# (feuille de langue) : la radio système quitte le XML à son tour,
+# remplacée par l'entrée résumé lang_current, née bornée pareil —
+# toujours 40 bornes au total.
 check("Layout : les radios, cases et descriptions sont bornées à "
       "320 dp (VisualLintButtonSize — régression bloquée)",
       layout_src.count('android:maxWidth="320dp"') == 40
@@ -277,9 +294,10 @@ if oncreate:
 check("SettingsActivity : les coches initiales sont posées AVANT "
       "l'écoute (elles ne déclenchent rien)",
       order_ok)
-check("SettingsActivity : CHAQUE groupe reçoit sa propre coche "
-      "(v3 : niveau du jeu reçu, sons/animation de la persistance, "
-      "langue d'appcompat)",
+check("SettingsActivity : CHAQUE section reçoit sa propre coche "
+      "(v3 : niveau du jeu reçu, sons/animation de la persistance ; "
+      "v21 : langue = le libellé de l'entrée résumé, lié à "
+      "appcompat)",
       re.search(r"binding\.skillGroup\.check\("
                 r"skillRadioFor\(currentSkill\)\)", sa) is not None
       and re.search(r"binding\.soundGroup\.check\(\s*"
@@ -289,9 +307,7 @@ check("SettingsActivity : CHAQUE groupe reçoit sa propre coche "
                     r"if \(Settings\.loadAnimEnabled\(this\)\) "
                     r"R\.id\.anim_on else R\.id\.anim_off", sa)
       is not None
-      and re.search(r"binding\.langGroup\.check\("
-                    r"langRadioFor\(currentLanguageTag\(\)\)\)", sa)
-      is not None)
+      and "bindLangEntry(currentLanguageTag())" in sa)
 check("SettingsActivity : plus d'helper unique checkRadioButton "
       "(la cause du bug : il cochait skillGroup pour TOUT, et "
       "RadioGroup.check ignore en silence les ids étrangers)",
@@ -357,14 +373,16 @@ check("Langue : appcompat importé et appliqué "
       "import androidx.appcompat.app.AppCompatDelegate" in sa_src
       and "import androidx.core.os.LocaleListCompat" in sa_src
       and "AppCompatDelegate.setApplicationLocales(locales)" in sa)
-check("Langue : les choix mènent aux locales par le REGISTRE "
-      "dynamique (v19 — données pinnées par validate_selecteur.py)",
+check("Langue : les choix de la feuille mènent aux locales par "
+      "le TAG complet (v21 — le registre d'ids de la v19 a "
+      "disparu, données pinnées par validate_selecteur.py)",
       "LocaleListCompat.forLanguageTags(tag)" in sa
       and "LocaleListCompat.getEmptyLocaleList()" in sa)
-check("Langue : la coche initiale vient de l'état RÉEL d'appcompat "
-      "(getApplicationLocales, pas d'une clé maison)",
+check("Langue : le libellé de l'entrée résumé vient de l'état "
+      "RÉEL d'appcompat (getApplicationLocales, pas d'une clé "
+      "maison)",
       "AppCompatDelegate.getApplicationLocales()" in sa
-      and "langRadioFor(currentLanguageTag())" in sa
+      and "bindLangEntry(currentLanguageTag())" in sa
       and re.search(r'private fun currentLanguageTag\(\): String',
                     sa) is not None
       and "locales[0]?.toLanguageTag()" in sa)
@@ -372,11 +390,11 @@ check("Langue : AUCUNE clé maison (ni Settings, ni Persistence, ni "
       "préférences de l'activité)",
       "LANGUAGE" not in st and "LANGUAGE" not in pe
       and re.search(r'putString\([^)]*lang', sa, re.I) is None)
-check("Langue : l'écoute de la section applique immédiatement "
-      "(comme sons et animation)",
-      re.search(r"langGroup\.setOnCheckedChangeListener.*?"
-                r"applyLanguage\(checkedId\)", sa, re.S) is not None
-      and re.search(r"private fun applyLanguage\(checkedId: Int\)",
+check("Langue : l'entrée résumé ouvre la feuille, le choix "
+      "s'applique immédiatement (v21, comme sons et animation)",
+      "binding.langCurrent.setOnClickListener { showLangSheet() }"
+      in sa
+      and re.search(r"private fun applyLanguage\(tag: String\)",
                     sa) is not None)
 
 # --- 4. Settings : mêmes clés, même fichier historique ----------------------
@@ -527,12 +545,12 @@ check("GameSpec : RIEN de ce chantier dans le format sérialisé "
 # Le jeu (MainActivity.confirmIfInProgress) : direct si résolue ou
 # vierge, sinon dialogue. La page (SettingsActivity.changeSkill) doit
 # décider pareil sur les mêmes faits.
-def game_needs_confirm(solved, moves):
-    return not (solved or moves == 0)
+def game_needs_confirm(resolue, nb_coups):
+    return not (resolue or nb_coups == 0)
 
 
-def page_needs_confirm(solved, moves):
-    return not (solved or moves == 0)
+def page_needs_confirm(resolue, nb_coups):
+    return not (resolue or nb_coups == 0)
 
 
 predicate_fail = []
@@ -594,8 +612,8 @@ check("Miroir persistance : l'animation est un booléen, activé par "
 # --- 10. Miroir : format de temps du dialogue ---------------------------------
 
 # formatTime (SettingsActivity) : mm:ss, le même que la barre d'état.
-def format_time(ms):
-    total_seconds = ms // 1000
+def format_time(duree):
+    total_seconds = duree // 1000
     return "%02d:%02d" % (total_seconds // 60, total_seconds % 60)
 
 
@@ -899,13 +917,13 @@ COL_NAMES = ("major", "minor", "expertMajor", "expertMinor",
              "normalMajor", "normalMinor", "noviceMajor", "noviceMinor")
 
 
-def screen_size(matrix, level, landscape):
-    if level in ("ENDLESS", "ABYSS", "VOID"):
-        return (ENDLESS_SIZE, ENDLESS_SIZE)
-    cols = dict(zip(COL_NAMES, SCREEN_MATRIX[matrix]))
-    major = cols[LEVEL_COLS[level][0]]
-    minor = cols[LEVEL_COLS[level][1]]
-    return (major, minor) if landscape else (minor, major)
+def screen_size(matrice, niveau, paysage):
+    if niveau in ("ENDLESS", "ABYSS", "VOID"):
+        return ENDLESS_SIZE, ENDLESS_SIZE
+    cols = dict(zip(COL_NAMES, SCREEN_MATRIX[matrice]))
+    major = cols[LEVEL_COLS[niveau][0]]
+    minor = cols[LEVEL_COLS[niveau][1]]
+    return (major, minor) if paysage else (minor, major)
 
 
 def screen_find(width_px, height_px):

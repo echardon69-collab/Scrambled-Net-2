@@ -17,6 +17,17 @@ package net.chardons.netscramble2
  * config.xml, cette liste, dossiers de traduction) : jamais l'un
  * sans les autres.
  *
+ * V21 (chantier « feuille de langue », 18 nov. 2026, demande
+ * d'eric : la page prévoit de NOMBREUSES langues, une radio par
+ * langue l'obligeait à trop scroller) : le choix ne vit plus dans
+ * la page mais dans une feuille Material 3 — la page ne garde
+ * qu'une entrée résumé. NOUVEAU champ drapeauPays : pour une
+ * langue SECONDAIRE d'un pays (corse, alsacien, futur breton,
+ * créoles…), le DRAPEAU NATIONAL du pays s'affiche entre
+ * parenthèses après l'endonyme (« Corsu (drapeau de la France) »)
+ * — les langues qui parlent pour elles-mêmes (français, anglais,
+ * chinois) n'en portent pas (null).
+ *
  * Les libellés sont des ENDONYMES — la langue se nomme elle-même :
  * « Français », « English », « Corsu », « Elsässisch ». Identiques
  * quelle que soit la langue d'affichage, ils ne vivent PAS dans les
@@ -30,8 +41,19 @@ package net.chardons.netscramble2
  * matche pas, il désignerait aussi l'alémanique suisse.
  */
 
-/** Une langue du jeu : tag BCP-47 complet et endonyme affiché. */
-data class AppLanguage(val tag: String, val endonym: String)
+/**
+ * Une langue du jeu : tag BCP-47 complet, endonyme affiché et,
+ * pour une langue SECONDAIRE d'un pays (v21), le tag du drapeau
+ * NATIONAL montré entre parenthèses après l'endonyme dans la
+ * feuille (drapeau de la France pour le corse et l'alsacien) ;
+ * null pour les langues qui parlent pour elles-mêmes (français,
+ * anglais, chinois).
+ */
+data class AppLanguage(
+    val tag: String,
+    val endonym: String,
+    val drapeauPays: String? = null
+)
 
 object AppLanguages {
 
@@ -39,8 +61,10 @@ object AppLanguages {
     val ALL: List<AppLanguage> = listOf(
         AppLanguage("fr", "Français"),
         AppLanguage("en", "English"),
-        AppLanguage("co", "Corsu"),
-        AppLanguage("gsw-FR", "Elsässisch"),
+        // V21 : langues secondaires de France — le drapeau
+        // national s'affiche entre parenthèses après l'endonyme.
+        AppLanguage("co", "Corsu", drapeauPays = "fr"),
+        AppLanguage("gsw-FR", "Elsässisch", drapeauPays = "fr"),
         // Chinois simplifié (18 nov. 2026) : première passe IA
         // expérimentale — relecteur natif attendu avant toute
         // officialisation, comme le corse et l'alsacien.

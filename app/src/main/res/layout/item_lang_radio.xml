@@ -1,11 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Une entrée du sélecteur de langue (page Réglages, v19 du
-     16 nov. 2026, chantier « sélecteur de langue dynamique ») :
-     gonflée AU RUNTIME pour chaque langue d'AppLanguages — l'id et
-     le libellé (endonyme) sont posés par SettingsActivity. Née déjà
-     bornée à 320 dp comme toutes les radios de la page
-     (VisualLintButtonSize). Pas d'android:id ni d'android:text :
-     ils viennent du code, une langue ajoutée n'édite rien ici. -->
+<!-- Un item de la feuille de langue (page Réglages, v19 du
+     16 nov. 2026 : radio née au runtime ; v21 du 18 nov. 2026,
+     chantier « feuille de langue » : gonflée AU RUNTIME dans la
+     feuille Material 3 sheet_langs.xml par
+     SettingsActivity.langSheetItem, pour « Suivre le système » puis
+     chaque langue d'AppLanguages — PLUS d'id posé au runtime, le
+     tag voyage par lambda ; le libellé (endonyme, suivi du drapeau
+     national entre parenthèses pour les langues secondaires d'un
+     pays) vient du code. Née déjà bornée à 320 dp comme toutes les
+     radios de la page (VisualLintButtonSize). Pas d'android:id ni
+     d'android:text : une langue ajoutée n'édite rien ici. -->
 <com.google.android.material.radiobutton.MaterialRadioButton
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"

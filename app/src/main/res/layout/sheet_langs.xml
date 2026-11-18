@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Feuille de sélection de la langue (v21 du 18 nov. 2026, chantier
+     « feuille de langue », demande d'eric : la page Réglages prévoit
+     de NOMBREUSES langues, elle ne peut plus grandir d'une radio par
+     langue). Gonflée dans un BottomSheetDialog par
+     SettingsActivity.showLangSheet(); les items naissent AU RUNTIME
+     dans lang_sheet_list depuis AppLanguages — « Suivre le système »
+     en TÊTE, puis les langues dans l'ordre d'affichage, gonflées
+     depuis item_lang_radio.xml. Le ScrollView PLAFONNE la feuille à
+     360 dp : au-delà, c'est la liste qui déroule EN INTERNE, jamais
+     la page. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:paddingTop="8dp"
+    android:paddingBottom="16dp">
+
+    <TextView
+        android:id="@+id/lang_sheet_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:text="@string/menu_lang"
+        android:textAppearance="?attr/textAppearanceTitleMedium" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:maxHeight="360dp">
+
+        <LinearLayout
+            android:id="@+id/lang_sheet_list"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+    </ScrollView>
+</LinearLayout>

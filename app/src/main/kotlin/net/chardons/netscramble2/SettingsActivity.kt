@@ -2,12 +2,17 @@ package net.chardons.netscramble2
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.View
+import android.text.SpannableStringBuilder
+import android.text.Spanned
+import android.text.style.ImageSpan
 import android.widget.CompoundButton
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.os.LocaleListCompat
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.radiobutton.MaterialRadioButton
 import net.chardons.netscramble2.audio.SoundMode
@@ -87,6 +92,25 @@ import net.chardons.netscramble2.ui.EdgeToEdge
  *  (réflexion, et le tag « gsw-FR » n'est pas un nom de ressource
  *  Android légal pour une recherche dynamique) — une langue ajoutée
  *  sans drapeau reste affichée, simplement nue.
+ *
+ * V21 (chantier « feuille de langue », 18 nov. 2026, demande
+ *  d'eric : l'app agrandit sa famille de langues, la page ne peut
+ *  plus scroller d'une radio par langue) : la section Langue ne
+ *  garde qu'UNE entrée résumé — libellé et drapeau de la langue en
+ *  vigueur, ou « Suivre le système » — qui ouvre une FEUILLE
+ *  Material 3 ([showLangSheet], BottomSheetDialog, layout
+ *  sheet_langs.xml) plafonnée à 360 dp : au-delà, c'est la feuille
+ *  qui déroule en interne, jamais la page. « Suivre le système »
+ *  reste en TÊTE de la feuille ; les langues suivent dans l'ordre
+ *  d'affichage d'[AppLanguages]. Le REGISTRE d'ids de la v19
+ *  disparaît : chaque item porte son tag par lambda, et la coche
+ *  initiale compare au tag complet renvoyé par appcompat (aucune
+ *  clé maison, aucun état parallèle). NOUVEAU, demande d'eric :
+ *  pour une langue SECONDAIRE d'un pays (corse, alsacien, futur
+ *  breton, créoles…), le DRAPEAU NATIONAL s'affiche entre
+ *  parenthèses après l'endonyme (« Corsu (drapeau de la France) »),
+ *  champ drapeauPays d'AppLanguage, inséré dans le libellé par
+ *  ImageSpan ([endonymAvecPays]).
  */
 class SettingsActivity : AppCompatActivity() {
 
@@ -102,11 +126,6 @@ class SettingsActivity : AppCompatActivity() {
 
     /** True pendant les coches programmatiques (pas d'écoute). */
     private var suppressSkillCheck = false
-
-    /** V6 : ids des radios de langues posés au runtime — tag
-     * complet -> id de la vue (les ids n'existent pas à la
-     * compilation, rien n'est figé dans le layout). */
-    private val langRadioIds = mutableMapOf<String, Int>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -143,10 +162,12 @@ class SettingsActivity : AppCompatActivity() {
         binding.animGroup.check(
             if (Settings.loadAnimEnabled(this)) R.id.anim_on else R.id.anim_off
         )
-        // V6 : les radios des langues naissent au runtime, AVANT la
-        // coche initiale (le sélecteur n'a plus de radios figées).
-        buildLangRadios()
-        binding.langGroup.check(langRadioFor(currentLanguageTag()))
+        // V21 : la section Langue ne garde qu'une entrée résumé,
+        // reliée à l'état RÉEL d'appcompat — le libellé et le
+        // drapeau de la langue en vigueur, ou « Suivre le
+        // système » si l'app n'force rien (aucune clé maison) ;
+        // l'entrée ouvre la feuille Material 3 au toucher.
+        bindLangEntry(currentLanguageTag())
 
         // V5 : sections « Indice » et « Démonstration » — mêmes coches
         // initiales AVANT l'écoute (patron V3), puis libellés du
@@ -212,9 +233,7 @@ class SettingsActivity : AppCompatActivity() {
         binding.animGroup.setOnCheckedChangeListener { _, checkedId ->
             Settings.saveAnimEnabled(this, checkedId == R.id.anim_on)
         }
-        binding.langGroup.setOnCheckedChangeListener { _, checkedId ->
-            applyLanguage(checkedId)
-        }
+        binding.langCurrent.setOnClickListener { showLangSheet() }
         // V5 : indice et démonstration — choix immédiats, persistés
         // par Settings (mêmes clés et fichier historiques).
         binding.hintStrategyGroup.setOnCheckedChangeListener { _, checkedId ->
@@ -384,52 +403,167 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     /**
-     * V6 : construit les radios du sélecteur, une par langue du jeu
-     * ([AppLanguages.ALL], ordre d'affichage), gonflées depuis
-     * item_lang_radio.xml directement dans le groupe de la section.
-     * Chaque radio reçoit un id posé au runtime ; le registre
-     * [langRadioIds] porte la correspondance tag complet -> id.
-     *
-     * CORRECTION (retour d'eric, 17 nov. 2026) : le gonflage se
-     * fait attachToRoot = FALSE puis addView — avec TRUE,
-     * LayoutInflater.inflate RENVOIE LE PARENT (le RadioGroup),
-     * pas l'enfant gonflé, et le cast en MaterialRadioButton
-     * plantait en ClassCastException dès la première langue, à
-     * l'ouverture de la page. Avec FALSE, inflate renvoie bien la
-     * racine du XML gonflé (la radio) avec ses LayoutParams
-     * dérivés du parent, qu'on ajoute alors à la main.
+     * V21 : relie l'entrée résumé de la section Langue (une seule
+     * ligne dans la page) à l'état RÉEL d'appcompat — seule source
+     * de vérité, aucune clé maison. Tag vide ou inconnu ->
+     * « Suivre le système » (texte seul, la pile de locales est
+     * vide ou parle une langue non listée) ; sinon l'endonyme de
+     * la langue, portant son drapeau à gauche et, pour une langue
+     * secondaire d'un pays, le drapeau NATIONAL entre parenthèses
+     * ([endonymAvecPays]).
      */
-    private fun buildLangRadios() {
-        AppLanguages.ALL.forEach { lang ->
-            val radio = layoutInflater.inflate(
-                R.layout.item_lang_radio, binding.langGroup, false
-            ) as MaterialRadioButton
-            binding.langGroup.addView(radio)
-            val id = View.generateViewId()
-            radio.id = id
-            radio.text = lang.endonym
-            langRadioIds[lang.tag] = id
-            // V7 : drapeau de la langue, à gauche du libellé.
+    private fun bindLangEntry(tag: String) {
+        val lang = AppLanguages.byTag(tag)
+        if (lang == null) {
+            binding.langCurrent.text = getString(R.string.lang_system)
+            binding.langCurrent.setCompoundDrawablesRelativeWithIntrinsicBounds(
+                0, 0, 0, 0
+            )
+        } else {
+            binding.langCurrent.text = endonymAvecPays(lang)
             // Surcharge (Int, Int, Int, Int) : ids de ressources,
             // 0 = pas de drawable (la surcharge Drawable prend des
             // objets, pas des ids — null y est réservé).
             val flag = langFlagFor(lang.tag)
             if (flag != 0) {
-                radio.setCompoundDrawablesRelativeWithIntrinsicBounds(
+                binding.langCurrent.setCompoundDrawablesRelativeWithIntrinsicBounds(
                     flag, 0, 0, 0
                 )
                 // 8 dp -> pixels : la ressource n'existe pas pour
                 // un drawable posé au runtime, conversion inline.
-                radio.compoundDrawablePadding =
+                binding.langCurrent.compoundDrawablePadding =
                     (8 * resources.displayMetrics.density).toInt()
             }
         }
     }
 
     /**
-     * V7 : drawable du drapeau porté par une langue du sélecteur.
-     * Correspondance EXPLICITE (voir l'en-tête V7) : le tag complet
-     * fait foi, inconnu -> 0, la radio s'affiche alors sans drapeau.
+     * V21 : la feuille Material 3 qui remplace la liste de radios
+     * (demande d'eric : la page prévoit de NOMBREUSES langues). Le
+     * ScrollView de sheet_langs.xml plafonne la feuille à 360 dp —
+     * au-delà, c'est la feuille qui déroule en interne, jamais la
+     * page. « Suivre le système » reste en TÊTE, puis les langues
+     * dans l'ordre d'affichage d'[AppLanguages.ALL]. Choisir
+     * applique la langue (appcompat stocke et recrée la pile pour
+     * l'appliquer partout) et referme la feuille.
+     */
+    private fun showLangSheet() {
+        val sheet = BottomSheetDialog(this)
+        // Racine NON NULLE (lint : elle résout les LayoutParams du
+        // LinearLayout racine de la feuille — une racine null les
+        // perdrait) mais attachToRoot FALSE : la feuille ne
+        // s'attache PAS à l'activité, elle attend le setContentView
+        // du BottomSheetDialog qui la coiffe de ses propres params.
+        val contenu = layoutInflater.inflate(
+            R.layout.sheet_langs, binding.root, false
+        )
+        val liste = contenu.findViewById<LinearLayout>(R.id.lang_sheet_list)
+        val courant = currentLanguageTag()
+        liste.addView(
+            langSheetItem(
+                liste, getString(R.string.lang_system), 0, courant.isEmpty()
+            ) {
+                applyLanguage("")
+                sheet.dismiss()
+            }
+        )
+        AppLanguages.ALL.forEach { lang ->
+            liste.addView(
+                langSheetItem(
+                    liste, endonymAvecPays(lang), langFlagFor(lang.tag),
+                    courant == lang.tag
+                ) {
+                    applyLanguage(lang.tag)
+                    sheet.dismiss()
+                }
+            )
+        }
+        sheet.setContentView(contenu)
+        sheet.show()
+    }
+
+    /**
+     * V21 : un item de la feuille — MaterialRadioButton gonflé
+     * depuis item_lang_radio.xml : libellé, drapeau à gauche,
+     * coche si la langue est celle en vigueur, et le choix
+     * appliqué au toucher. AttachToRoot FALSE puis addView, piège
+     * conservé de la correction du 17 nov. 2026 (il tient toujours
+     * dans la feuille) : avec TRUE, LayoutInflater.inflate RENVOIE
+     * LE PARENT (la liste), et le cast en MaterialRadioButton
+     * plantait en ClassCastException. Avec FALSE, inflate renvoie
+     * bien la racine gonflée avec ses LayoutParams DÉRIVÉS du
+     * parent passé en racine ([racine]) — le passer à null les
+     * ferait
+     * disparaître, et addView y poserait les défauts du
+     * LinearLayout (hauteur match_parent).
+     */
+    private fun langSheetItem(
+        racine: LinearLayout, libelle: CharSequence, drapeau: Int,
+        coche: Boolean, choix: () -> Unit
+    ): MaterialRadioButton {
+        val item = layoutInflater.inflate(
+            R.layout.item_lang_radio, racine, false
+        ) as MaterialRadioButton
+        item.text = libelle
+        item.isChecked = coche
+        if (drapeau != 0) {
+            // V7 : drapeau de la langue, à gauche du libellé.
+            item.setCompoundDrawablesRelativeWithIntrinsicBounds(
+                drapeau, 0, 0, 0
+            )
+            // 8 dp -> pixels : la ressource n'existe pas pour
+            // un drawable posé au runtime, conversion inline.
+            item.compoundDrawablePadding =
+                (8 * resources.displayMetrics.density).toInt()
+        }
+        item.setOnClickListener { choix() }
+        return item
+    }
+
+    /**
+     * V21 (demande d'eric) : le libellé d'une langue dans la
+     * feuille — l'endonyme puis, pour une langue SECONDAIRE d'un
+     * pays (corse, alsacien, futur breton, créoles…), le DRAPEAU
+     * NATIONAL entre parenthèses (« Corsu (drapeau de la
+     * France) ») : il situe d'un coup d'œil les langues qui
+     * partagent un pays. Le drapeau s'insère DANS le texte par
+     * ImageSpan : l'alignement de (DynamicDrawableSpan)
+     * ALIGN_CENTER n'existe qu'à partir de l'API 29, minSdk 24
+     * impose le constructeur simple (alignement bas). Le drapeau
+     * garde la HAUTEUR uniforme de 15 dp des drapeaux composés,
+     * largeur au ratio intrinsèque ; plus petit que la ligne de
+     * texte, il n'épaissit pas la rangée.
+     */
+    private fun endonymAvecPays(lang: AppLanguage): CharSequence {
+        val pays = lang.drapeauPays ?: return lang.endonym
+        val flag = langFlagFor(pays)
+        if (flag == 0) return lang.endonym
+        val drapeau = AppCompatResources.getDrawable(this, flag)
+            ?: return lang.endonym
+        val dens = resources.displayMetrics.density
+        val h = (15 * dens).toInt()
+        drapeau.setBounds(
+            0, 0, drapeau.intrinsicWidth * h / drapeau.intrinsicHeight, h
+        )
+        val sb = SpannableStringBuilder(lang.endonym)
+        sb.append(" (")
+        val debut = sb.length
+        sb.append(" ")
+        sb.setSpan(ImageSpan(drapeau), debut, sb.length,
+                   Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        sb.append(")")
+        return sb
+    }
+
+    /**
+     * V7 : drawable du drapeau porté par une langue du sélecteur
+     * (et, via [endonymAvecPays], par le suffixe de drapeau
+     * national des langues secondaires d'un pays — langFlagFor("fr")
+     * EST le drapeau de la France). Correspondance EXPLICITE (voir
+     * l'en-tête V7) : le tag complet fait foi, inconnu -> 0, l'item
+     * s'affiche alors sans drapeau. RÉUTILISÉE par la feuille V21 :
+     * les items nés au runtime la consultent comme les radios
+     * d'antan.
      */
     private fun langFlagFor(tag: String): Int = when (tag) {
         "fr" -> R.drawable.flag_fr
@@ -440,23 +574,18 @@ class SettingsActivity : AppCompatActivity() {
         else -> 0
     }
 
-    /** Radio de la langue en vigueur (suivi du système par défaut). */
-    private fun langRadioFor(tag: String): Int =
-        langRadioIds[tag] ?: R.id.lang_system
-
     /**
-     * Applique la langue choisie : le registre rend le tag porté par
-     * la radio cochée (liste vide = « Suivre le système »), puis
-     * appcompat stocke le choix et recrée la pile d'activités pour
-     * l'appliquer partout (toutes nos activités sont des
-     * AppCompatActivity, le ViewModel du jeu survit à la
-     * recréation). Liste VIDE = suivre la langue du système, aucun
-     * forçage.
+     * Applique la langue choisie DANS LA FEUILLE, par son tag
+     * COMPLET (gsw-FR jamais « gsw » seul) : liste vide = « Suivre
+     * le système », sans forçage ; appcompat stocke le choix
+     * (autoStoreLocales avant Android 13, réglage système « langue
+     * par application » ensuite) et recrée la pile d'activités pour
+     * l'appliquer partout — toutes nos activités sont des
+     * AppCompatActivity, le ViewModel du jeu survit à la recréation,
+     * et la feuille se referme sans attendre.
      */
-    private fun applyLanguage(checkedId: Int) {
-        val tag = langRadioIds.entries
-            .firstOrNull { it.value == checkedId }?.key
-        val locales = if (tag == null) {
+    private fun applyLanguage(tag: String) {
+        val locales = if (tag.isEmpty()) {
             LocaleListCompat.getEmptyLocaleList()
         } else {
             LocaleListCompat.forLanguageTags(tag)

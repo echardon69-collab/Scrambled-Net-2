@@ -68,6 +68,21 @@ convertisseur (OMBRE_ALPHA). Révisé le 18 nov. 2026 sur second
 retour d'eric : 1,5 dp et alpha 0x40 (~25 %), le 1 dp à ~15 %
 ne se détachait pas assez.
 
+Extension « feuille de langue » (v21 du 18 nov. 2026, demande
+d'eric : l'app agrandit sa famille de langues, une radio par
+langue obligeait à trop scroller la page) : la section Langue ne
+garde qu'UNE entrée résumé dans la page (lang_current, libellé et
+drapeau de la langue en vigueur), qui ouvre une FEUILLE Material 3
+(BottomSheetDialog + sheet_langs.xml, plafonnée à 360 dp — au-delà
+c'est la feuille qui déroule, jamais la page). Le REGISTRE d'ids
+de la v19 disparaît : chaque item porte son tag par lambda,
+« Suivre le système » reste en TÊTE. NOUVEAU champ drapeauPays dans
+AppLanguage : pour une langue SECONDAIRE d'un pays (corse,
+alsacien, futur breton, créoles…), le DRAPEAU NATIONAL du pays
+s'affiche entre parenthèses après l'endonyme (ImageSpan dans le
+libellé, hauteur uniforme 15 dp, pas d'ALIGN_CENTER : ce mode de
+DynamicDrawableSpan n'existe qu'à partir de l'API 29, minSdk 24).
+
 Usage : python3 tools/validate_selecteur.py
 """
 
@@ -110,22 +125,35 @@ FLAGS_TOOL = ROOT / "tools/flags"
 
 # --- 1. AppLanguages : les données, épinglées une à une ---------------------
 
-check("AppLanguages : data class AppLanguage(tag, endonym)",
+check("AppLanguages : data class AppLanguage(tag, endonym, "
+      "drapeauPays — 3e champ, défaut null)",
       re.search(r"data class AppLanguage\(\s*val tag: String,"
-                r"\s*val endonym: String\s*\)", al_src) is not None)
+                r"\s*val endonym: String,\s*"
+                r"val drapeauPays: String\? = null\s*\)",
+                al_src) is not None)
 check("AppLanguages : objet AppLanguages avec ALL en liste",
       re.search(r"object AppLanguages \{\s*"
                 r"/\*\* [^*]*\*/\s*"
                 r"val ALL: List<AppLanguage> = listOf\(", al_src,
                 re.S) is not None)
-pairs = re.findall(r'AppLanguage\("([^"]+)",\s*"([^"]+)"\),?', al_src)
-check("AppLanguages : les cinq langues, tags et endonymes "
-      "épinglés (fr, en, co, gsw-FR, zh-CN — continuité de la page v3 "
-      "puis langues ajoutées)",
-      pairs == [("fr", "Français"), ("en", "English"),
-                ("co", "Corsu"), ("gsw-FR", "Elsässisch"),
-                ("zh-CN", "简体中文")],
+# V21 : 3e argument NOMMÉ optionnel, drapeauPays = "fr" pour les
+# langues secondaires d'un pays.
+pairs = [(t, e, d or None) for t, e, d in re.findall(
+    r'AppLanguage\("([^"]+)",\s*"([^"]+)"'
+    r'(?:,\s*drapeauPays\s*=\s*"([^"]*)")?\),?', al_src)]
+check("AppLanguages : les cinq langues, tags, endonymes et "
+      "drapeaux pays épinglés (fr, en, co, gsw-FR, zh-CN — "
+      "continuité de la page v3 puis langues ajoutées)",
+      pairs == [("fr", "Français", None), ("en", "English", None),
+                ("co", "Corsu", "fr"), ("gsw-FR", "Elsässisch", "fr"),
+                ("zh-CN", "简体中文", None)],
       str(pairs))
+check("AppLanguages : drapeau NATIONAL réservé aux langues "
+      "SECONDAIRES d'un pays (v21, demande d'eric : corse et "
+      "alsacien portent « fr », les langues pleine page n'en "
+      "portent PAS)",
+      [d for _, _, d in pairs if d] == ["fr", "fr"]
+      and [t for t, _, d in pairs if d] == ["co", "gsw-FR"])
 check("AppLanguages : byTag en correspondance EXACTE (premier tag "
       "égal, pas de préfixe ni de langue seule)",
       re.search(r"fun byTag\(tag: String\): AppLanguage\? =\s*"
@@ -140,27 +168,47 @@ check("AppLanguages : PUR Kotlin, testable JVM (aucun import "
 
 locale_tags = re.findall(r'<locale android:name="([^"]+)" />',
                         locales_src)
-app_tags = [tag for tag, _ in pairs]
+app_tags = [tag for tag, _, _ in pairs]
 check("Cohérence : locales_config et AppLanguages portent les "
       "MÊMES langues (set, compte exact 5)",
       len(locale_tags) == 5
       and set(locale_tags) == set(app_tags),
       f"locales_config={locale_tags} AppLanguages={app_tags}")
 
-# --- 3. Le layout : une seule radio statique, l'item de gonflage ------------
+# --- 3. Le layout : une entrée résumé, la feuille, l'item de gonflage -------
 
+# V21 : la section ne garde PLUS AUCUN groupe de radios — une seule
+# entrée résumé (lang_current) ouvre la feuille Material 3 ; le
+# choix déroule DANS la feuille (maxHeight 360 dp), jamais la page.
 lang_block = re.search(
-    r'<RadioGroup[^>]*@\+id/lang_group(.*?)</RadioGroup>', layout_src,
-    re.S)
-lang_static = (re.findall(r'@\+id/(lang_\w+)', lang_block.group(1))
-               if lang_block else [])
-check("Layout : section langue — seule la radio système est "
-      "statique, les langues naissent au runtime",
-      lang_static == ["lang_system"], str(lang_static))
+    r'<TextView[^>]*@\+id/lang_current(.*?)/>', layout_src, re.S)
+check("Layout : section langue — UNE entrée résumé (v21) : "
+      "borne 320 dp, cible tactile 48 dp, ripple et focus au "
+      "toucher, PAS un groupe de radios",
+      lang_block is not None
+      and 'android:maxWidth="320dp"' in lang_block.group(1)
+      and 'android:minHeight="48dp"' in lang_block.group(1)
+      and "?attr/selectableItemBackground" in lang_block.group(1)
+      and 'android:clickable="true"' in lang_block.group(1)
+      and 'android:focusable="true"' in lang_block.group(1),
+      lang_block.group(0)[:160] if lang_block else "absent")
 check("Layout : plus AUCUNE radio de langue figée "
-      "(lang_fr/lang_en retirées)",
+      "(lang_fr/lang_en retirées, lang_group et la radio système "
+      "parties avec la feuille)",
       "@+id/lang_fr" not in layout_src
-      and "@+id/lang_en" not in layout_src)
+      and "@+id/lang_en" not in layout_src
+      and "@+id/lang_group" not in layout_src
+      and "@+id/lang_system" not in layout_src)
+sheet_path = RES / "layout/sheet_langs.xml"
+sheet_src = read(sheet_path) if sheet_path.exists() else ""
+check("Layout : la feuille sheet_langs.xml (v21) — titre menu_lang, "
+      "liste des items nés au runtime, ScrollView PLAFOND 360 dp "
+      "(au-delà la feuille déroule EN INTERNE, jamais la page)",
+      sheet_path.exists()
+      and re.search(r"@\+id/lang_sheet_title", sheet_src) is not None
+      and re.search(r"@\+id/lang_sheet_list", sheet_src) is not None
+      and 'android:maxHeight="360dp"' in sheet_src
+      and 'android:text="@string/menu_lang"' in sheet_src)
 check("Layout : l'item de gonflage existe, radio Material bornée "
       "à 320 dp (VisualLintButtonSize), SANS id ni texte figés",
       item_path.exists()
@@ -171,46 +219,73 @@ check("Layout : l'item de gonflage existe, radio Material bornée "
       and re.search(r'android:id="', item_src) is None
       and re.search(r'android:text="', item_src) is None)
 
-# --- 4. SettingsActivity : le mécanisme dynamique ---------------------------
+# --- 4. SettingsActivity : la feuille Material 3 (v21) ----------------------
 
-check("SettingsActivity : les radios sont construites depuis "
-      "AppLanguages.ALL, gonflées dans le groupe de la section",
-      re.search(r"AppLanguages\.ALL\.forEach \{ lang ->\s*"
-                r"val radio = layoutInflater\.inflate\(\s*"
-                r"R\.layout\.item_lang_radio, binding\.langGroup, "
-                r"false\s*\)", sa_src, re.S) is not None)
-check("SettingsActivity : id posé au runtime, registre tag -> id "
-      "et libellé = endonyme",
-      "View.generateViewId()" in sa_src
-      and "radio.id = id" in sa_src
-      and "radio.text = lang.endonym" in sa_src
-      and "langRadioIds[lang.tag] = id" in sa_src)
-check("SettingsActivity : gonflage attachToRoot = FALSE + addView "
-      "(avec TRUE, inflate RENVOIE LE PARENT : le cast en "
-      "MaterialRadioButton plantait en ClassCastException — "
-      "correction du 17 nov. 2026)",
-      "R.layout.item_lang_radio, binding.langGroup, false" in sa_src
-      and "binding.langGroup.addView(radio)" in sa_src
-      and "langGroup, true" not in sa_src)
-
-check("SettingsActivity : les radios sont construites AVANT la "
-      "coche initiale (patron v3)",
-      sa_src.find("buildLangRadios()")
-      < sa_src.find("binding.langGroup.check("
-                    "langRadioFor(currentLanguageTag()))")
-      and "buildLangRadios()" in sa_src)
-check("SettingsActivity : la coche consulte le REGISTRE, repli sur "
-      "« Suivre le système »",
-      re.search(r"private fun langRadioFor\(tag: String\): Int =\s*"
-                r"langRadioIds\[tag\] \?: R\.id\.lang_system", sa_src)
-      is not None)
-check("SettingsActivity : l'application inverse le registre et "
-      "force la locale par le tag (vide = suivre le système)",
-      re.search(r"val tag = langRadioIds\.entries\s*"
-                r"\.firstOrNull \{ it\.value == checkedId \}\?\.key",
-                sa_src) is not None
+check("SettingsActivity : le REGISTRE d'ids de la v19 a DISPARU "
+      "avec la feuille (plus d'état parallèle — chaque item porte "
+      "son tag par lambda, la coche compare au tag complet)",
+      "langRadioIds" not in sa_src
+      and "View.generateViewId()" not in sa_src
+      and "langRadioFor" not in sa_src
+      and "binding.langGroup" not in sa_src)
+check("SettingsActivity : l'entrée résumé ouvre la feuille, reliée "
+      "à l'état RÉEL d'appcompat (aucune clé maison)",
+      "binding.langCurrent.setOnClickListener { showLangSheet() }"
+      in sa_src
+      and "bindLangEntry(currentLanguageTag())" in sa_src
+      and "AppCompatDelegate.getApplicationLocales()" in sa_src
+      and "AppCompatDelegate.setApplicationLocales(locales)" in sa_src)
+check("SettingsActivity : la feuille est un BottomSheetDialog qui "
+      "gonfle sheet_langs (racine NON NULLE + attachToRoot FALSE, "
+      "lint : la racine résout les LayoutParams) et remplit sa "
+      "liste (lang_sheet_list)",
+      "BottomSheetDialog(this)" in sa_src
+      and re.search(r"inflate\(\s*R\.layout\.sheet_langs,\s*"
+                    r"binding\.root,\s*false\s*\)", sa_src) is not None
+      and re.search(r"inflate\(\s*R\.layout\.sheet_langs,\s*null",
+                    sa_src) is None
+      and "findViewById<LinearLayout>(R.id.lang_sheet_list)" in sa_src)
+check("SettingsActivity : « Suivre le système » reste la PREMIÈRE "
+      "entrée de la feuille, puis les langues dans l'ordre "
+      "d'affichage d'AppLanguages.ALL",
+      sa_src.find("liste, getString(R.string.lang_system)")
+      < sa_src.find("AppLanguages.ALL.forEach { lang ->")
+      and sa_src.count("langSheetItem(") == 3)
+check("SettingsActivity : les items naissent AU RUNTIME gonflés "
+      "depuis item_lang_radio.xml — attachToRoot FALSE, racine = la "
+      "liste (avec TRUE, inflate RENVOIE LE PARENT : le cast en "
+      "MaterialRadioButton plantait — piège du 17 nov. 2026 "
+      "conservé)",
+      "R.layout.item_lang_radio, racine, false" in sa_src
+      and re.search(r"racine: LinearLayout, libelle: CharSequence",
+                    sa_src) is not None
+      and "liste.addView(" in sa_src)
+check("SettingsActivity : chaque item porte libellé, drapeau "
+      "(drawable relatif + marge 8 dp), coche si la langue est "
+      "celle en vigueur, et le toucher applique puis referme",
+      "item.text = libelle" in sa_src
+      and "item.isChecked = coche" in sa_src
+      and "setCompoundDrawablesRelativeWithIntrinsicBounds(" in sa_src
+      and "compoundDrawablePadding" in sa_src
+      and "applyLanguage(\"\")" in sa_src
+      and "applyLanguage(lang.tag)" in sa_src
+      and "sheet.dismiss()" in sa_src)
+check("SettingsActivity : le suffixe de DRAPEAU NATIONAL entre "
+      "parenthèses (v21, demande d'eric) — ImageSpan dans le "
+      "libellé, hauteur uniforme 15 dp, PAS d'ALIGN_CENTER "
+      "(DynamicDrawableSpan ALIGN_CENTER = API 29, minSdk 24)",
+      "endonymAvecPays(lang)" in sa_src
+      and "ImageSpan(drapeau)" in sa_src
+      and "(15 * dens).toInt()" in sa_src
+      and "ImageSpan.ALIGN_CENTER" not in sa_src)
+check("SettingsActivity : applyLanguage prend le TAG complet "
+      "(vide = suivre le système), l'inversion de registre est "
+      "partie",
+      re.search(r"private fun applyLanguage\(tag: String\)", sa_src)
+      is not None
       and "LocaleListCompat.forLanguageTags(tag)" in sa_src
-      and "LocaleListCompat.getEmptyLocaleList()" in sa_src)
+      and "LocaleListCompat.getEmptyLocaleList()" in sa_src
+      and "langRadioIds.entries" not in sa_src)
 check("SettingsActivity : le tag COMPLET fait foi "
       "(toLanguageTag, gsw-FR matche, « gsw » seul jamais)",
       "locales[0]?.toLanguageTag()" in sa_src
@@ -220,10 +295,6 @@ check("SettingsActivity : plus AUCUNE référence aux radios "
       "R.id.lang_fr" not in sa_src and "R.id.lang_en" not in sa_src
       and 'forLanguageTags("fr")' not in sa_src
       and 'forLanguageTags("en")' not in sa_src)
-check("SettingsActivity : la coche initiale vient toujours de "
-      "l'état RÉEL d'appcompat (aucune clé maison)",
-      "AppCompatDelegate.getApplicationLocales()" in sa_src
-      and "AppCompatDelegate.setApplicationLocales(locales)" in sa_src)
 
 # --- 5. Traductions : endonymes partis, libellés traduits restants ----------
 
@@ -255,6 +326,11 @@ check("Tests JVM : les cinq langues et endonymes épinglés, "
       "listsAllFiveLanguagesInDisplayOrder" in test_src
       and "byTagIsExactMatchOnly" in test_src
       and "endonymsAreNotBlankAndDistinct" in test_src)
+check("Tests JVM : drapeau NATIONAL pour les seules langues "
+      "secondaires (v21 : co et gsw-FR portent « fr », fr, en et "
+      "zh-CN n'en portent PAS)",
+      "countryFlagsOnlyOnSecondaryLanguages" in test_src
+      and "?.drapeauPays" in test_src)
 
 # --- 7. Drapeaux du sélecteur (Lot 15) --------------------------------------
 
@@ -346,8 +422,9 @@ check("Drapeaux : l'Union Jack est RÉÉCRIT sans clipPath (non "
           "-->")[1]
       and read(RES / "drawable/flag_en.xml").count(
           'android:strokeWidth="40"') == 4)
-check("Drapeaux : les radios les portent (drawable relatif + "
-      "marge 8 dp), PAS de getIdentifier",
+check("Drapeaux : les items de la feuille et l'entrée résumé "
+      "les portent (drawable relatif + marge 8 dp), PAS de "
+      "getIdentifier",
       "setCompoundDrawablesRelativeWithIntrinsicBounds(" in sa_src
       and "compoundDrawablePadding" in sa_src
       and re.search(r"\.getIdentifier\(", sa_src) is None)
@@ -382,7 +459,8 @@ if failures:
         print(f"  - {echec}")
     sys.exit(1)
 print(f"TOUT PASSE : {checks}/{checks} vérifications "
-      "(sélecteur de langue dynamique : radios nées au runtime "
-      "depuis AppLanguages, en phase avec locales_config et les "
-      "traductions, drapeaux générés des SVG et posés sur les "
-      "radios).")
+      "(feuille de langue v21 : items nés au runtime depuis "
+      "AppLanguages dans la feuille Material 3, en phase avec "
+      "locales_config et les traductions, drapeaux générés des "
+      "SVG, suffixe de drapeau national pour les langues "
+      "secondaires d'un pays).")

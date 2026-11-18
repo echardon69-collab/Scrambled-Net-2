@@ -72,8 +72,8 @@ def read(path):
     return Path(path).read_text(encoding="utf-8")
 
 
-def count(st, needle):
-    return st.count(needle)
+def count(txt, needle):
+    return txt.count(needle)
 
 
 b = read(KOTLIN / "game/Board.kt")
@@ -427,9 +427,11 @@ check("SettingsActivity : la radio 0 porte hint_limit_zero, pas les autres",
       layout_settings.count('@string/hint_limit_zero') == 1)
 # v19 (sélecteur de langue dynamique) : les radios Français et
 # English quittent le XML pour naître au runtime depuis
-# item_lang_radio.xml (borné pareil) — 24 radios, 40 bornes.
-check("Layout réglages : 24 radios + 8 cases, maxWidth 320dp (v11 : plafond à 3 radios ; v19 : radios de langues au runtime)",
-      layout_settings.count("<com.google.android.material.radiobutton.MaterialRadioButton") == 24
+# item_lang_radio.xml (borné pareil). v21 (feuille de langue) :
+# la radio système part à son tour, remplacée par l'entrée résumé
+# lang_current (née bornée pareil) — 23 radios, 40 bornes.
+check("Layout réglages : 23 radios + 8 cases, maxWidth 320dp (v11 : plafond à 3 radios ; v19 : radios de langues au runtime ; v21 : l'entrée résumé remplace la radio système)",
+      layout_settings.count("<com.google.android.material.radiobutton.MaterialRadioButton") == 23
       and layout_settings.count("<com.google.android.material.checkbox.MaterialCheckBox") == 8
       and layout_settings.count('android:maxWidth="320dp"') == 40
       and "demo_zoom" not in layout_settings
@@ -440,8 +442,8 @@ check("Layout réglages : plafond d'indices à 3 radios Désactivé/10/20 (v11)"
       and layout_settings.count('@+id/hint_limit_10"') == 1
       and layout_settings.count('@+id/hint_limit_20"') == 1
       and layout_settings.count("@+id/hint_limit_") == 4)
-check("Layout réglages : 8 RadioGroups au total (v10 : le groupe de zoom est retiré)",
-      layout_settings.count("<RadioGroup") == 8)
+check("Layout réglages : 7 RadioGroups au total (v10 : le groupe de zoom est retiré ; v21 : le groupe de langue part avec la feuille)",
+      layout_settings.count("<RadioGroup") == 7)
 for gid, n in [("hint_strategy_group", 2), ("hint_limit_group", 3), ("demo_diff_group", 2),
                ("demo_speed_group", 3)]:
     m = re.search(rf'@\+id/{gid}"[\s\S]*?</RadioGroup>', layout_settings)
@@ -695,8 +697,8 @@ class FakeBoard:
     """Miroir minimal de Board : rotations, drapeaux, masques Dir."""
     BITS = [1, 2, 4, 8]  # UP, RIGHT, DOWN, LEFT — quart de tour horaire.
 
-    def __init__(self, n, rotations, locked, touched, sealed, empty, bfs, conns):
-        self.n = n
+    def __init__(self, taille, rotations, locked, touched, sealed, empty, bfs, conns):
+        self.n = taille
         self.rotations = rotations
         self.locked = locked
         self.touched = touched
@@ -710,9 +712,9 @@ class FakeBoard:
 
     def current_dirs(self, i):
         out = 0
-        for k, bit in enumerate(self.BITS):
+        for j, bit in enumerate(self.BITS):
             if self.conns[i] & bit:
-                out |= self.BITS[(k + self.rotations[i]) % 4]
+                out |= self.BITS[(j + self.rotations[i]) % 4]
         return out
 
     def is_misplaced(self, i):
@@ -741,10 +743,14 @@ class FakeBoard:
         return fallback
 
 def fb(**kw):
-    n = kw.get("n", 6)
-    d = dict(n=n, rotations=[0] * n, locked=[False] * n, touched=[False] * n,
-             sealed=[False] * n, empty=[False] * n, bfs=list(range(n)),
-             conns=[1] * n)
+    # kw garde sa clé historique « n » (aucun appelant ne la cite,
+    # pop la retire quand même avant l'update) ; d parle le nom du
+    # paramètre de FakeBoard (taille).
+    taille = kw.pop("n", 6)
+    d = dict(taille=taille, rotations=[0] * taille,
+             locked=[False] * taille, touched=[False] * taille,
+             sealed=[False] * taille, empty=[False] * taille,
+             bfs=list(range(taille)), conns=[1] * taille)
     d.update(kw)
     return FakeBoard(**d)
 
