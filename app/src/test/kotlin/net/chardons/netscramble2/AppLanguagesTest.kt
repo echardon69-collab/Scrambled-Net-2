@@ -16,24 +16,24 @@ import org.junit.Test
 class AppLanguagesTest {
 
     @Test
-    fun listsAllElevenLanguagesInDisplayOrder() {
+    fun listsAllTwelveLanguagesInDisplayOrder() {
         // Ordre d'affichage du sélecteur : continuité de la page v3
         // (Français avant English), puis les langues ajoutées dans
         // l'ordre chronologique — le chinois simplifié, l'espagnol,
-        // le portugais, l'italien, l'hébreu, le russe puis
-        // l'allemand du 18-19 nov. 2026, premières passes IA
+        // le portugais, l'italien, l'hébreu, le russe, l'allemand
+        // puis le tamoul du 18-19 nov. 2026, premières passes IA
         // expérimentales en attente de relecture native. L'hébreu
         // est la première langue RTL du jeu : supportsRtl=true, la
         // mise en page se reflète seule.
         assertEquals(
             listOf("fr", "en", "co", "gsw-FR",
-                   "zh-CN", "es", "pt", "it", "he", "ru", "de"),
+                   "zh-CN", "es", "pt", "it", "he", "ru", "de", "ta"),
             AppLanguages.ALL.map { it.tag }
         )
         assertEquals(
             listOf("Français", "English", "Corsu", "Elsässisch",
                    "简体中文", "Español", "Português", "Italiano",
-                   "עברית", "Русский", "Deutsch"),
+                   "עברית", "Русский", "Deutsch", "தமிழ்"),
             AppLanguages.ALL.map { it.endonym }
         )
     }
@@ -77,6 +77,7 @@ class AppLanguagesTest {
         assertNull(AppLanguages.byTag("he")?.drapeauPays)
         assertNull(AppLanguages.byTag("ru")?.drapeauPays)
         assertNull(AppLanguages.byTag("de")?.drapeauPays)
+        assertNull(AppLanguages.byTag("ta")?.drapeauPays)
     }
 
     @Test

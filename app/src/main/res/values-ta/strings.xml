@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     தமிழ் மொழிபெயர்ப்பு (செயற்கை நுண்ணறிவின் முதல் வருகை,
+     2026 நவம்பர் 18-19, சோதனை முயற்சி — தாய்மொழி பேசுபவரின்
+     மீள்பார்வை வரும் வரை அதிகாரப்பூர்வமாகாது; கோர்சிகன்,
+     அல்சாசியன், சீனம், எசுப்பானியம், போர்த்துகீசியம், இத்தாலியம்,
+     எபிரேயம், உருசியம், செர்மன் போலவே ஒரே செயல்முறை: இயந்திரம்
+     மொழிபெயர்க்கிறது, திருத்திபவர் வாசித்து மேம்படுத்துகிறார்).
+     values/strings.xml-இன் அதே விசைகள் (இணைப்பை
+     tools/validate_langues.py சரிபார்க்கும்). «நீ» வடிவம் (நெருங்கிய
+     ஒற்றைப் பன்மை), விளையாட்டுகளின் வழக்கம்.
+
+     சொற்களஞ்சியம் (EN → TA):
+       tile → ஓடு ; board → பலகை ; server → சேவையகம் ; terminal →
+       முனையம் ; network → வலையமைப்பு ; wiring → கம்பியிடல் ;
+       hidden wiring → மறைந்த கம்பியிடல் ; lock/unlock →
+       பூட்டு/திற ; hint → குறிப்பு ; hint allowance → குறிப்பு
+       வரம்பு ; moves → நகர்வுகள் ; fog → மூடுபனி ; torus
+       (edges wrap around) → டோரசு: விளிம்புகள் இணைகின்றன ;
+       panning → நகர்த்தல் ; zoom → அளவுமாற்றம் ; camera →
+       கேமரா ; personal best → தனிப்பட்ட சாதனை ; settings →
+       அமைப்புகள் ;
+       நிலைகள்: Novice → ஆரம்பநிலை, Normal → சாதாரணம்,
+       Expert → நிபுணர், Master → மாஸ்டர், Insane → பைத்தியம்,
+       Endless → முடிவிலி, Abyss → பாதாளம், Void → வெறுமை.
+       தமிழுக்கு எழுத்துக் கூட்டளவு (பெரிய/சிறிய எழுத்து) இல்லை:
+       ஆங்கிலப் பெருங்கள் எழுத்தின் அழுத்தம் (TORUS, FOG,
+       INVISIBLE) மொழிபெயர்க்க இயலாது — இங்கே ஆவணப்படுத்தப்
+       படுகிறது, எபிரேயத்தைப் போலவே. சரியான பெயர்களும் «பிளிப்»
+       சொற்களும் மொழிபெயர்க்கப்படாமல் உள்ளன. இடம்பெற்றிருப்போர்
+     %1$d / %1$s / %2$d மாறாமல் இருக்கின்றன; «\n» வரிகள்
+     அப்படியே அசலில் உள்ளது போல.
+-->
+<resources>
+    <string name="app_name">Scrambled Net 2</string>
+
+    <string name="menu_new">புதிய ஆட்டம்</string>
+    <string name="menu_solve">தீர்க்க</string>
+    <string name="menu_settings">அமைப்புகள்</string>
+    <string name="menu_stop_solve">தீர்த்தலை நிறுத்து</string>
+    <string name="solver_used">தானியங்கி தீர்வி பயன்படுத்தப்பட்டது — இந்த ஆட்டம் மதிப்பெண்களில் கணக்கில் எடுக்கப்படாது.</string>
+    <string name="menu_skill">திறன் நிலை</string>
+    <string name="menu_sounds">ஒலிகள்</string>
+    <string name="sounds_off">ஒலியடக்கம்</string>
+    <string name="sounds_quiet">மெல்லிய ஒலி</string>
+    <string name="sounds_full">முழு ஒலி</string>
+    <string name="menu_anim">அசைவூட்டம்</string>
+    <string name="anim_off">அசைவூட்டம் இல்லை</string>
+    <string name="anim_on">அசைவூட்டம்</string>
+
+    <string name="menu_lang">மொழி</string>
+    <string name="lang_system">கணினியைப் பின்பற்று</string>
+
+    <string name="skill_novice_desc">பலகை %1$d × %2$d — இரு கிளைகள், திறந்த விளிம்புகள்</string>
+    <string name="skill_normal_desc">பலகை %1$d × %2$d — இரு கிளைகள், திறந்த விளிம்புகள்</string>
+    <string name="skill_expert_desc">பலகை %1$d × %2$d — இரு கிளைகள், திறந்த விளிம்புகள்</string>
+    <string name="skill_master_desc">பலகை %1$d × %2$d — டோரசு: விளிம்புகள் இணைகின்றன, மூன்று கிளைகள்</string>
+    <string name="skill_insane_desc">பலகை %1$d × %2$d — டோரசு, மூன்று கிளைகள், சந்திகளில் மறைந்த கம்பியிடல்</string>
+    <string name="skill_endless_desc">பலகை %1$d × %2$d — டோரசு, நகர்த்தும்போது எந்த விளிம்பும் தெரியாது</string>
+    <string name="skill_abyss_desc">பலகை %1$d × %2$d — டோரசு, சந்திகளில் மறைந்த கம்பியிடல்</string>
+    <string name="skill_void_desc">பலகை %1$d × %2$d — டோரசு, மறைந்த கம்பியிடல், வலையமைப்பின் மேல் மூடுபனி</string>
+
+    <string name="help_master">மாஸ்டர் நிலையில், பலகையின் விளிம்புகள் இணைகின்றன: வலது விளிம்பின் கட்டங்கள் இடது விளிம்பின் கட்டங்களுடன் இணைக்கப்படுகின்றன, மறுபுறமும் அப்படியே. மேலும் கீழும் அதேபோல.</string>
+    <string name="help_insane">பைத்தியம் நிலையில், பலகையின் விளிம்புகள் இணைகின்றன: வலது விளிம்பின் கட்டங்கள் இடது விளிம்பின் கட்டங்களுடன் இணைக்கப்படுகின்றன, மறுபுறமும் அப்படியே. மேலும் கீழும் அதேபோல. ஆனால் கூடுதலாக, 3 அல்லது 4 இணைப்புகள் உள்ள கட்டங்களில் கம்பியிடல் காணப்படாது. வாழ்த்துகள்!</string>
+    <string name="help_abyss">பாதாளம் நிலையில் பலகை முடிவிலி: அது 40 சதுர கட்டங்களை உள்ளடக்கியது, அதன் விளிம்புகள் இணைகின்றன, எனவே நகர்த்தும்போது பலகையின் எந்த முனையும் வெளிப்படாது. கூடுதலாக, 3 அல்லது 4 இணைப்புகள் உள்ள கட்டங்களில் கம்பியிடல் காணப்படாது. வாழ்த்துகள்!</string>
+    <string name="help_void">வெறுமை நிலையில் பலகை முடிவிலி: அது 40 சதுர கட்டங்களை உள்ளடக்கியது, அதன் விளிம்புகள் இணைகின்றன. 3 அல்லது 4 இணைப்புகள் உள்ள கட்டங்களில் கம்பியிடல் காணப்படாது. அத்துடன் கூடுதலாக, சேவையகத்துடன் இணைந்த வலையமைப்பிலிருந்து தொலைவிலுள்ள கட்டங்களை ஒரு மூடுபனி மறைக்கிறது: இணைந்த கட்டங்களின் சுற்றுப்புறம் மட்டுமே தெரியும். வாழ்த்துகள்!</string>
+    <string name="menu_scores">சிறந்த மதிப்பெண்கள்</string>
+    <string name="menu_help">உதவி</string>
+    <string name="menu_about">பற்றி</string>
+
+    <string name="skill_novice">ஆரம்பநிலை</string>
+    <string name="skill_normal">சாதாரணம்</string>
+    <string name="skill_expert">நிபுணர்</string>
+    <string name="skill_master">மாஸ்டர்</string>
+    <string name="skill_insane">பைத்தியம்</string>
+    <string name="skill_endless">முடிவிலி</string>
+    <string name="skill_abyss">பாதாளம்</string>
+    <string name="skill_void">வெறுமை</string>
+
+    <string name="status_moves">நகர்வுகள்: %1$d</string>
+    <string name="status_time">நேரம்: %1$s</string>
+
+    <string name="win_title">நீ வென்றாய்!</string>
+    <string name="win_pbest_title">புதிய தனிப்பட்ட சாதனை!</string>
+    <string name="win_text">வாழ்த்துகள்! இந்தப் புதிரை %1$s நேரத்தில், %2$d நகர்வுகளில் தீர்த்தாய்.</string>
+    <string name="best_moves_text">இது இந்த நிலையில் உன் இதுவரையிலான சிறந்த நகர்வு எண்ணிக்கை!</string>
+    <string name="best_time_text">இது இந்த நிலையில் உன் இதுவரையிலான விரைவான நேரம்!</string>
+    <string name="best_both_text">இது இந்த நிலையில் உன் இதுவரையிலான சிறந்த நகர்வு எண்ணிக்கையும் விரைவான நேரமும்!</string>
+    <string name="win_new">புதிய ஆட்டம்</string>
+    <string name="win_continue">தொடர்க</string>
+
+    <string name="title_version">பதிப்பு %1$s</string>
+    <string name="title_license">Scrambled Net (© 2007–2010 Ian Cameron Smith,\n© 2014 Michael Mueller), KNetWalk என்னும் KDE ஆட்டின் தழுவலை அடிப்படையாகக் கொண்டது.\nஇந்தப் பதிப்பு: © 2026 Eric Chardon — GPL-2.0.</string>
+    <string name="title_loading">சேமிக்கப்பட்ட ஆட்டம் ஏற்றப்படுகிறது…</string>
+    <string name="title_checking">புதுப்பிப்புகள் தேடப்படுகின்றன…</string>
+    <string name="title_update_available">பதிப்பு %1$s கிடைக்கிறது.</string>
+    <string name="title_update_button">புதுப்பி</string>
+    <string name="title_play_button">விளையாடு</string>
+    <string name="title_download_status">பதிப்பு %1$s பதிவிறக்கப்படுகிறது…</string>
+    <string name="title_install_status">நிறுவப்படுகிறது…</string>
+    <string name="title_install_permission">அறியப்படாத செயலிகளை நிறுவுவதற்கு இந்தச் செயலியை அண்ட்ராய்டு அமைப்புகளில் அனுமதி, பிறகு «புதுப்பி» என்பதை மீண்டும் தட்டு.</string>
+    <string name="title_install_failed">புதுப்பிப்பு தோல்வியுற்றது (%1$s). தொடர்ந்து விளையாடலாம்.</string>
+
+    <string name="version_obsolete">காலாவதியான பதிப்பு!</string>
+    <string name="version_obsolete_detail">இந்த மேம்பாட்டுப் பதிப்பு காலாவதியானது. அதிகாரப்பூர்வ வெளியீட்டை நிறுவு.</string>
+    <string name="version_obsolete_quitter">வெளியேறு</string>
+
+    <string name="confirm_new_title">புதிய ஆட்டமா?</string>
+    <string name="confirm_change_title">நிலையை மாற்றவா?</string>
+    <string name="confirm_change_ok">நிலையை மாற்று</string>
+    <string name="confirm_progress_message">ஒரு ஆட்டம் நடந்து வருகிறது (%1$d நகர்வுகள், %2$s). அது இழக்கப்படும்.</string>
+
+    <string name="scores_title">தனிப்பட்ட சாதனைகள்</string>
+    <string name="scores_movestitle">குறைந்த நகர்வுகள்</string>
+    <string name="scores_timestitle">விரைவான நேரம்</string>
+    <string name="scores_skill">நிலை</string>
+    <string name="scores_moves">நகர்வுகள்</string>
+    <string name="scores_time">நேரம்</string>
+    <string name="scores_when">அப்போது</string>
+    <string name="menu_scores_reset">சாதனைகள் அனைத்தையும் மீட்டமை</string>
+    <string name="scores_reset_confirm">உன் தனிப்பட்ட சாதனைகள் அனைத்தையும் அழிக்கவா?</string>
+
+    <string name="menu_hint">குறிப்பு</string>
+    <string name="menu_hint_count">குறிப்பு (%1$d)</string>
+    <string name="menu_tools">கருவிகள்</string>
+    <string name="menu_demo">செயல்விளக்கம்</string>
+    <string name="hint_strategy_signal">பிழையைச் சுட்டிக்காட்டு</string>
+    <string name="hint_strategy_fix">பிழையைச் சரிசெய்</string>
+    <string name="hint_limit_title">குறிப்பு வரம்பு</string>
+    <string name="hint_limit_zero">முடக்கம்</string>
+    <string name="hint_limit_value">%1$d%%</string>
+    <string name="demo_diff_random">எழுந்தமானம்</string>
+    <string name="demo_diff_progressive">படிப்படியாக</string>
+    <string name="demo_skill_title">நிலைகள்</string>
+    <string name="demo_speed_title">வேகம்</string>
+    <string name="demo_speed_slow">மெதுவாக</string>
+    <string name="demo_speed_normal">சாதாரணம்</string>
+    <string name="demo_speed_fast">வேகமாக</string>
+    <string name="hints_section">குறிப்புகள்</string>
+    <string name="hints_total">குறிப்பால் தொடப்பட்ட ஓடுகள்: %1$d</string>
+    <string name="hints_none">குறிப்பு இல்லை</string>
+    <string name="hints_n">%1$d குறிப்புகள்</string>
+    <string name="hints_column_tiles">குறிப்புகள்</string>
+    <string name="demo_touch_return">ஆட்டத்திற்குத் திரும்ப திரையைத் தொடு</string>
+    <string name="demo_level_banner">செயல்விளக்க நிலை %1$s</string>
+
+    <string name="menu_lessons">கற்றல்</string>
+    <string name="lesson_1_title">சுழற்றி இணை</string>
+    <string name="lesson_2_title">முறையும் பூட்டும்</string>
+    <string name="lesson_3_title">துணைகள்</string>
+    <string name="lesson_4_title">டோரசு பலகை</string>
+    <string name="lesson_5_title">காணப்படாத ஓடுகள்</string>
+    <string name="lesson_6_title">முடிவிலி பலகை</string>
+    <string name="lesson_7_title">மூடுபனி</string>
+    <string name="lesson_l1_b1">ஒரு ஓட்டைத் தட்டி கால்வாசிச் சுழற்சி சுழற்று. வலையமைப்பை சேவையகத்திலிருந்து முனையம் வரை இணை.</string>
+    <string name="lesson_l1_b2">தொடர்க: சேவையகத்துடன் இணைந்த ஒவ்வொரு ஓடும் ஒளிர்கிறது.</string>
+    <string name="lesson_l1_b3">நன்று, வலையமைப்பு தீர்க்கப்பட்டது! ஒவ்வொரு ஆட்டமும் இப்படியே வெல்லப்படுகிறது: சுழற்று, இணை, ஒளிர்க.</string>
+    <string name="lesson_l2_b1">முறை: சேவையகத்தில் தொடங்கி, இணைந்த கம்பிகளை அண்டையிலிருந்து அண்டைக்குப் பின்தொடர். தொடங்க ஒரு ஓட்டைச் சுழற்று.</string>
+    <string name="lesson_l2_b2">சரியாகச் சுழற்றப்பட்ட ஓட்டை நீண்ட நேரம் அழுத்து: பூட்டு அதைத் தற்செயலான தப்புத் திருப்பத்திலிருந்து காக்கிறது.</string>
+    <string name="lesson_l2_b3">வெற்றி வரை அண்டையிலிருந்து அண்டைக்குத் தொடர்ந்து செல், உறுதியாக அறிவதைப் பூட்டு.</string>
+    <string name="lesson_l2_b4">பெரிய பலகைகளில் பூட்டு உன் துணை: முறையை மனதில் கொள்.</string>
+    <string name="lesson_l3_b1">சுட்டிக்காட்டும் குறிப்பு, சரிசெய்ய வேண்டிய ஓட்டைச் சுட்டுகிறது (பச்சை விளிம்பு). «குறிப்பு» என்பதைத் தட்டு.</string>
+    <string name="lesson_l3_b2">சரிசெய்யும் குறிப்பு ஓட்டை நிமிர்த்தி முத்திரையிடுகிறது (இறுதி பூட்டு). «குறிப்பு» என்பதைத் தட்டு.</string>
+    <string name="lesson_l3_b3">«தீர்க்க» உனக்காக ஆடுகிறது, ஒரு நகர்வு பின் ஒன்று; அப்படி அதனால் தீர்க்கப்பட்ட ஆட்டம் சாதனைகளில் ஒருபோதும் கணக்கில் வராது. «தீர்க்க» என்பதைத் தட்டு.</string>
+    <string name="lesson_l3_b4">துணைகள் சிக்கலை விடுவிக்கவே உள்ளன, உனக்காக ஆடவே அல்ல: உன் முடிவே கடைசி.</string>
+    <string name="lesson_l4_b1">மாஸ்டர் பலகை: விளிம்புகள் இணைகின்றன. பலகை ஒரு டோரசு: வலம் இடத்துடன் இணைகிறது, மேல் கீழுடன்.</string>
+    <string name="lesson_l4_b2">தீர்த்துக்காட்டு: குறைந்தது ஒரு கம்பி, அப்பால் இணைக்க, பலகையின் விளிம்பைக் கடந்து செல்கிறது.</string>
+    <string name="lesson_l4_b3">மாஸ்டருக்குப் பிறகு டோரசு எங்கும் உண்டு: விளிம்புகளற்ற பலகையை எண்ணு.</string>
+    <string name="lesson_l5_b1">பைத்தியம் நிலை: சில ஓடுகள் காணப்படாது. அவற்றின் திசையை அண்டைகளிடமிருந்து பின்னுரைத்தெடு, பிறகு தெரியும் ஓட்டைச் சுழற்று.</string>
+    <string name="lesson_l5_b2">தொடர்க: ஒவ்வொரு அண்டையும் மறைந்த ஓடுகளை நெருக்குகிறது; வெற்றிதான் மட்டுமே எல்லாவற்றையும் வெளிப்படுத்துகிறது.</string>
+    <string name="lesson_l5_b3">சரிசெய்யும் குறிப்பு மறைக்கப்பட்ட ஓட்டை வெளிப்படுத்துகிறது: ஒரு நகர்வு காட்டப்படுகிறது, ஆனால் ஆடப்படாது.</string>
+    <string name="lesson_l6_b1">முடிவிலி பலகை: 40 × 40 டோரசு, சேவையகத்தில் சட்டகத்தில். சேவையகத்தை மீண்டும் கண்டறியும் வரை, சாளரத்தைப் படுக்கையாக ஒரு முழுச் சுற்று நகர்த்து.</string>
+    <string name="lesson_l6_b2">பலகை என்றென்றும் மீண்டும் வந்துகொண்டிருக்கிறது: சாம்பல் வளையம் இல்லை. இப்போது செங்குத்தாக, ஒரு முழுச் சுற்றுப் பயணி.</string>
+    <string name="lesson_l6_b3">அளவை மாற்றுதலுக்கு இரு விரல்களை நெருக்கு அல்லது விலக்கு: சாளரமே உன் கேமரா, உலகம் மாறாது.</string>
+    <string name="lesson_l6_b4">முடிவிலி முறை கேமராவால்தான் ஆடப்படுகிறது: பலகைக்கு விளிம்புகள் இல்லை, சாளரங்கள் மட்டுமே உண்டு.</string>
+    <string name="lesson_l7_b1">வெறுமை நிலை: மூடுபனி பலகையை மறைக்கிறது. ஒவ்வொரு இணைப்பும் பனியைப் பின்னுக்கித் தள்ளுகிறது. தெரியும் ஓட்டைச் சுழற்று.</string>
+    <string name="lesson_l7_b2">தொடர்க: வெல்லப்பட்ட ஒவ்வொரு இணைப்பும் தன் சுற்றுப்புறத்தை ஒளிரச் செய்கிறது.</string>
+    <string name="lesson_l7_b3">மூடுபனி ஓடு ஓடாக வெல்லப்படுகிறது: ஒளி வலையமைப்பைப் பின்தொடர்கிறது.</string>
+    <string name="lesson_completed">முடிந்தது</string>
+    <string name="lesson_continue">தொடர்க</string>
+</resources>

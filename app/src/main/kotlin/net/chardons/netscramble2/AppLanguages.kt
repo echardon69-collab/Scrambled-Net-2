@@ -95,6 +95,10 @@ object AppLanguages {
         // expérimentale — relecteur natif attendu avant toute
         // officialisation, comme le russe et l'hébreu.
         AppLanguage("de", "Deutsch"),
+        // தமிழ் (18-19 nov. 2026) : première passe IA
+        // expérimentale — relecteur natif attendu avant toute
+        // officialisation, comme les langues précédentes.
+        AppLanguage("ta", "தமிழ்"),
     )
 
     /**

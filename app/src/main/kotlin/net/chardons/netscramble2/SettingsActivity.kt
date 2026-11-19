@@ -577,6 +577,7 @@ class SettingsActivity : AppCompatActivity() {
         "he" -> R.drawable.flag_he
         "ru" -> R.drawable.flag_ru
         "de" -> R.drawable.flag_de
+        "ta" -> R.drawable.flag_ta
         else -> 0
     }
 

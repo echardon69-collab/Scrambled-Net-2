@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Drapeau de l'Inde — chantier traduction (tamoul expérimental,
+     18-19 nov. 2026). Le tamoul est une langue officielle de l'Inde
+     (et du Sri Lanka et de Singapour) : comme le mandarin rattaché
+     à la Chine, c'est le drapeau de l'Inde qui le représente, eric
+     tranchera si un autre rattachement est souhaité. Ratio officiel
+     2:3, donc viewBox 600 X 400 et drawable 22,5 dp X 15 dp :
+     trois bandes horizontales égales de 133,33 unités — safran en
+     haut, blanc au milieu, vert en bas. Teintes officielles :
+     #FF9933, #FFFFFF, #138808. Le chakra d'Ashoka a, selon la
+     spécification officielle, un diamètre égal aux TROIS QUARTS de
+     la hauteur de la bande blanche (donc 100 unités, centre
+     (300, 200)) et vingt-quatre rayons : à 15 dp de haut, le chakra
+     fait 3,75 dp et ses rayons seraient illisibles — il est
+     schématisé en un ANNEAU bleu marine #000080 (fill none +
+     stroke), silhouette du chakra, comme la sphère armillaire
+     portugaise et le maguen David israélien avant lui. Pas de
+     dégradé ni de clip : le convertisseur accepte des remplissages
+     unis ou des contours seulement (l'ombrage est synthétique). -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400">
+  <rect x="0" y="0" width="600" height="133.33" fill="#FF9933"/>
+  <rect x="0" y="133.33" width="600" height="133.34" fill="#FFFFFF"/>
+  <rect x="0" y="266.67" width="600" height="133.33" fill="#138808"/>
+  <circle cx="300" cy="200" r="50" fill="none" stroke="#000080" stroke-width="13"/>
+</svg>
