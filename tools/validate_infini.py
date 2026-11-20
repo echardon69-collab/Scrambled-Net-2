@@ -82,6 +82,9 @@ menu_src = read(RES / "menu/menu_main.xml")
 en_src = read(RES / "values/strings.xml")
 fr_src = read(RES / "values-fr/strings.xml")
 tests_src = read(ROOT / "app/src/test/kotlin/net/chardons/netscramble2/game/BoardTest.kt")
+fog_src = read(KOTLIN / "game/FogShapes.kt")
+fog_tests_src = read(
+    ROOT / "app/src/test/kotlin/net/chardons/netscramble2/game/FogShapesTest.kt")
 
 # ---------------------------------------------------------------------------
 # 1. Skill.kt — le niveau ENDLESS et sa taille fixe.
@@ -91,14 +94,14 @@ sk = strip_comments(skill_src)
 sk_entries = re.findall(r"^    (\w+)\((.*?)\)[,;]", sk, re.M | re.S)
 skills = {}
 skill_order = []
-for name, body in sk_entries:
+for nom, body in sk_entries:
     br = re.search(r"branches = (\d+)", body)
     wr = re.search(r"wrap = (true|false)", body)
     ht = re.search(r"hiddenThreshold = (\d+)", body)
     en = re.search(r"\bendless = (true|false)", body)
-    skills[name] = (int(br.group(1)), wr.group(1) == "true",
+    skills[nom] = (int(br.group(1)), wr.group(1) == "true",
                     int(ht.group(1)), en is not None and en.group(1) == "true")
-    skill_order.append(name)
+    skill_order.append(nom)
 check("Skill.kt : ENDLESS = 3 branches, tore, aucun masquage",
       skills.get("ENDLESS") == (3, True, 9, True),
       f"lu={skills.get('ENDLESS')}")
@@ -140,20 +143,20 @@ screen_entries = re.findall(
     screen_src, re.M)
 check("Screen.kt : les 5 matrices de l'original sont intactes",
       len(screen_entries) == 5,
-      str([name for name, _ in screen_entries]))
+      str([nom for nom, _ in screen_entries]))
 
-def board_size_endless(screen_name, landscape):
+def board_size_endless(_screen_name, _landscape):
     """Miroir : pour la famille, major et minor valent la taille fixe."""
     size = int(re.search(r"const val ENDLESS_SIZE = (\d+)", sk).group(1))
-    return (size, size)
+    return size, size
 
 for skill_name in ("ENDLESS", "ABYSS", "VOID"):
-    for name, _ in screen_entries:
+    for nom, _ in screen_entries:
         for landscape in (True, False):
-            w, h = board_size_endless(name, landscape)
-            check(f"boardSize({skill_name}) = {w}x{h} sur {name} "
+            sw, sh = board_size_endless(nom, landscape)
+            check(f"boardSize({skill_name}) = {sw}x{sh} sur {nom} "
                   f"({'paysage' if landscape else 'portrait'})",
-                  (w, h) == (40, 40))
+                  (sw, sh) == (40, 40))
 
 # ---------------------------------------------------------------------------
 # 3. GameViewModel.kt — générateur ORIGINAL forcé sur ENDLESS.
@@ -183,9 +186,9 @@ def choose_generator(endless, seed):
 
 forced_ok = True
 mixer = random.Random(2026)
-for i in range(50):
-    seed = mixer.randrange(1 << 48)
-    forced_ok &= choose_generator(True, seed) == "ORIGINAL"
+for rep in range(50):
+    graine = mixer.randrange(1 << 48)
+    forced_ok &= choose_generator(True, graine) == "ORIGINAL"
 check("Miroir : famille Infini = ORIGINAL sur 50 graines (paires et "
       "impaires)", forced_ok)
 others_mixed = {choose_generator(False, s) for s in (0, 1, 2, 3)}
@@ -205,7 +208,7 @@ status_list = re.search(
     ma)
 status_ids = (re.findall(r"R\.string\.(skill_\w+)", status_list.group(1))
               if status_list else [])
-expected_labels = ["skill_" + name.lower() for name in skill_order]
+expected_labels = ["skill_" + nom.lower() for nom in skill_order]
 check("MainActivity : 8 libellés d'état alignés sur l'ordre de l'enum",
       status_ids == expected_labels, f"lu={status_ids}")
 
@@ -219,13 +222,13 @@ radio_block = re.search(
 radio_mapping = (dict(re.findall(r"Skill\.(\w+) -> R\.id\.(skill_\w+)",
                                 radio_block.group(1)))
                 if radio_block else {})
-radio_map = {v: "Skill." + k for k, v in radio_mapping.items()}
+radio_map = {val: "Skill." + k for k, val in radio_mapping.items()}
 check("SettingsActivity : la radio skill_endless mappe Skill.ENDLESS",
       radio_map.get("skill_endless") == "Skill.ENDLESS",
       f"lu={radio_map.get('skill_endless')}")
 check("SettingsActivity : les 8 radios mappent chacune vers son Skill",
       radio_map == {
-          "skill_" + name.lower(): "Skill." + name for name in skill_order},
+          "skill_" + nom.lower(): "Skill." + nom for nom in skill_order},
       str(radio_map))
 check("SettingsActivity : la page s'ouvre sur le niveau reçu du jeu",
       re.search(r"Skill\.entries\.firstOrNull \{\s*"
@@ -272,8 +275,8 @@ check("Chaînes : skill_void = Void (EN), Néant (FR)",
       en.get("skill_void") == "Void" and fr.get("skill_void") == "Néant",
       f"lu={en.get('skill_void')!r}/{fr.get('skill_void')!r}")
 check("Chaînes : aucune apostrophe non échappée dans les libellés FR",
-      all(re.search(r"(?<!\\)'", v) is None
-          for k, v in fr.items() if k.startswith("skill_")))
+      all(re.search(r"(?<!\\)'", val) is None
+          for k, val in fr.items() if k.startswith("skill_")))
 
 sa = strip_comments(scores_src)
 labels = re.search(r"private val labels = listOf\(\s*((?:R\.string\.skill_\w+,?\s*)+?)\)", sa)
@@ -326,11 +329,11 @@ check("Tests JVM : messages d'échec en PREMIER argument (JUnit 4 — "
 # 8. Pièges Kotlin : pas de « /* » dans les commentaires des fichiers touchés.
 # ---------------------------------------------------------------------------
 
-for rel, src in (("game/Skill.kt", skill_src), ("game/Screen.kt", screen_src),
+for rel, contenu in (("game/Skill.kt", skill_src), ("game/Screen.kt", screen_src),
                  ("GameViewModel.kt", vm_src), ("MainActivity.kt", ma_src),
                  ("ScoresActivity.kt", scores_src), ("game/GameSpec.kt", spec_src),
                  ("BoardTest.kt", tests_src)):
-    bad = [line for line in src.splitlines()
+    bad = [line for line in contenu.splitlines()
            if re.search(r"^\s*(//|\*)[^/]*?/\*", line)]
     check(f"Piège /* imbriqué absent ({rel})", not bad,
           bad[0].strip()[:60] if bad else "")
@@ -439,50 +442,50 @@ def is_solved(conns, rotations, width, height, wrap, server):
 
 SIZE = 40
 NBOARDS = 20
-rnd = random.Random(424242)
+dice = random.Random(424242)
 coverages = []
 terminals_count = []
 gen_fail = []
-for seed in range(NBOARDS):
-    r = random.Random(1_000_003 * seed + 7)
-    conns, root = gen_original(r, SIZE, SIZE, wrap=True, branches=3)
-    size = SIZE * SIZE
-    coverages.append(sum(1 for c in conns if c != 0) / size)
-    terminals = sum(1 for i, c in enumerate(conns)
-                    if bin(c).count("1") == 1 and i != root)
+for graine in range(NBOARDS):
+    rng = random.Random(1_000_003 * graine + 7)
+    wires, origin = gen_original(rng, SIZE, SIZE, wrap=True, branches=3)
+    nb_cells = SIZE * SIZE
+    coverages.append(sum(1 for wire in wires if wire != 0) / nb_cells)
+    terminals = sum(1 for rep, wire in enumerate(wires)
+                    if bin(wire).count("1") == 1 and rep != origin)
     terminals_count.append(terminals)
     # Le serveur est câblé, la solution est connexe, victoire par terminaux.
-    if conns[root] == 0:
-        gen_fail.append(f"graine {seed} : serveur non câblé")
-    sol = connected_cells(conns, [0] * size, SIZE, SIZE, True, root)
-    if any(c != 0 and not sol[i] for i, c in enumerate(conns)):
-        gen_fail.append(f"graine {seed} : cellule active non connexe")
-    if not is_solved(conns, [0] * size, SIZE, SIZE, True, root):
-        gen_fail.append(f"graine {seed} : pas de victoire à rotations nulles")
+    if wires[origin] == 0:
+        gen_fail.append(f"graine {graine} : serveur non câblé")
+    sol = connected_cells(wires, [0] * nb_cells, SIZE, SIZE, True, origin)
+    if any(wire != 0 and not sol[rep] for rep, wire in enumerate(wires)):
+        gen_fail.append(f"graine {graine} : cellule active non connexe")
+    if not is_solved(wires, [0] * nb_cells, SIZE, SIZE, True, origin):
+        gen_fail.append(f"graine {graine} : pas de victoire à rotations nulles")
     # Mélange (miroir de scramble) : jamais résolu au départ.
-    r2 = random.Random(seed ^ (-0x5DEECE66D & ((1 << 64) - 1)))
+    r2 = random.Random(graine ^ (-0x5DEECE66D & ((1 << 64) - 1)))
     for _ in range(100):
-        rotations = [r2.randrange(4) for _ in range(size)]
-        if not is_solved(conns, rotations, SIZE, SIZE, True, root):
+        scramble = [r2.randrange(4) for _ in range(nb_cells)]
+        if not is_solved(wires, scramble, SIZE, SIZE, True, origin):
             break
     else:
-        gen_fail.append(f"graine {seed} : mélangé encore résolu")
+        gen_fail.append(f"graine {graine} : mélangé encore résolu")
     # Solveur : le BFS de la solution rejoint toutes les cellules actives.
-    visited = [False] * size
-    visited[root] = True
-    queue = [root]
-    while queue:
-        cur = queue.pop(0)
-        for d in DIRS:
-            if not conns[cur] & BIT[d]:
+    visited = [False] * nb_cells
+    visited[origin] = True
+    frontier = [origin]
+    while frontier:
+        head = frontier.pop(0)
+        for direction in DIRS:
+            if not wires[head] & BIT[direction]:
                 continue
-            n = neighbor(cur, SIZE, SIZE, True, d)
-            if n < 0 or visited[n]:
+            nb = neighbor(head, SIZE, SIZE, True, direction)
+            if nb < 0 or visited[nb]:
                 continue
-            visited[n] = True
-            queue.append(n)
-    if any(c != 0 and not visited[i] for i, c in enumerate(conns)):
-        gen_fail.append(f"graine {seed} : solveur ne couvre pas le réseau")
+            visited[nb] = True
+            frontier.append(nb)
+    if any(wire != 0 and not visited[rep] for rep, wire in enumerate(wires)):
+        gen_fail.append(f"graine {graine} : solveur ne couvre pas le réseau")
 
 check("Génération 40x40 : couverture >= 85 pour cent sur 20 graines",
       min(coverages) >= 0.85, f"min={min(coverages):.1%}, "
@@ -568,21 +571,21 @@ def decode_mirror(spec):
 
 
 # Une partie Infini typique : 40 x 40, ORIGINAL, racine tirée (consigne -1).
-r = random.Random(20261112)
-big_rotations = [r.randrange(4) for _ in range(SIZE * SIZE)]
-big_locked = [r.random() < 0.05 for _ in range(SIZE * SIZE)]
+rng = random.Random(20261112)
+big_rotations = [rng.randrange(4) for _ in range(SIZE * SIZE)]
+big_locked = [rng.random() < 0.05 for _ in range(SIZE * SIZE)]
 big_revealed = [False] * (SIZE * SIZE)
-spec = encode_v3("ENDLESS", 987654321012, "ORIGINAL", SIZE, SIZE, -1,
+serial = encode_v3("ENDLESS", 987654321012, "ORIGINAL", SIZE, SIZE, -1,
                  123, 654_000, False, 555, [1, 2, 3],
                  big_rotations, big_locked, big_revealed)
-back = decode_mirror(spec)
+back = decode_mirror(serial)
 check("GameSpec v3 ENDLESS : aller-retour intact (40x40, ORIGINAL)",
       back is not None and back["skill"] == "ENDLESS"
       and back["gen"] == "ORIGINAL" and back["root"] == -1
       and (back["width"], back["height"]) == (40, 40)
       and back["rotations"] == big_rotations and back["queue"] == [1, 2, 3])
 check("GameSpec v3 ENDLESS : taille sérialisée raisonnable (mesurée)",
-      0 < len(spec) < 7000, f"{len(spec)} octets")
+      0 < len(serial) < 7000, f"{len(serial)} octets")
 
 check("GameSpec : un v2 falsifié au niveau ENDLESS est rejeté",
       decode_mirror("v2|ENDLESS|1|17|42000|false|-1|5,9|"
@@ -713,39 +716,39 @@ DEVICES = [
 ]
 
 floor_fail = []
-for view_w, view_h, density in DEVICES:
-    cell = floor_cell_px(view_w, view_h, density)
-    largest = max(view_w, view_h)
-    extent = SPAN * cell
+for dev_w, dev_h, dev_dpi in DEVICES:
+    cell_px = floor_cell_px(dev_w, dev_h, dev_dpi)
+    biggest = max(dev_w, dev_h)
+    extent = SPAN * cell_px
     # Le plateau entier ne tient JAMAIS : marge >= 2 cases de chaque côté.
-    if extent - largest < 2.0 * MARGIN_CELLS * cell - 1e-6:
-        floor_fail.append(f"{view_w}x{view_h}@{density} : plateau visible")
+    if extent - biggest < 2.0 * MARGIN_CELLS * cell_px - 1e-6:
+        floor_fail.append(f"{dev_w}x{dev_h}@{dev_dpi} : plateau visible")
     # La fenêtre visible reste plus ÉTROITE que le plateau : aucune
     # cellule n'apparaît deux fois (chaque copie est une tuile différente).
-    window = math.ceil(largest / cell) + 1
+    window = math.ceil(biggest / cell_px) + 1
     if window >= SPAN:
-        floor_fail.append(f"{view_w}x{view_h}@{density} : fenêtre {window} >= 40")
+        floor_fail.append(f"{dev_w}x{dev_h}@{dev_dpi} : fenêtre {window} >= 40")
 check("Miroir plancher : plateau entier jamais visible, fenêtre < plateau "
       "(7 écrans réalistes, portrait et paysage)",
       not floor_fail, "; ".join(floor_fail[:3]))
 
 # Invariance du tap par translation d'un plateau ENTIER (40 cases) : la
 # copie vaut l'original, dans les deux axes et les deux sens.
-rnd = random.Random(20261112)
+dice = random.Random(20261112)
 invariant_ok = True
 for trial in range(50):
-    view_w, view_h, density = rnd.choice(DEVICES)
-    cell = floor_cell_px(view_w, view_h, density)
-    span_px = SPAN * cell
-    pan_x = rnd.uniform(-span_px, 0)
-    pan_y = rnd.uniform(-span_px, 0)
-    x = rnd.uniform(0, view_w)
-    y = rnd.uniform(0, view_h)
-    base = hit_cell_endless(x, y, pan_x, pan_y, cell)
+    dev_w, dev_h, dev_dpi = dice.choice(DEVICES)
+    cell_px = floor_cell_px(dev_w, dev_h, dev_dpi)
+    span_px = SPAN * cell_px
+    pan_px = dice.uniform(-span_px, 0)
+    pan_py = dice.uniform(-span_px, 0)
+    tap_x = dice.uniform(0, dev_w)
+    tap_y = dice.uniform(0, dev_h)
+    ref = hit_cell_endless(tap_x, tap_y, pan_px, pan_py, cell_px)
     for k in (-2, -1, 0, 1, 2):
-        for j in (-2, -1, 0, 1, 2):
-            if hit_cell_endless(x + k * span_px, y + j * span_px,
-                                pan_x, pan_y, cell) != base:
+        for col in (-2, -1, 0, 1, 2):
+            if hit_cell_endless(tap_x + k * span_px, tap_y + col * span_px,
+                                pan_px, pan_py, cell_px) != ref:
                 invariant_ok = False
 check("Miroir tap : mapping invariant par translation de 40 cases "
       "(50 configurations, 25 translations chacune)", invariant_ok)
@@ -753,16 +756,16 @@ check("Miroir tap : mapping invariant par translation de 40 cases "
 # Couture : les copies sont à des positions qui diffèrent d'exactement
 # l'étendue du plateau — le raccord est invisible (aucun écart).
 seam_ok = True
-for view_w, view_h, density in DEVICES:
-    cell = floor_cell_px(view_w, view_h, density)
+for dev_w, dev_h, dev_dpi in DEVICES:
+    cell_px = floor_cell_px(dev_w, dev_h, dev_dpi)
     for wx in range(-50, 50):
-        left_a = wx * cell
-        left_b = (wx + SPAN) * cell
-        if abs((left_b - left_a) - SPAN * cell) > 1e-6:
+        left_a = wx * cell_px
+        left_b = (wx + SPAN) * cell_px
+        if abs((left_b - left_a) - SPAN * cell_px) > 1e-6:
             seam_ok = False
         # Le contenu des deux copies est la même cellule du plateau.
-        if hit_cell_endless(left_a + cell / 2, 0, 0, 0, cell) != \
-           hit_cell_endless(left_b + cell / 2, 0, 0, 0, cell):
+        if hit_cell_endless(left_a + cell_px / 2, 0, 0, 0, cell_px) != \
+           hit_cell_endless(left_b + cell_px / 2, 0, 0, 0, cell_px):
             seam_ok = False
 check("Miroir couture : copies espacées d'exactement un plateau, "
       "même cellule dessous", seam_ok)
@@ -771,19 +774,19 @@ check("Miroir couture : copies espacées d'exactement un plateau, "
 # pan — aucun pixel de vue sans tuile.
 cover_fail = []
 for trial in range(50):
-    view_w, view_h, density = rnd.choice(DEVICES)
-    cell = floor_cell_px(view_w, view_h, density)
-    span_px = SPAN * cell
-    pan_x = rnd.uniform(-span_px, 0)
-    pan_y = rnd.uniform(-span_px, 0)
-    min_x = math.floor(-pan_x / cell)
-    max_x = math.ceil((view_w - pan_x) / cell)
-    min_y = math.floor(-pan_y / cell)
-    max_y = math.ceil((view_h - pan_y) / cell)
-    if min_x * cell > -pan_x + 1e-6 or max_x * cell < view_w - pan_x - 1e-6:
-        cover_fail.append(f"horizontal {pan_x:.0f}")
-    if min_y * cell > -pan_y + 1e-6 or max_y * cell < view_h - pan_y - 1e-6:
-        cover_fail.append(f"vertical {pan_y:.0f}")
+    dev_w, dev_h, dev_dpi = dice.choice(DEVICES)
+    cell_px = floor_cell_px(dev_w, dev_h, dev_dpi)
+    span_px = SPAN * cell_px
+    pan_px = dice.uniform(-span_px, 0)
+    pan_py = dice.uniform(-span_px, 0)
+    lo_x = math.floor(-pan_px / cell_px)
+    hi_x = math.ceil((dev_w - pan_px) / cell_px)
+    lo_y = math.floor(-pan_py / cell_px)
+    hi_y = math.ceil((dev_h - pan_py) / cell_px)
+    if lo_x * cell_px > -pan_px + 1e-6 or hi_x * cell_px < dev_w - pan_px - 1e-6:
+        cover_fail.append(f"horizontal {pan_px:.0f}")
+    if lo_y * cell_px > -pan_py + 1e-6 or hi_y * cell_px < dev_h - pan_py - 1e-6:
+        cover_fail.append(f"vertical {pan_py:.0f}")
 check("Miroir fenêtre : la vue est toujours couverte, tout pan confondu "
       "(50 configurations)", not cover_fail, "; ".join(cover_fail[:3]))
 
@@ -800,6 +803,17 @@ check("Miroir négatif : hors famille, clampPan borne toujours le pan "
 # Phase D : le brouillard n'est PLUS un réglage — il est la marque
 # PERMANENTE du niveau Néant (VOID) ; le réglage de la phase C est
 # retiré de l'activité et du menu.
+#
+# Refonte « brouillard-nuage » (19 nov. 2026, décision d'eric, style B
+# de la maquette) : fin de la case sombre par tuile — la zone cachée
+# est une COUCHE DE NUAGE, silhouette + FESTONS qui débordent d'un
+# tiers de tuile sur la zone visible, liseré vapeur en deux passes,
+# fondu de découverte par tuile révélée et fondu de victoire. V2 du
+# 20 nov. 2026 (retour utilisateurs) : le cœur du nuage redevient
+# « les tuiles d'avant » — coins arrondis SUR LA FRONTIÈRE SEULE
+# (masques par sommet), bouffées de relief RETIRÉES, plus de trou
+# au centre de quatre cases. La REGLE DU JEU est inchangée :
+# dérivation, hitCell, blips, révélation totale.
 # ---------------------------------------------------------------------------
 
 fog_radius_m = re.search(r"const val FOG_RADIUS_CELLS = (\d+)", bd)
@@ -834,9 +848,96 @@ check("BoardView : hitCell refuse les tuiles cachées (ni rotation au "
       "tap, ni verrouillage au long-press — sans interaction)",
       "if (fog != null && !fog[index]) return null" in vw)
 
-check("BoardView : la passe des cellules d'Infini dessine les cachées en "
-      "case sombre (drawFogCell, couleur fog_cell)",
-      vw.count("drawFogCell(") >= 2 and "R.color.fog_cell" in vw)
+check("BoardView : les cachées ne sont PLUS dessinées tuile par tuile "
+      "(drawFogCell retiré) — la COUCHE DE NUAGE les recouvre en une "
+      "passe dédiée, au-dessus des cellules et des blips",
+      "drawFogCell" not in vw and
+      "drawFogCloud(" in vw and "buildFogCloudPath(" in vw and
+      "forEachVisibleCopy(" in vw)
+
+check("FogShapes : la géométrie du nuage est PURE (game/, zéro Android), "
+      "dérivée de la visibilité — festons ET coins de frontière, "
+      "bouffées retirées (V2)",
+      "object FogShapes" in fog_src and "fun bumps(" in fog_src and
+      "fun cornerRounding(" in fog_src and "fun puffs(" not in fog_src and
+      "import android" not in fog_src)
+
+check("FogShapes : festons BORNÉS (rayon min/max en fraction de cellule) "
+      "et hasard DÉTERMINISTE (mix maison, aucun Random android/kotlin)",
+      re.search(r"const val BUMP_MIN = 0\.20f", fog_src) is not None and
+      re.search(r"const val BUMP_MAX = 0\.34f", fog_src) is not None and
+      "private fun mix(seed: Int, salt: Int): Float" in fog_src and
+      "import kotlin.random" not in fog_src)
+
+check("FogShapes : le plateau est un TORE pour les formes (floorMod sur "
+      "le voisinage des festons et des coins)",
+      "Math.floorMod(x + dxs[d], width)" in fog_src and
+      "Math.floorMod(y + dys[d], height)" in fog_src and
+      "Math.floorMod(x - 1, width)" in fog_src and
+      "Math.floorMod(x + 1, width)" in fog_src and
+      "Math.floorMod(y - 1, height)" in fog_src and
+      "Math.floorMod(y + 1, height)" in fog_src)
+
+check("BoardView : la silhouette FUSIONNE carrés, coins de frontière "
+      "et festons (même Path, winding — cache par (version, indice), "
+      "jamais à la trame) : seuls les sommets qui TOUCHENT le visible "
+      "s'arrondissent, le cœur reste carré",
+      "FogShapes.bumps(fog, b.width, b.height, revealed)" in vw and
+      "FogShapes.cornerRounding(fog, b.width, b.height, revealed)" in vw and
+      "path.addCircle(fx, fy, fr, Path.Direction.CW)" in vw and
+      "addRoundRect(" in vw and
+      "FOG_CELL_CORNER_CELLS = 0.35f" in vw and
+      "floatArrayOf(tl, tl, tr, tr, br, br, bl, bl)" in vw and
+      "fogPathVersion != fogVersion" in vw and
+      "fogPathHint != revealed" in vw)
+
+check("BoardView : LISERÉ VAPEUR en deux passes sur la frontière (traits "
+      "larges AVANT le remplissage opaque : il ne vit que sur le "
+      "débordé), largeurs et alphas constants en unités de cellules",
+      "FOG_HALO_FAR_CELLS = 0.85f" in vw and
+      "FOG_HALO_NEAR_CELLS = 0.425f" in vw and
+      "FOG_HALO_FAR_ALPHA = 36" in vw and
+      "FOG_HALO_NEAR_ALPHA = 82" in vw and
+      "drawPath(path, fogHaloFarPaint)" in vw and
+      "drawPath(path, fogHaloNearPaint)" in vw and
+      vw.count("drawPath(path, fogPaint)") == 1)
+
+check("BoardView : TORE et ZOOM honorés — même Path par COPIE visible "
+      "(floorDiv), échelle de la case par CTM, fenêtre seulement",
+      "Math.floorDiv(minX, b.width)" in vw and
+      "Math.floorDiv(maxX - 1, b.width)" in vw and
+      "Math.floorDiv(minY, b.height)" in vw and
+      "Math.floorDiv(maxY - 1, b.height)" in vw and
+      "scale(cellPx, cellPx)" in vw)
+
+check("BoardView : cœur du nuage PLEIN en V2 (bouffées et teinte "
+      "fog_cell_light RETIRÉES), effluves de dissolution conservées "
+      "sur les tuiles RÉVÉLÉES",
+      "FogShapes.puffs(" not in vw and "fogPuffPaint" not in vw and
+      "R.color.fog_cell_light" not in vw and
+      "FOG_PUFF_" not in vw and
+      "fogDissolving.add(i to nowMs)" in vw and
+      "FOG_DISSOLVE_MS = 250L" in vw and
+      "FOG_REMNANT_R0_CELLS = 0.66f" in vw)
+
+check("BoardView : référentiel clos — la refermeture du brouillard est "
+      "immédiate (pas de condensation à rebours), la victoire "
+      "DISSOUT le nuage en fondu (pas un claquement), la trame vit "
+      "tant qu'un effluve ou le fondu existent",
+      "FOG_FADE_MS = 400L" in vw and
+      "fogFadeStartMs = nowMs" in vw and
+      "fogDissolving.isNotEmpty() || fogFadePath != null" in vw)
+
+check("FogShapesTest : la géométrie du nuage est verrouillée en JVM "
+      "(déterminisme, frontière, coins, tore, bornes, indice — V2 "
+      "sans bouffées)",
+      "festons are deterministic" in fog_tests_src and
+      "interior corners are square" in fog_tests_src and
+      "corner masks wrap the torus" in fog_tests_src and
+      "torus wraps" in fog_tests_src and
+      "revealed hint tile" in fog_tests_src and
+      "two festons" in fog_tests_src and
+      "fun puffs(" not in fog_tests_src)
 
 check("BoardView : la passe des blips ignore les tuiles cachées "
       "(les connectées restent visibles par définition)",
@@ -873,8 +974,18 @@ day_colors = read(RES / "values/colors.xml")
 night_colors = read(RES / "values-night/colors.xml")
 check("Couleurs : tuile cachée fog_cell en jour ET nuit, PLUS SOMBRE que "
       "le fond du plateau dans les deux thèmes",
-      all(color_of(s, c) for s in (day_colors, night_colors)
-          for c in ("fog_cell", "board_background")) and
+      all(color_of(s, wire) for s in (day_colors, night_colors)
+          for wire in ("fog_cell", "board_background")) and
+      lum(color_of(day_colors, "fog_cell")) <
+      lum(color_of(day_colors, "board_background")) and
+      lum(color_of(night_colors, "fog_cell")) <
+      lum(color_of(night_colors, "board_background")))
+
+check("Couleurs : teinte des bouffées fog_cell_light RETIRÉE des deux "
+      "thèmes (V2 du 20 nov.), fog_cell reste PLUS SOMBRE que le fond "
+      "du plateau",
+      all(color_of(s, "fog_cell_light") is None
+          for s in (day_colors, night_colors)) and
       lum(color_of(day_colors, "fog_cell")) <
       lum(color_of(day_colors, "board_background")) and
       lum(color_of(night_colors, "fog_cell")) <
@@ -908,7 +1019,7 @@ def fog_definition(connected, w, h, r):
     """Définition brute INDÉPENDANTE : distance de Chebyshev sur le tore,
     minimum sur les cellules connectées (formulation différente de la
     dérivation : une vraie contre-épreuve)."""
-    on = [i for i, c in enumerate(connected) if c]
+    on = [idx for idx, c in enumerate(connected) if c]
     visible = []
     for i in range(w * h):
         x, y = i % w, i // w
@@ -926,18 +1037,18 @@ def fog_definition(connected, w, h, r):
 
 
 fail_fog = []
-for i in range(8):
+for rep in range(8):
     # Réseaux clairsemés déterministes (le serveur + quelques cellules
     # éparses, proches et loin des bords : l'enroulement compte) —
     # beaucoup de tuiles cachées : l'équivalence discrimine vraiment.
-    connected = [False] * (FW * FH)
-    for k in range(1 + (i % 6)):
-        sx = (k * 11 + i * 3) % FW
-        sy = (k * 17 + i * 5) % FH
-        connected[sy * FW + sx] = True
-    if fog_derive(connected, FW, FH, FOG_RADIUS) != \
-            fog_definition(connected, FW, FH, FOG_RADIUS):
-        fail_fog.append(f"réseau {i}")
+    network = [False] * (FW * FH)
+    for k in range(1 + (rep % 6)):
+        sx = (k * 11 + rep * 3) % FW
+        sy = (k * 17 + rep * 5) % FH
+        network[sy * FW + sx] = True
+    if fog_derive(network, FW, FH, FOG_RADIUS) != \
+            fog_definition(network, FW, FH, FOG_RADIUS):
+        fail_fog.append(f"réseau {rep}")
 check("Miroir brouillard : la dérivation parsée égale la définition "
       "Chebyshev-tore, exhaustivement (8 réseaux clairsemés)",
       not fail_fog, "; ".join(fail_fog[:3]))
@@ -945,10 +1056,10 @@ check("Miroir brouillard : la dérivation parsée égale la définition "
 counts_ok = True
 for edge_case in [(0, 0), (FW - 1, FH - 1), (0, FH - 1),
                   (FW // 2, FH // 2), (FW - 1, 0)]:
-    connected = [False] * (FW * FH)
-    connected[edge_case[1] * FW + edge_case[0]] = True
-    n = sum(fog_derive(connected, FW, FH, FOG_RADIUS))
-    if n != (2 * FOG_RADIUS + 1) ** 2:
+    network = [False] * (FW * FH)
+    network[edge_case[1] * FW + edge_case[0]] = True
+    nb = sum(fog_derive(network, FW, FH, FOG_RADIUS))
+    if nb != (2 * FOG_RADIUS + 1) ** 2:
         counts_ok = False
 check("Miroir brouillard : une connectée révèle exactement son carré "
       "(2r+1)², même aux quatre coins du tore (enroulement, aucune case "
@@ -956,15 +1067,15 @@ check("Miroir brouillard : une connectée révèle exactement son carré "
       counts_ok, f"rayon {FOG_RADIUS} -> {(2 * FOG_RADIUS + 1) ** 2} cases")
 
 monotone_ok = True
-for i in range(6):
-    connected = [False] * (FW * FH)
-    for k in range(2 + i):
-        connected[((k * 13 + i * 7) % FH) * FW +
-                   (k * 19 + i * 3) % FW] = True
-    full = fog_derive(connected, FW, FH, FOG_RADIUS)
+for rep in range(6):
+    network = [False] * (FW * FH)
+    for k in range(2 + rep):
+        network[((k * 13 + rep * 7) % FH) * FW +
+                   (k * 19 + rep * 3) % FW] = True
+    full = fog_derive(network, FW, FH, FOG_RADIUS)
     # On retire UNE connexion : la zone ne peut que rétrécir (le
     # brouillard dérivé ne retient rien d'un état passé).
-    removed = list(connected)
+    removed = list(network)
     for k in range(FW * FH - 1, -1, -1):
         if removed[k]:
             removed[k] = False
@@ -1005,8 +1116,8 @@ check("Strings : aide help_void en EN et FR (Abîme + brouillard)",
       and "fog" in en_help["help_void"].lower()
       and "brouillard" in fr_help["help_void"])
 check("Strings : aucune apostrophe non échappée dans les aides FR",
-      all(re.search(r"(?<!\\)'", v) is None
-          for k, v in fr_help.items() if k.startswith("help_")))
+      all(re.search(r"(?<!\\)'", val) is None
+          for k, val in fr_help.items() if k.startswith("help_")))
 
 # --- Miroir : le masquage à la Dément mord vraiment sur les plateaux
 # générés pour Abîme et Néant (le seuil parsé depuis Skill.kt) ---
@@ -1015,14 +1126,14 @@ abyss_rule = skills.get("ABYSS")
 HIDDEN_T = abyss_rule[2] if abyss_rule else 3
 hidden_fail = []
 hidden_counts = []
-for i in range(10):
-    r_gen = random.Random(31_000 + i * 101)
+for rep in range(10):
+    r_gen = random.Random(31_000 + rep * 101)
     conns_d, root_d = gen_original(r_gen, SIZE, SIZE, wrap=True, branches=3)
-    hidden = sum(1 for c in conns_d
-                 if bin(c).count("1") >= HIDDEN_T)
+    hidden = sum(1 for wire in conns_d
+                 if bin(wire).count("1") >= HIDDEN_T)
     hidden_counts.append(hidden)
     if hidden == 0:
-        hidden_fail.append(f"graine {i}")
+        hidden_fail.append(f"graine {rep}")
 check(f"Miroir Abîme/Néant : des cellules cachées existent sur 10 "
       f"plateaux 40x40 (seuil parsé {HIDDEN_T} connexions)",
       not hidden_fail, f"min={min(hidden_counts)}, "
@@ -1031,12 +1142,12 @@ check(f"Miroir Abîme/Néant : des cellules cachées existent sur 10 "
 # La solution reste saine avec masquage : la dérivation du brouillard du
 # Néant révèle au moins le carré du serveur (une partie jouable existe).
 void_reveal_ok = True
-for i in range(6):
-    r_gen = random.Random(41_000 + i * 97)
+for rep in range(6):
+    r_gen = random.Random(41_000 + rep * 97)
     conns_v, root_v = gen_original(r_gen, SIZE, SIZE, wrap=True, branches=3)
-    connected = [False] * (SIZE * SIZE)
-    connected[root_v] = True
-    fog = fog_derive(connected, SIZE, SIZE, FOG_RADIUS)
+    network = [False] * (SIZE * SIZE)
+    network[root_v] = True
+    fog = fog_derive(network, SIZE, SIZE, FOG_RADIUS)
     if not fog[root_v] or sum(fog) < (2 * FOG_RADIUS + 1) ** 2:
         void_reveal_ok = False
 check("Miroir Néant : au lancement, le brouillard révèle au moins le "
@@ -1186,15 +1297,15 @@ check("Tests JVM : les rejets caméra (position hors plateau, zoom hors "
 # Zoom confort : le carré révélé (2r+1 cases) occupe la moitié du petit
 # côté de la vue, sans jamais passer sous le plancher de la famille.
 comfort_fail = []
-for view_w, view_h, density in DEVICES:
-    floor = floor_cell_px(view_w, view_h, density)
-    raw = min(view_w, view_h) / (2.0 * (2 * FOG_RADIUS + 1))
-    cell = min(max(raw, floor), MAX_CELL_DP * density)
-    square = (2 * FOG_RADIUS + 1) * cell
-    if cell < floor - 1e-6:
-        comfort_fail.append(f"{view_w}x{view_h}@{density} sous le plancher")
-    if cell != floor and square > min(view_w, view_h) / 2.0 + 1e-6:
-        comfort_fail.append(f"{view_w}x{view_h}@{density} carré > moitié")
+for dev_w, dev_h, dev_dpi in DEVICES:
+    floor = floor_cell_px(dev_w, dev_h, dev_dpi)
+    brut = min(dev_w, dev_h) / (2.0 * (2 * FOG_RADIUS + 1))
+    cell_px = min(max(brut, floor), MAX_CELL_DP * dev_dpi)
+    square = (2 * FOG_RADIUS + 1) * cell_px
+    if cell_px < floor - 1e-6:
+        comfort_fail.append(f"{dev_w}x{dev_h}@{dev_dpi} sous le plancher")
+    if cell_px != floor and square > min(dev_w, dev_h) / 2.0 + 1e-6:
+        comfort_fail.append(f"{dev_w}x{dev_h}@{dev_dpi} carré > moitié")
 check("Miroir zoom confort : carré révélé = moitié du petit côté, jamais "
       "sous le plancher Infini (7 écrans réalistes)",
       not comfort_fail, "; ".join(comfort_fail[:3]))
@@ -1213,18 +1324,18 @@ def camera_snapshot(view_w, view_h, pan_x, pan_y, cell, bw, bh):
 
 mod_fail = []
 for trial in range(60):
-    view_w, view_h, density = rnd.choice(DEVICES)
-    cell = floor_cell_px(view_w, view_h, density)
-    span_px = SPAN * cell
-    pan_x = rnd.uniform(-4 * span_px, 4 * span_px)
-    pan_y = rnd.uniform(-4 * span_px, 4 * span_px)
-    base = camera_snapshot(view_w, view_h, pan_x, pan_y, cell, SPAN, SPAN)
+    dev_w, dev_h, dev_dpi = dice.choice(DEVICES)
+    cell_px = floor_cell_px(dev_w, dev_h, dev_dpi)
+    span_px = SPAN * cell_px
+    pan_px = dice.uniform(-4 * span_px, 4 * span_px)
+    pan_py = dice.uniform(-4 * span_px, 4 * span_px)
+    ref = camera_snapshot(dev_w, dev_h, pan_px, pan_py, cell_px, SPAN, SPAN)
     for k in (-2, -1, 1, 2):
-        if camera_snapshot(view_w, view_h, pan_x + k * span_px, pan_y,
-                          cell, SPAN, SPAN) != base:
+        if camera_snapshot(dev_w, dev_h, pan_px + k * span_px, pan_py,
+                          cell_px, SPAN, SPAN) != ref:
             mod_fail.append(f"x+{k} plateau")
-        if camera_snapshot(view_w, view_h, pan_x, pan_y + k * span_px,
-                          cell, SPAN, SPAN) != base:
+        if camera_snapshot(dev_w, dev_h, pan_px, pan_py + k * span_px,
+                          cell_px, SPAN, SPAN) != ref:
             mod_fail.append(f"y+{k} plateau")
 check("Miroir caméra : la position photographiée est INVARIANTE par "
       "translation d'un plateau entier (60 configurations, 8 "
@@ -1236,17 +1347,17 @@ check("Miroir caméra : la position photographiée est INVARIANTE par "
 # troncature, elle, n'a pas en Float — contrepovre exhaustive float 32).
 rt_fail = []
 for trial in range(60):
-    view_w, view_h, density = rnd.choice(DEVICES)
-    cell = floor_cell_px(view_w, view_h, density)
-    pan_x = rnd.uniform(-4 * SPAN * cell, 4 * SPAN * cell)
-    pan_y = rnd.uniform(-4 * SPAN * cell, 4 * SPAN * cell)
-    mx, my = camera_snapshot(view_w, view_h, pan_x, pan_y, cell, SPAN, SPAN)
+    dev_w, dev_h, dev_dpi = dice.choice(DEVICES)
+    cell_px = floor_cell_px(dev_w, dev_h, dev_dpi)
+    pan_px = dice.uniform(-4 * SPAN * cell_px, 4 * SPAN * cell_px)
+    pan_py = dice.uniform(-4 * SPAN * cell_px, 4 * SPAN * cell_px)
+    milli_x, milli_y = camera_snapshot(dev_w, dev_h, pan_px, pan_py, cell_px, SPAN, SPAN)
     # applyArrivalCamera : le pan est reposé sur le centre restauré.
-    pan_x2 = view_w / 2.0 - (mx / 1000.0 + 0.5) * cell
-    pan_y2 = view_h / 2.0 - (my / 1000.0 + 0.5) * cell
-    if camera_snapshot(view_w, view_h, pan_x2, pan_y2, cell, SPAN, SPAN) \
-            != (mx, my):
-        rt_fail.append(f"mx={mx}")
+    pan_x2 = dev_w / 2.0 - (milli_x / 1000.0 + 0.5) * cell_px
+    pan_y2 = dev_h / 2.0 - (milli_y / 1000.0 + 0.5) * cell_px
+    if camera_snapshot(dev_w, dev_h, pan_x2, pan_y2, cell_px, SPAN, SPAN) \
+            != (milli_x, milli_y):
+        rt_fail.append(f"mx={milli_x}")
 check("Miroir caméra : aller-retour snapshot-restauration-snapshot stable "
       "au milli près (60 configurations)",
       not rt_fail, "; ".join(sorted(set(rt_fail))[:3]))
@@ -1259,36 +1370,36 @@ check("Miroir caméra : aller-retour snapshot-restauration-snapshot stable "
 # du 13 nov.), la caméra consommée à 0x0 était ensuite écrasée : zoom au
 # plancher, pan au centre du plateau — tout était perdu.
 cold_fail = []
-for i in range(12):
-    view_w, view_h, density = DEVICES[i % len(DEVICES)]
-    floor = floor_cell_px(view_w, view_h, density)
-    zoom_centis = rnd.randrange(3000, 9001, 100)
-    while zoom_centis / 100.0 * density < floor:
+for rep in range(12):
+    dev_w, dev_h, dev_dpi = DEVICES[rep % len(DEVICES)]
+    floor = floor_cell_px(dev_w, dev_h, dev_dpi)
+    zoom_centis = dice.randrange(3000, 9001, 100)
+    while zoom_centis / 100.0 * dev_dpi < floor:
         zoom_centis += 500
-    cell = min(max(zoom_centis / 100.0 * density, floor),
-               MAX_CELL_DP * density)
-    if cell == floor:
+    cell_px = min(max(zoom_centis / 100.0 * dev_dpi, floor),
+               MAX_CELL_DP * dev_dpi)
+    if cell_px == floor:
         continue  # zoom sous le plancher : coercé, pas un cas préservé
-    mx = rnd.randrange(SPAN * 1000)
-    my = rnd.randrange(SPAN * 1000)
+    milli_x = dice.randrange(SPAN * 1000)
+    milli_y = dice.randrange(SPAN * 1000)
     # Comportement corrigé : pose APRÈS layout, contre la taille réelle.
-    pan_x = view_w / 2.0 - (mx / 1000.0 + 0.5) * cell
-    pan_y = view_h / 2.0 - (my / 1000.0 + 0.5) * cell
-    if camera_snapshot(view_w, view_h, pan_x, pan_y, cell, SPAN, SPAN) \
-            != (mx, my):
-        cold_fail.append(f"position perdue {view_w}x{view_h}")
-    if abs(cell / density * 100.0 - zoom_centis) > 0.5:
-        cold_fail.append(f"zoom perdu {view_w}x{view_h}")
+    pan_px = dev_w / 2.0 - (milli_x / 1000.0 + 0.5) * cell_px
+    pan_py = dev_h / 2.0 - (milli_y / 1000.0 + 0.5) * cell_px
+    if camera_snapshot(dev_w, dev_h, pan_px, pan_py, cell_px, SPAN, SPAN) \
+            != (milli_x, milli_y):
+        cold_fail.append(f"position perdue {dev_w}x{dev_h}")
+    if abs(cell_px / dev_dpi * 100.0 - zoom_centis) > 0.5:
+        cold_fail.append(f"zoom perdu {dev_w}x{dev_h}")
     # Ancien séquencement (régression bloquée par les checks statiques) :
     # caméra consommée à 0x0, fitBoard du premier onSizeChanged — le pan
     # retombe au centre du plateau, le zoom au plancher.
     old_cell = floor
-    old_pan_x = (view_w - SPAN * old_cell) / 2.0
-    old_pan_y = (view_h - SPAN * old_cell) / 2.0
-    if old_cell == cell and camera_snapshot(view_w, view_h, old_pan_x,
+    old_pan_x = (dev_w - SPAN * old_cell) / 2.0
+    old_pan_y = (dev_h - SPAN * old_cell) / 2.0
+    if old_cell == cell_px and camera_snapshot(dev_w, dev_h, old_pan_x,
                                             old_pan_y, old_cell, SPAN,
-                                            SPAN) == (mx, my):
-        cold_fail.append(f"ancien aurait préservé {view_w}x{view_h}")
+                                            SPAN) == (milli_x, milli_y):
+        cold_fail.append(f"ancien aurait préservé {dev_w}x{dev_h}")
 check("Miroir démarrage à froid : caméra différée jusqu'au premier "
       "layout — position ET zoom de la sauvegarde préservés ; "
       "l'ancien séquencement (consommée à 0x0 puis écrasée par le "
@@ -1299,7 +1410,7 @@ check("Miroir démarrage à froid : caméra différée jusqu'au premier "
 # lancement : le serveur seul) ; grâce au plateau répété (caméra modulo),
 # tout le carré révélé — y compris enroulé près d'un bord — reste dans
 # la fenêtre visible autour de ce centre.
-def center_pan(view_w, view_h, cell, bbox, bw):
+def center_pan(view_w, view_h, cell, bbox, _bw):
     min_x, max_x, min_y, max_y = bbox
     cx = (min_x + max_x) / 2.0
     cy = (min_y + max_y) / 2.0
@@ -1307,31 +1418,31 @@ def center_pan(view_w, view_h, cell, bbox, bw):
 
 
 center_fail = []
-for i in range(8):
-    view_w, view_h, density = DEVICES[i % len(DEVICES)]
-    floor = floor_cell_px(view_w, view_h, density)
-    comfort = min(max(min(view_w, view_h) / (2.0 * (2 * FOG_RADIUS + 1)),
-                      floor), MAX_CELL_DP * density)
-    r_gen = random.Random(51_000 + i * 131)
+for rep in range(8):
+    dev_w, dev_h, dev_dpi = DEVICES[rep % len(DEVICES)]
+    floor = floor_cell_px(dev_w, dev_h, dev_dpi)
+    comfort = min(max(min(dev_w, dev_h) / (2.0 * (2 * FOG_RADIUS + 1)),
+                      floor), MAX_CELL_DP * dev_dpi)
+    r_gen = random.Random(51_000 + rep * 131)
     conns_v, root_v = gen_original(r_gen, SIZE, SIZE, wrap=True, branches=3)
-    connected = [False] * (SIZE * SIZE)
-    connected[root_v] = True
-    xs = [j % SIZE for j in range(SIZE * SIZE) if connected[j]]
-    ys = [j // SIZE for j in range(SIZE * SIZE) if connected[j]]
-    pan_x, pan_y = center_pan(view_w, view_h, comfort,
+    network = [False] * (SIZE * SIZE)
+    network[root_v] = True
+    xs = [col % SIZE for col in range(SIZE * SIZE) if network[col]]
+    ys = [col // SIZE for col in range(SIZE * SIZE) if network[col]]
+    pan_px, pan_py = center_pan(dev_w, dev_h, comfort,
                               (min(xs), max(xs), min(ys), max(ys)), SIZE)
     # Le centre de vue est le serveur (bbox du réseau connecté réduit
     # au serveur au lancement), à une demi-case près (centre de case).
     sx = root_v % SIZE
     sy = root_v // SIZE
-    if abs(view_w / 2.0 - (sx + 0.5) * comfort - pan_x) > 1e-6:
-        center_fail.append(f"centre X décalé (graine {i})")
-    if abs(view_h / 2.0 - (sy + 0.5) * comfort - pan_y) > 1e-6:
-        center_fail.append(f"centre Y décalé (graine {i})")
+    if abs(dev_w / 2.0 - (sx + 0.5) * comfort - pan_px) > 1e-6:
+        center_fail.append(f"centre X décalé (graine {rep})")
+    if abs(dev_h / 2.0 - (sy + 0.5) * comfort - pan_py) > 1e-6:
+        center_fail.append(f"centre Y décalé (graine {rep})")
     # Toute case du carré révélé (distance torique de Chebyshev <= r du
     # serveur) est dans la fenêtre visible : demi-fenêtre du petit côté
     # = (2r+1) cases au zoom confort, toujours > r + 1 case de marge.
-    half_cells = (min(view_w, view_h) / 2.0) / comfort
+    half_cells = (min(dev_w, dev_h) / 2.0) / comfort
     if half_cells < FOG_RADIUS + 1.0:
         center_fail.append(f"demi-fenêtre {half_cells:.2f} trop étroite")
 check("Miroir centrage : au lancement d'un Néant, la vue vise le serveur "
@@ -1348,8 +1459,8 @@ check("Miroir centrage : au lancement d'un Néant, la vue vise le serveur "
 print()
 if failures:
     print(f"{len(failures)} échec(s) sur {checks} vérifications :")
-    for name in failures:
-        print(f"  - {name}")
+    for nom in failures:
+        print(f"  - {nom}")
     sys.exit(1)
 print(f"TOUT PASSE : {checks}/{checks} vérifications (famille Infini, "
           "phases A à E).")

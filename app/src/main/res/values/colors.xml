@@ -14,8 +14,10 @@
     <color name="blip_idle">#90A4AE</color>
     <color name="term_data">#00C853</color>
 
-    <!-- Brouillard d'Infini (phase C) : tuile cachée — case sombre
-         pleine, plus foncée que le fond du plateau, sans interaction. -->
+    <!-- Brouillard-nuage du Néant (19 nov. 2026) : la zone cachée n'est
+         plus une case sombre par tuile mais une COUCHE DE NUAGE —
+         silhouette opaque plus foncée que le fond du plateau, liseré
+         vapeur et festons débordant sur les tuiles visibles. -->
     <color name="fog_cell">#39424D</color>
 
     <!-- Blink : bande diagonale qui balaie une tuile refusée ou la

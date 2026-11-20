@@ -5,6 +5,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
+import android.graphics.Path
 import android.graphics.drawable.Drawable
 import android.os.SystemClock
 import android.util.AttributeSet
@@ -21,6 +22,7 @@ import net.chardons.netscramble2.game.BlipField
 import net.chardons.netscramble2.game.Board
 import net.chardons.netscramble2.game.CameraSpec
 import net.chardons.netscramble2.game.Dir
+import net.chardons.netscramble2.game.FogShapes
 import net.chardons.netscramble2.game.Generator
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.withTranslation
@@ -275,6 +277,37 @@ class BoardView @JvmOverloads constructor(
      */
     private var fogVisible: BooleanArray? = null
 
+    // --- Brouillard-nuage (19 nov. 2026) : la géométrie dérive de la
+    //     visibilité — reconstruite seulement quand ELLE change, jamais
+    //     à la trame. fogVersion s'incrémente à chaque update du
+    //     Néant ; le couple (version, indice démasqué) sert de clé.
+    /** Version de la visibilité du brouillard (bump par coup du Néant). */
+    private var fogVersion = 0
+    /**
+     * Silhouette du nuage (carrés à coins de frontière + festons),
+     * en cellules.
+     */
+    private var fogPathCache: Path? = null
+    /** Version + indice de la dernière construction de [fogPathCache]. */
+    private var fogPathVersion = -1
+    private var fogPathHint = -2
+    /**
+     * Effluves de dissolution : cellules RÉVÉLÉES au dernier coup
+     * (index, départ ms) — un reste de nuage s'y évapore pendant
+     * [FOG_DISSOLVE_MS]. La refermeture du brouillard, elle, est
+     * immédiate : le nuage se referme vite, il ne se « condense » pas.
+     */
+    private val fogDissolving = mutableListOf<Pair<Int, Long>>()
+    /**
+     * Nuage de VICTOIRE : lorsque la partie est résolue la visibilité
+     * disparaît, mais la silhouette d'avant victoire vit encore
+     * [FOG_FADE_MS] en fondu — la victoire « dissout » le brouillard
+     * au lieu de le faire claquer. Plus de trace après : null.
+     */
+    private var fogFadePath: Path? = null
+    /** Départ (ms) du fondu de victoire. */
+    private var fogFadeStartMs = 0L
+
     /**
      * Caméra d'une partie RESTAURÉE : posée par l'activité juste
      * après la restauration, consommée au premier rendu du plateau
@@ -384,7 +417,10 @@ class BoardView @JvmOverloads constructor(
 
     // --- Peintures (allouées une seule fois, jamais dans onDraw) ---
     private val boardPaint = Paint()
-    private val fogPaint = Paint()
+    private val fogPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val fogHaloNearPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val fogHaloFarPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val fogRemnantPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val blipPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val termPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val victoryShadowPaint = Paint(Paint.ANTI_ALIAS_FLAG)
@@ -464,6 +500,18 @@ class BoardView @JvmOverloads constructor(
     init {
         boardPaint.style = Paint.Style.FILL
         fogPaint.style = Paint.Style.FILL
+        // Brouillard-nuage : les liserés vapeur sont des TRAITS larges
+        // et translucides posés sur la frontière. Épaisseurs en UNITÉS
+        // DE CELLULES : la passe dessine sous CTM à l'échelle de la
+        // case, elles suivent donc le zoom sans être re-spécifiées.
+        fogHaloFarPaint.style = Paint.Style.STROKE
+        fogHaloFarPaint.strokeWidth = FOG_HALO_FAR_CELLS
+        fogHaloFarPaint.strokeJoin = Paint.Join.ROUND
+        fogHaloNearPaint.style = Paint.Style.STROKE
+        fogHaloNearPaint.strokeWidth = FOG_HALO_NEAR_CELLS
+        fogHaloNearPaint.strokeJoin = Paint.Join.ROUND
+        // Effluves et nuage de victoire : pleins, alpha modulé à la volée.
+        fogRemnantPaint.style = Paint.Style.FILL
         // Effet de réussite : ombre au sol de la vague, opaque —
         // l'alpha suit le soulèvement, à chaque dessin.
         victoryShadowPaint.style = Paint.Style.FILL
@@ -590,12 +638,40 @@ class BoardView @JvmOverloads constructor(
         // toujours connecté, il y a toujours une zone visible. Les
         // autres niveaux de la famille Infini ne portent pas de
         // brouillard : il est la marque du Néant, pas un réglage.
+        val previousFog = fogVisible
         fogVisible =
             if (board.skill == Skill.VOID && !solved) {
                 board.fogVisibility(connected)
             } else {
                 null
             }
+        if (board.skill == Skill.VOID) {
+            // Brouillard-nuage : la géométrie dérive de la visibilité,
+            // version incrémentée pour le cache de la passe de dessin.
+            fogVersion++
+            val nowMs = SystemClock.elapsedRealtime()
+            val newFog = fogVisible
+            if (newFog == null &&
+                previousFog != null && previousFog.size == board.size) {
+                // Victoire : la visibilité disparaît, la silhouette
+                // d'avant-coup vit encore FOG_FADE_MS en fondu — la
+                // victoire DISSOUT le brouillard, elle ne le claque pas.
+                fogFadePath = buildFogCloudPath(board, previousFog, -1)
+                fogFadeStartMs = nowMs
+                postInvalidateOnAnimation()
+            } else if (newFog != null &&
+                previousFog != null && previousFog.size == newFog.size) {
+                // Fondu de découverte : chaque tuile fraîchement révélée
+                // garde un effluve de nuage le temps de FOG_DISSOLVE_MS.
+                // Refermeture (débranchement) : immédiate — le nuage se
+                // referme vite, il ne se « condense » pas à rebours.
+                for (i in newFog.indices) {
+                    if (!previousFog[i] && newFog[i]) {
+                        fogDissolving.add(i to nowMs)
+                    }
+                }
+            }
+        }
         val now = SystemClock.elapsedRealtime()
         if (board !== shownBoard || visualTarget.size != board.size) {
             // Nouveau plateau : tout est posé d'emblée, aucun angle résiduel.
@@ -1302,7 +1378,10 @@ class BoardView @JvmOverloads constructor(
                             Math.floorMod(wy, b.height) * b.width +
                                 Math.floorMod(wx, b.width)
                         if (fog != null && !fog[index] && index != hintIndex) {
-                            drawFogCell(wx * cellPx, wy * cellPx)
+                            // Cachée : RIEN dans la passe cellulaire — la
+                            // couche de nuage, dessinée après les blips,
+                            // recouvre la zone d'un seul tenant festonné,
+                            // liseré vapeur compris (brouillard-nuage).
                         } else {
                             drawVictoryCell(
                                 b, connected, appearanceFrozen, serverWired,
@@ -1397,6 +1476,13 @@ class BoardView @JvmOverloads constructor(
                     }
                 }
             }
+
+            // Chantier « brouillard-nuage » : la COUCHE DE NUAGE vit
+            // AU-DESSUS des cellules ET des blips — silhouette
+            // festonnée opaque (fog_cell), liseré vapeur translucide
+            // qui déborde sur les tuiles visibles, bouffées de relief
+            // au cœur, effluves de dissolution sur tuiles révélées.
+            drawFogCloud(b, now, minX, maxX, minY, maxY)
         }
 
         // Chantier « Effets spéciaux de réussite » : le feu d'artifice
@@ -1416,6 +1502,11 @@ class BoardView @JvmOverloads constructor(
         // plus rien ne s'anime (M5 : animation coupée, rotations finies).
         // Le blink vit 200 ms : la trame reste active jusqu'à sa fin.
         if (blipsEnabled || animDurationMs.any { it > 0L } || blinkIndex >= 0) {
+            postInvalidateOnAnimation()
+        }
+        // Brouillard-nuage : la trame vit tant qu'un effluve de
+        // découverte s'évapore ou que le nuage de victoire s'efface.
+        if (fogDissolving.isNotEmpty() || fogFadePath != null) {
             postInvalidateOnAnimation()
         }
         // Chantier Aide à la résolution : le cadre d'indice vit tant
@@ -1671,16 +1762,178 @@ class BoardView @JvmOverloads constructor(
     }
 
     /**
-     * Dessine une tuile CACHÉE par le brouillard d'Infini : case
-     * pleine sombre, ressource couleur fog_cell déclinée en jour et
-     * nuit (values-night), comme le fond du plateau. Aucun câble,
-     * aucun équipement, aucun blip — et hitCell refuse l'interaction
-     * dessus : la tuile cachée est purement décorative, la zone
-     * visible se découvre en construisant le réseau.
+     * Passe du BROUILLARD-NUAGE du Néant (19 nov. 2026) — dessinée
+     * APRÈS les cellules et les blips, donc AU-DESSUS d'eux, tuile par
+     * tuile c'est fini : la zone cachée est recouverte d'un seul
+     * tenant. Décisions d'eric (style B validé sur maquette) :
+     * silhouette aux coins arrondis + FESTONS qui débordent d'un
+     * tiers de tuile sur la zone visible (FogShapes.bumps), LISERÉ
+     * VAPEUR translucide en deux épaisseurs posées sur la frontière —
+     * le trait large AVANT le remplissage opaque, le plein recouvre
+     * la moitié intérieure du trait : il ne reste de visible que le
+     * déborde vapeur, festons compris. Le cœur du nuage est PLEIN :
+     * coins carrés aux sommets qui ne touchent pas la zone visible
+     * (V2 du 20 nov. 2026, retour utilisateurs : « les tuiles
+     * d'avant » au loin, festons au bord).
+     *
+     * La silhouette vit en UNITÉS DE CELLULES (Path sous CTM à
+     * l'échelle de la case : un seul objet suit tout le zoom), mise
+     * en cache par (fogVersion, tuile d'indice démasquée) : rien n'est
+     * reconstruit à la trame, seulement au coup. Chaque COPIE visible
+     * du tore dessine le même Path translaté — aucune couture, comme
+     * la passe des cellules. Le fondu de DÉCOUVERTE (effluves de
+     * FOG_DISSOLVE_MS sur les tuiles révélées, décision d'eric) et le
+     * fondu de VICTOIRE (le nuage entier s'efface en FOG_FADE_MS)
+     * vivent ici. Règle du jeu intacte : hitCell refuse déjà les
+     * cachées, les blips les ignorent, le débordé est décoratif.
      */
-    private fun Canvas.drawFogCell(left: Float, top: Float) {
-        fogPaint.color = ContextCompat.getColor(context, R.color.fog_cell)
-        drawRect(left, top, left + cellPx, top + cellPx, fogPaint)
+    private fun Canvas.drawFogCloud(
+        b: Board,
+        now: Long,
+        minX: Int, maxX: Int,
+        minY: Int, maxY: Int
+    ) {
+        val fogColor = ContextCompat.getColor(context, R.color.fog_cell)
+        val fade = fogFadePath
+        if (fade != null) {
+            // Nuage de victoire : fondu intégral, puis plus rien.
+            val t = ((now - fogFadeStartMs).toFloat() / FOG_FADE_MS)
+                .coerceIn(0f, 1f)
+            if (t >= 1f) {
+                fogFadePath = null
+            } else {
+                fogRemnantPaint.color = fogColor
+                fogRemnantPaint.alpha = ((1f - t) * 255).toInt()
+                forEachVisibleCopy(b, minX, maxX, minY, maxY) {
+                    drawPath(fade, fogRemnantPaint)
+                }
+            }
+        }
+        val fog = fogVisible ?: return
+        // Tuile d'indice DÉMASQUÉE : la silhouette lui laisse un trou
+        // (seul moment où une tuile cachée se montre) — l'indice vit
+        // dans la clé de cache, il ne reconstruit QUE ce qu'il touche.
+        val revealed =
+            if (hintIndex >= 0 && !fog[hintIndex]) hintIndex else -1
+        val cachePath = fogPathCache
+        if (cachePath == null ||
+            fogPathVersion != fogVersion || fogPathHint != revealed) {
+            fogPathCache = buildFogCloudPath(b, fog, revealed)
+            fogPathVersion = fogVersion
+            fogPathHint = revealed
+        }
+        val path = fogPathCache ?: return
+        fogDissolving.removeAll { p -> now - p.second >= FOG_DISSOLVE_MS }
+        // Peintres : couleurs du thème courant, alphas de la maquette.
+        fogPaint.color = fogColor
+        fogHaloNearPaint.color = fogColor
+        fogHaloNearPaint.alpha = FOG_HALO_NEAR_ALPHA
+        fogHaloFarPaint.color = fogColor
+        fogHaloFarPaint.alpha = FOG_HALO_FAR_ALPHA
+        forEachVisibleCopy(b, minX, maxX, minY, maxY) {
+            // Liseré large, liseré proche, PLEIN opaque : le plein
+            // recouvre la moitié intérieure des traits — le vapeur ne
+            // vit que sur le débordé, festons compris. Winding : les
+            // carrés arrondis ET les festons fusionnent d'un bloc.
+            drawPath(path, fogHaloFarPaint)
+            drawPath(path, fogHaloNearPaint)
+            drawPath(path, fogPaint)
+            // Effluves de découverte : un reste de nuage s'évapore sur
+            // chaque tuile révélée — le nuage « recule » en fondu.
+            if (fogDissolving.isNotEmpty()) {
+                fogRemnantPaint.color = fogColor
+                for ((idx, startMs) in fogDissolving) {
+                    val t = ((now - startMs).toFloat() / FOG_DISSOLVE_MS)
+                        .coerceIn(0f, 1f)
+                    fogRemnantPaint.alpha =
+                        (((1f - t) * (1f - t)) * 255).toInt()
+                    val cx = (idx % b.width) + 0.5f
+                    val cy = (idx / b.width) + 0.5f
+                    drawCircle(
+                        cx, cy,
+                        FOG_REMNANT_R0_CELLS -
+                            (FOG_REMNANT_R0_CELLS - FOG_REMNANT_R1_CELLS) * t,
+                        fogRemnantPaint
+                    )
+                }
+            }
+        }
+    }
+
+    /**
+     * Parcourt les COPIES visibles du tore pour la fenêtre allant de
+     * minX à maxX exclu et de minY à maxY exclu (cases « monde »)
+     * et exécute [block] dans le
+     * repère de la copie, TRANSLATÉ à sa position monde puis MIS À
+     * L'ÉCHELLE de la case : à l'intérieur, on dessine en unités de
+     * cellules du plateau — le nuage, ses liserés et ses effluves
+     * suivent le zoom par construction. Une vue ne montre JAMAIS plus
+     * d'une copie par axe au plancher de dézoom (garanti par
+     * floorCellPx) : la boucle ne paie que ce qui est à l'écran.
+     */
+    private fun Canvas.forEachVisibleCopy(
+        b: Board,
+        minX: Int, maxX: Int,
+        minY: Int, maxY: Int,
+        block: Canvas.() -> Unit
+    ) {
+        if (cellPx <= 0f) return
+        val kx0 = Math.floorDiv(minX, b.width)
+        val kx1 = Math.floorDiv(maxX - 1, b.width)
+        val ky0 = Math.floorDiv(minY, b.height)
+        val ky1 = Math.floorDiv(maxY - 1, b.height)
+        for (ky in ky0..ky1) {
+            for (kx in kx0..kx1) {
+                withSave {
+                    translate(kx * b.width * cellPx, ky * b.height * cellPx)
+                    scale(cellPx, cellPx)
+                    block()
+                }
+            }
+        }
+    }
+
+    /**
+     * Construit la SILHOUETTE du nuage ([fogVisible] = visible) en
+     * unités de cellules : un carré par cellule cachée (hors
+     * [revealed]) dont seuls les coins qui TOUCHENT la zone visible
+     * s'arrondissent ([FOG_CELL_CORNER_CELLS], masques de
+     * FogShapes.cornerRounding — V2 du 20 nov. : le cœur du nuage
+     * redevient les tuiles d'avant, plus de trou au sommet de
+     * quatre cases), et un cercle par feston de frontière — même
+     * Path, même winding : l'union se remplit d'un bloc, débordé
+     * compris. Reine du cache : appelée seulement quand la
+     * visibilité, l'indice ou la victoire la rendent obsolète,
+     * jamais à la trame.
+     */
+    private fun buildFogCloudPath(
+        b: Board,
+        fog: BooleanArray,
+        revealed: Int
+    ): Path {
+        val path = Path()
+        val masks = FogShapes.cornerRounding(fog, b.width, b.height, revealed)
+        for (i in fog.indices) {
+            if (fog[i] || i == revealed) continue
+            val x = (i % b.width).toFloat()
+            val y = (i / b.width).toFloat()
+            val m = masks[i]
+            fun corner(bit: Int): Float =
+                if (m and bit != 0) FOG_CELL_CORNER_CELLS else 0f
+            val tl = corner(FogShapes.CORNER_TL)
+            val tr = corner(FogShapes.CORNER_TR)
+            val br = corner(FogShapes.CORNER_BR)
+            val bl = corner(FogShapes.CORNER_BL)
+            path.addRoundRect(
+                x, y, x + 1f, y + 1f,
+                floatArrayOf(tl, tl, tr, tr, br, br, bl, bl),
+                Path.Direction.CW
+            )
+        }
+        for ((fx, fy, fr) in FogShapes.bumps(fog, b.width, b.height, revealed)) {
+            path.addCircle(fx, fy, fr, Path.Direction.CW)
+        }
+        return path
     }
 
     /**
@@ -2055,6 +2308,36 @@ class BoardView @JvmOverloads constructor(
 
         /** Basse de la respiration : le serveur ne paraît jamais éteint. */
         private const val SERVER_BREATH_MIN_ALPHA = 170
+
+        // --- Chantier brouillard-nuage du Néant (19 nov. 2026) ---
+        //     Décisions d'eric : style B « festons » de la maquette,
+        //     fondu de découverte. V2 du 20 nov. 2026 (retour
+        //     utilisateurs) : le cœur du nuage redevient les tuiles
+        //     d'avant, bouffées retirées, coins arrondis en
+        //     frontière seule. Toutes les
+        //     valeurs sont en UNITÉS DE CELLULES (la passe dessine
+        //     sous CTM à l'échelle de la case) ou en millisecondes.
+
+        /** Coins arrondis de la silhouette, fraction de cellule. */
+        private const val FOG_CELL_CORNER_CELLS = 0.35f
+
+        /** Liseré vapeur lointain : épaisseur (cellules) puis alpha. */
+        private const val FOG_HALO_FAR_CELLS = 0.85f
+        private const val FOG_HALO_FAR_ALPHA = 36
+
+        /** Liseré vapeur proche : épaisseur (cellules) puis alpha. */
+        private const val FOG_HALO_NEAR_CELLS = 0.425f
+        private const val FOG_HALO_NEAR_ALPHA = 82
+
+        /** Effluve de découverte : durée de l'évaporation. */
+        private const val FOG_DISSOLVE_MS = 250L
+
+        /** Effluve de découverte : rayon de départ puis d'arrivée. */
+        private const val FOG_REMNANT_R0_CELLS = 0.66f
+        private const val FOG_REMNANT_R1_CELLS = 0.45f
+
+        /** Victoire : le nuage entier s'efface en ce fondu. */
+        private const val FOG_FADE_MS = 400L
 
         // --- Chantier Aide à la résolution (15 nov. 2026) ---
 
